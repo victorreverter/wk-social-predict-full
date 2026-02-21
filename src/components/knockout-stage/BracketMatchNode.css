@@ -1,0 +1,144 @@
+.bracket-match-node {
+    width: 200px;
+    position: relative;
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-normal);
+    padding: 0;
+    overflow: hidden;
+}
+
+.bracket-match-node:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    transform: scale(1.02);
+    z-index: 10;
+}
+
+.match-id-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--color-tertiary);
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-bottom-right-radius: 6px;
+    opacity: 0.8;
+}
+
+.bracket-teams-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.bracket-team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    min-height: 48px;
+    transition: background-color var(--transition-fast);
+}
+
+.bracket-team:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.bracket-team.home {
+    padding-top: 1.25rem;
+    /* Room for badge */
+}
+
+.team-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+.bracket-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    width: 100%;
+}
+
+.score-inputs {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.bracket-score-input,
+.pen-input {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: white;
+    text-align: center;
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all var(--transition-fast);
+}
+
+.bracket-score-input {
+    width: 28px;
+    height: 28px;
+}
+
+.pen-input {
+    width: 24px;
+    height: 28px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    border-color: transparent;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.bracket-score-input:focus,
+.pen-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Hide spinners */
+.bracket-score-input::-webkit-outer-spin-button,
+.bracket-score-input::-webkit-inner-spin-button,
+.pen-input::-webkit-outer-spin-button,
+.pen-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.easy-bracket-controls {
+    display: flex;
+}
+
+.btn-easy-bracket {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.btn-easy-bracket:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.btn-easy-bracket.active {
+    background: var(--color-primary);
+    color: black;
+    border-color: var(--color-primary);
+    box-shadow: var(--glow-primary);
+}

@@ -1,0 +1,94 @@
+.bracket-tree-wrapper {
+    width: 100%;
+    background: var(--bg-base);
+    border-radius: 16px;
+    position: relative;
+    /* Slight ambient glow behind the bracket tree */
+    box-shadow: inset 0 0 100px rgba(169, 0, 255, 0.05);
+}
+
+.bracket-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.btn-export {
+    background: var(--color-quaternary);
+    color: black;
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+    background: white;
+}
+
+.bracket-scroll-container {
+    overflow-x: auto;
+    padding: 2rem 1rem;
+    /* Hide scrollbar for cleaner look if possible, but keep functional */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-quaternary) var(--bg-surface);
+}
+
+.bracket-columns {
+    display: flex;
+    min-width: max-content;
+    gap: 3rem;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
+.bracket-column {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+}
+
+.stage-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--color-quaternary);
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.5rem;
+}
+
+.matches-vertical-flow {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 100%;
+    gap: 1.5rem;
+}
+
+.match-connector-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Pseudo element connectors tracing the path -- super basic version for now */
+.match-connector-wrapper::after {
+    content: '';
+    position: absolute;
+    right: -1.5rem;
+    width: 1.5rem;
+    height: 2px;
+    background: var(--border-subtle);
+    z-index: 0;
+}
+
+.stage-f .match-connector-wrapper::after {
+    display: none;
+}

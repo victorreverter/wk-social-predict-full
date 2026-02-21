@@ -1,0 +1,39 @@
+.group-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.group-section {
+    position: relative;
+}
+
+.group-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .group-grid {
+        grid-template-columns: 5fr 4fr;
+        /* Table slightly wider than matches */
+        align-items: start;
+    }
+}
+
+.matches-title {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.matches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}

@@ -1,0 +1,82 @@
+.group-standings {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.group-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.group-header h3 {
+    font-size: 1.25rem;
+    color: var(--color-primary);
+    letter-spacing: 1px;
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.standings-table th {
+    padding: 0.75rem 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.standings-table td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.standings-table tr {
+    transition: background-color var(--transition-fast);
+}
+
+.standings-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.team-col {
+    text-align: left;
+    font-weight: 600;
+    color: white;
+    min-width: 120px;
+}
+
+.pos-col {
+    width: 30px;
+    color: var(--text-muted);
+}
+
+.pts-col {
+    font-weight: 700;
+    color: var(--color-quaternary);
+    font-size: 0.95rem;
+}
+
+/* Qualification Highlight Styles */
+.qualified td {
+    background: rgba(169, 0, 255, 0.05);
+}
+
+.qualified td.pos-col {
+    color: var(--color-tertiary);
+    font-weight: 700;
+}
+
+.possible-qualifier td {
+    background: rgba(255, 0, 85, 0.05);
+}
+
+.possible-qualifier td.pos-col {
+    color: var(--color-secondary);
+    font-weight: 700;
+}
