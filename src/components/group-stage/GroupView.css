@@ -4,6 +4,60 @@
     gap: 3rem;
     max-width: var(--max-width);
     margin: 0 auto;
+    margin: 0 auto;
+}
+
+.group-selector-ribbon {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) transparent;
+}
+
+/* Custom scrollbar for webkit (Chrome/Safari) */
+.group-selector-ribbon::-webkit-scrollbar {
+    height: 4px;
+}
+
+.group-selector-ribbon::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.group-selector-ribbon::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 10px;
+}
+
+.group-tab-btn {
+    flex: 0 0 auto;
+    padding: 0.5rem 1.5rem;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.group-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.group-tab-btn.active {
+    background: var(--color-primary);
+    color: var(--bg-dark);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
 }
 
 .group-section {

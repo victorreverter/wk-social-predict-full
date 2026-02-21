@@ -9,45 +9,55 @@ import './GroupView.css';
 export const GroupView: React.FC = () => {
     const { state } = useApp();
     const { groupMatches } = state;
+    const [activeGroup, setActiveGroup] = React.useState<string>(groups[0]);
+
+    // Determine what to display based on the selected tab
+    const standings = calculateGroupStandings(activeGroup, initialTeams, groupMatches);
+    const groupMatchList = Object.values(groupMatches).filter(m => m.group === activeGroup);
 
     return (
         <div className="group-view-container">
-            {groups.map((group) => {
-                const standings = calculateGroupStandings(group, initialTeams, groupMatches);
-                const groupMatchList = Object.values(groupMatches).filter(m => m.group === group);
+            <div className="group-selector-ribbon">
+                {groups.map((group) => (
+                    <button
+                        key={group}
+                        className={`group-tab-btn ${activeGroup === group ? 'active' : ''}`}
+                        onClick={() => setActiveGroup(group)}
+                    >
+                        {group}
+                    </button>
+                ))}
+            </div>
 
-                return (
-                    <div key={group} className="group-section">
-                        <div className="group-grid">
+            <div key={activeGroup} className="group-section">
+                <div className="group-grid">
 
-                            <div className="group-table-wrapper">
-                                <GroupStandings group={group} standings={standings} />
-                            </div>
+                    <div className="group-table-wrapper">
+                        <GroupStandings group={activeGroup} standings={standings} />
+                    </div>
 
-                            <div className="group-matches-wrapper">
-                                <h4 className="matches-title">Matches</h4>
-                                <div className="matches-list">
-                                    {groupMatchList.map(match => {
-                                        const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
-                                        const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
+                    <div className="group-matches-wrapper">
+                        <h4 className="matches-title">Matches</h4>
+                        <div className="matches-list">
+                            {groupMatchList.map(match => {
+                                const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
+                                const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
 
-                                        if (!homeTeam || !awayTeam) return null;
+                                if (!homeTeam || !awayTeam) return null;
 
-                                        return (
-                                            <MatchCard
-                                                key={match.id}
-                                                match={match}
-                                                homeTeam={homeTeam}
-                                                awayTeam={awayTeam}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                                return (
+                                    <MatchCard
+                                        key={match.id}
+                                        match={match}
+                                        homeTeam={homeTeam}
+                                        awayTeam={awayTeam}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
-                );
-            })}
+                </div>
+            </div>
         </div>
     );
 };
