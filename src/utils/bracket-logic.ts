@@ -120,24 +120,42 @@ export const updateKnockoutBracket = (
             bindings.forEach((pair, idx) => {
                 const matchId = `k_R32_${idx + 1}`;
                 if (newKnockout[matchId]) {
-                    newKnockout[matchId] = {
-                        ...newKnockout[matchId],
-                        homeTeamId: pair[0].teamId,
-                        awayTeamId: pair[1].teamId
-                    };
+                    if (newKnockout[matchId].homeTeamId !== pair[0].teamId || newKnockout[matchId].awayTeamId !== pair[1].teamId) {
+                        newKnockout[matchId] = {
+                            ...newKnockout[matchId],
+                            homeTeamId: pair[0].teamId,
+                            awayTeamId: pair[1].teamId
+                        };
+                    }
                 }
             });
+        } else {
+            // Reset all to TBD if group is not entirely finished
+            for (let i = 1; i <= 16; i++) {
+                const matchId = `k_R32_${i}`;
+                if (newKnockout[matchId]) {
+                    if (newKnockout[matchId].homeTeamId !== 'TBD' || newKnockout[matchId].awayTeamId !== 'TBD') {
+                        newKnockout[matchId] = {
+                            ...newKnockout[matchId],
+                            homeTeamId: 'TBD',
+                            awayTeamId: 'TBD'
+                        };
+                    }
+                }
+            }
         }
     } else {
         // Reset all to TBD if group is not entirely finished
         for (let i = 1; i <= 16; i++) {
             const matchId = `k_R32_${i}`;
             if (newKnockout[matchId]) {
-                newKnockout[matchId] = {
-                    ...newKnockout[matchId],
-                    homeTeamId: 'TBD',
-                    awayTeamId: 'TBD'
-                };
+                if (newKnockout[matchId].homeTeamId !== 'TBD' || newKnockout[matchId].awayTeamId !== 'TBD') {
+                    newKnockout[matchId] = {
+                        ...newKnockout[matchId],
+                        homeTeamId: 'TBD',
+                        awayTeamId: 'TBD'
+                    };
+                }
             }
         }
     }
@@ -176,11 +194,15 @@ export const updateKnockoutBracket = (
 
             const targetMatchId = `k_${rule.to}_${i}`;
             if (newKnockout[targetMatchId]) {
-                newKnockout[targetMatchId] = {
-                    ...newKnockout[targetMatchId],
-                    homeTeamId: getMatchWinner(prevMatchHome),
-                    awayTeamId: getMatchWinner(prevMatchAway)
-                };
+                const newHome = getMatchWinner(prevMatchHome);
+                const newAway = getMatchWinner(prevMatchAway);
+                if (newKnockout[targetMatchId].homeTeamId !== newHome || newKnockout[targetMatchId].awayTeamId !== newAway) {
+                    newKnockout[targetMatchId] = {
+                        ...newKnockout[targetMatchId],
+                        homeTeamId: newHome,
+                        awayTeamId: newAway
+                    };
+                }
             }
         }
     });

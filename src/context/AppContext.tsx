@@ -28,12 +28,11 @@ const getFreshState = (): AppState => ({
     isThirdsModalDismissed: false,
 });
 
-const initialState: AppState = getFreshState();
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [state, setState] = useLocalStorage<AppState>('wk-predict-data-v2', initialState);
+    // Lazily initialize state so getFreshState() isn't called on every render/clone pass
+    const [state, setState] = React.useState<AppState>(() => getFreshState());
 
     const setMode = (mode: PredictionMode) => {
         setState(prev => ({ ...prev, mode }));
@@ -177,22 +176,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const contextValue = React.useMemo(() => ({
+        state,
+        setMode,
+        setActiveTab,
+        updateGroupMatchScore,
+        updateGroupMatchEasyResult,
+        updateKnockoutMatchScore,
+        updateKnockoutMatchEasyResult,
+        setSelectedThirds,
+        setThirdsModalDismissed,
+        resetPredictions,
+        autoFillGroups
+    }), [state]); // Only re-create context object if state actually changes
+
     return (
-        <AppContext.Provider
-            value={{
-                state,
-                setMode,
-                setActiveTab,
-                updateGroupMatchScore,
-                updateGroupMatchEasyResult,
-                updateKnockoutMatchScore,
-                updateKnockoutMatchEasyResult,
-                setSelectedThirds,
-                setThirdsModalDismissed,
-                resetPredictions,
-                autoFillGroups
-            }}
-        >
+        <AppContext.Provider value={contextValue}>
             {children}
         </AppContext.Provider>
     );

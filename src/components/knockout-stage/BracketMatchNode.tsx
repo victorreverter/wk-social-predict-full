@@ -9,7 +9,7 @@ interface Props {
     awayTeam?: Team;
 }
 
-export const BracketMatchNode: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
+export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam }) => {
     const { state, updateKnockoutMatchEasyResult, updateKnockoutMatchScore } = useApp();
     const { mode } = state;
 
@@ -34,7 +34,7 @@ export const BracketMatchNode: React.FC<Props> = ({ match, homeTeam, awayTeam })
         return (
             <div className={`bracket-team ${isHome ? 'home' : 'away'}`}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                    {teamInfo && <img src={`${import.meta.env.BASE_URL}flags/${teamInfo.code}.svg`} className="team-flag" alt="" />}
+                    {teamInfo && <img src={`${import.meta.env.BASE_URL}flags/${teamInfo.code}.svg`} className="team-flag" crossOrigin="anonymous" width={24} height={16} alt="" />}
                     <span className="team-name">{teamInfo ? teamInfo.name : 'TBD'}</span>
                 </div>
 
@@ -86,4 +86,4 @@ export const BracketMatchNode: React.FC<Props> = ({ match, homeTeam, awayTeam })
             </div>
         </div>
     );
-};
+});

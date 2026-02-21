@@ -14,7 +14,7 @@ export const BracketTree: React.FC = () => {
     const matchesList = Object.values(state.knockoutMatches);
 
     const handleExport = () => {
-        exportBracketToImage('bracket-export-target', 'my-wc2026-bracket.png');
+        exportBracketToImage(matchesList, 'my-wc2026-bracket.jpg');
     };
 
     // Helper: Split an array of matches strictly in half for left/right mapping
