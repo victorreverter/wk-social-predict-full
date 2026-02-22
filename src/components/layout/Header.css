@@ -17,10 +17,10 @@
     gap: 0.5rem;
 }
 
-.header-logo h1 {
-    font-size: 2rem;
-    margin: 0;
-    letter-spacing: -1px;
+.header-logo .wc-logo {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
 }
 
 .subtitle {

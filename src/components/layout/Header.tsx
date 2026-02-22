@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
     return (
         <header className="app-header glass-panel">
             <div className="header-logo">
-                <h1 className="text-gradient">WC 2026</h1>
+                <img src={`${import.meta.env.BASE_URL}2026_FIFA_World_Cup_Light_Logo.png`} alt="WC 2026 Logo" className="wc-logo" />
                 <span className="subtitle">Predictor</span>
             </div>
 
