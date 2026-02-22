@@ -128,15 +128,16 @@
 
 .champion-display {
     text-align: center;
+    margin-top: -10rem;
     margin-bottom: 0.5rem;
-    animation: pulseGlow 2s infinite alternate;
 }
 
 .champion-title {
     color: #ffd700;
     font-size: 1.5rem;
     letter-spacing: 3px;
-    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    /* margin-bottom: 0.5rem; */
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     font-weight: 800;
 }
@@ -145,19 +146,14 @@
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 215, 0, 0.1);
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    padding: 1rem 2rem;
-    border-radius: 12px;
+    /* gap: 0.5rem; */
 }
 
-.champion-flag {
-    width: 60px;
-    height: 40px;
-    border-radius: 4px;
-    object-fit: cover;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+.champion-trophy {
+    height: 265px;
+    width: 200px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }
 
 .champion-name {

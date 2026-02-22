@@ -161,26 +161,17 @@ export const exportBracketToImage = async (
             ctx.font = 'bold 20px Inter, sans-serif';
             ctx.fillText(championTeam.name, canvas.width / 2, 410);
 
-            // Draw flag
+            // Draw trophy
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.src = `${import.meta.env.BASE_URL}flags/${championTeam.code}.svg`;
+            img.src = `${import.meta.env.BASE_URL}world_cup_trophy.webp`;
             await new Promise((resolve) => {
                 img.onload = resolve;
                 img.onerror = resolve; // Continue on error
             });
 
-            // Draw a subtle badge background
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.1)';
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
-            ctx.lineWidth = 2;
-            const badgeWidth = 140;
-            const badgeHeight = 90;
-            ctx.fillRect(canvas.width / 2 - badgeWidth / 2, 295, badgeWidth, badgeHeight);
-            ctx.strokeRect(canvas.width / 2 - badgeWidth / 2, 295, badgeWidth, badgeHeight);
-
-            // Scale flag down slightly
-            ctx.drawImage(img, canvas.width / 2 - 35, 310, 70, 46);
+            // Scale trophy
+            ctx.drawImage(img, canvas.width / 2 - 25, 295, 50, 70);
 
         } else {
             // Standard Title

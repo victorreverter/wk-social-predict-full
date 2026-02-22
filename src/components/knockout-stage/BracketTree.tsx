@@ -94,8 +94,8 @@ export const BracketTree: React.FC = () => {
                                     {championTeam && (
                                         <div className="champion-display">
                                             <div className="champion-badge">
+                                                <img src={`${import.meta.env.BASE_URL}world_cup_trophy.png`} className="champion-trophy" alt="Trophy" />
                                                 <h3 className="champion-title">CHAMPION</h3>
-                                                <img src={`${import.meta.env.BASE_URL}flags/${championTeam.code}.svg`} className="champion-flag" alt="" />
                                                 <span className="champion-name">{championTeam.name}</span>
                                             </div>
                                         </div>
