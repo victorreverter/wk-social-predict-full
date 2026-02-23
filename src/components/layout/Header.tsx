@@ -52,14 +52,13 @@ export const Header: React.FC = () => {
                 </button>
                 {isGroupsFinished && (
                     <button
-                        className="reset-btn"
-                        style={{ background: 'var(--neon-green)', color: 'var(--bg-dark)' }}
+                        className="select-thirds-btn"
                         onClick={() => setThirdsModalDismissed(false)}
                     >
                         Select 3rds
                     </button>
                 )}
-                <button className="reset-btn" style={{ background: 'var(--color-tertiary)' }} onClick={autoFillGroups}>
+                <button className="auto-fill-btn" onClick={autoFillGroups}>
                     Auto-Fill Groups
                 </button>
             </div>

@@ -9,6 +9,7 @@
 
 .group-selector-ribbon {
     display: flex;
+    justify-content: center;
     overflow-x: auto;
     gap: 0.75rem;
     padding: 0.5rem;
