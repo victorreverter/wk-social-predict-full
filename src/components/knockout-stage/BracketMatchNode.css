@@ -1,5 +1,5 @@
 .bracket-match-node {
-    width: 155px;
+    width: 100%;
     position: relative;
     border: 1px solid var(--border-subtle);
     transition: all var(--transition-normal);
@@ -52,11 +52,29 @@
 
 .team-name {
     font-size: 0.75rem;
-    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 80px;
+}
+
+.team-name.full {
+    display: inline;
+}
+
+.team-name.abbr {
+    display: none;
+    font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+    .team-name.full {
+        display: none;
+    }
+
+    .team-name.abbr {
+        display: inline;
+    }
 }
 
 .bracket-divider {

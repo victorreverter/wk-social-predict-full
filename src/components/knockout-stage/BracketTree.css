@@ -49,8 +49,10 @@
 
 .bracket-columns {
     display: flex;
-    min-width: max-content;
-    gap: 0.5rem;
+    width: 100%;
+    min-width: 800px;
+    /* Only scroll on very small screens */
+    gap: 0.5vw;
     justify-content: center;
     align-items: stretch;
 }
@@ -58,14 +60,15 @@
 .bracket-column {
     display: flex;
     flex-direction: column;
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    /* Equal width columns */
 }
 
 .bracket-column.center-final {
     justify-content: flex-start;
-    /* Start at the top so the title aligns with others */
-    padding: 0 1rem;
-    /* height: 100%; */
+    padding: 0 0.5vw;
+    flex: 1.5 1 0;
+    /* Give the center slightly more real estate */
 }
 
 .center-final-content {
@@ -158,8 +161,8 @@
 }
 
 .champion-trophy {
-    height: 265px;
-    width: 200px;
+    height: clamp(120px, 15vw, 265px);
+    width: clamp(80px, 12vw, 200px);
     object-fit: contain;
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
 }

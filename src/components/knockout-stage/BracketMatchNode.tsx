@@ -31,16 +31,21 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
     };
 
     const renderTeam = (teamInfo?: Team, pens?: number | null, isHome: boolean = true) => {
+        const isKnockoutTied = match.score?.homeGoals !== null &&
+            match.score?.awayGoals !== null &&
+            match.score?.homeGoals === match.score?.awayGoals;
+
         return (
             <div className={`bracket-team ${isHome ? 'home' : 'away'}`}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
                     {teamInfo && <img src={`${import.meta.env.BASE_URL}flags/${teamInfo.code}.svg`} className="team-flag" crossOrigin="anonymous" width={24} height={16} alt="" />}
-                    <span className="team-name">{teamInfo ? teamInfo.name : 'TBD'}</span>
+                    <span className="team-name full">{teamInfo ? teamInfo.name : 'TBD'}</span>
+                    <span className="team-name abbr">{teamInfo ? teamInfo.code : 'TBD'}</span>
                 </div>
 
                 {mode === 'HARD' ? (
                     <div className="score-inputs">
-                        {pens !== undefined && pens !== null && (
+                        {(isKnockoutTied || (pens !== undefined && pens !== null)) && (
                             <input
                                 type="number"
                                 className="pen-input"
