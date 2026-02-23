@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Match } from '../../types';
 import { BracketMatchNode } from './BracketMatchNode';
 import { useApp } from '../../context/AppContext';
@@ -12,6 +12,7 @@ const RIGHT_STAGES = ['SF', 'QF', 'R16', 'R32']; // Mirrored order for right sid
 
 export const BracketTree: React.FC = () => {
     const { state } = useApp();
+    const [userName, setUserName] = useState('');
     const matchesList = Object.values(state.knockoutMatches);
 
     const handleExport = () => {
@@ -78,6 +79,25 @@ export const BracketTree: React.FC = () => {
             </div>
 
             <div className="bracket-tree-wrapper" id="bracket-export-target">
+                <div className="bracket-user-prediction-input-container">
+                    <div className="prediction-input-wrapper">
+                        <input
+                            type="text"
+                            className="user-prediction-input"
+                            placeholder="Your Name"
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
+                            maxLength={25}
+                            autoComplete="off"
+                            style={{
+                                width: userName ? `calc(${userName.length}ch + 2px)` : '140px',
+                                transition: 'width 0.1s'
+                            }}
+                        />
+                        <span className="prediction-suffix">'s Prediction</span>
+                    </div>
+                </div>
+
                 <div className="bracket-scroll-container">
 
                     <div className="bracket-columns">
