@@ -112,6 +112,14 @@ export const BracketTree: React.FC = () => {
                                                 <img src={`${import.meta.env.BASE_URL}world_cup_trophy.png`} className="champion-trophy" alt="Trophy" />
                                                 <h3 className="champion-title">CHAMPION</h3>
                                                 <span className="champion-name">{championTeam.name}</span>
+                                                <span className="champion-title-count">{
+                                                    ['Brazil'].includes(championTeam.name) ? '6th Title' :
+                                                        ['Germany', 'Italy'].includes(championTeam.name) ? '5th Title' :
+                                                            ['Argentina'].includes(championTeam.name) ? '4th Title' :
+                                                                ['France', 'Uruguay'].includes(championTeam.name) ? '3rd Title' :
+                                                                    ['Spain', 'England'].includes(championTeam.name) ? '2nd Title' :
+                                                                        '1st Title'
+                                                }</span>
                                             </div>
                                         </div>
                                     )}

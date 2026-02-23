@@ -236,6 +236,16 @@
     color: white;
 }
 
+.champion-title-count {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: 0.25rem;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(169, 0, 255, 0.4);
+    text-transform: uppercase;
+}
+
 .third-place-container {
     margin-top: 1.5rem;
     padding-top: 1rem;
