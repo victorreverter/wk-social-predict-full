@@ -11,20 +11,18 @@ export const exportBracketToImage = async (
 
         if (!wrapperElement || !scrollContainer) throw new Error('Bracket element not found');
 
-        // 1. Calculate the true, uncropped width of the entire Bracket matrix
-        const targetWidth = scrollContainer.scrollWidth;
+        // 1. Measure the full uncropped width before touching anything
+        const fullWidth = scrollContainer.scrollWidth;
+        const fullHeight = scrollContainer.scrollHeight;
 
-        // Temporarily adjust styling to capture the full overflowing bracket correctly
+        // Temporarily expand overflow so html2canvas doesn't clip hidden content
         const originalOverflow = scrollContainer.style.overflow;
         const originalMaxWidth = wrapperElement.style.maxWidth;
-        const originalWidth = wrapperElement.style.width;
 
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
-        // 2. FORCE the wrapper to physically expand to the uncropped pixel width so html2canvas doesn't truncate the DOM node.
-        wrapperElement.style.width = `${targetWidth}px`;
 
-        // Prevent out-of-memory crashes on iOS by dropping the scale on mobile devices
+        // Prevent out-of-memory crashes on iOS
         const isMobile = window.innerWidth <= 768;
         const exportScale = isMobile ? 1.5 : 2;
 
@@ -32,14 +30,17 @@ export const exportBracketToImage = async (
             scale: exportScale,
             useCORS: true,
             allowTaint: true,
-            backgroundColor: '#0a0a0c', // Ensure the background bleeds correctly
+            backgroundColor: '#0a0a0c',
             logging: false,
+            // Simulate a wide viewport so "width: 100%" resolves to the full bracket width.
+            // This avoids flex-column gaps caused by physically overriding DOM width.
+            windowWidth: fullWidth,
+            windowHeight: fullHeight,
         });
 
         // Restore styles
         scrollContainer.style.overflow = originalOverflow;
         wrapperElement.style.maxWidth = originalMaxWidth;
-        wrapperElement.style.width = originalWidth;
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
