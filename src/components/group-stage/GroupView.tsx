@@ -39,19 +39,29 @@ export const GroupView: React.FC = () => {
                     <div className="group-matches-wrapper">
                         <h4 className="matches-title">Matches</h4>
                         <div className="matches-list">
-                            {groupMatchList.map(match => {
-                                const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
-                                const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
-
-                                if (!homeTeam || !awayTeam) return null;
+                            {/* Partition matches into 3 fixtures (Matchdays) of 2 games each */}
+                            {[0, 1, 2].map(fixtureIndex => {
+                                const fixtureMatches = groupMatchList.slice(fixtureIndex * 2, fixtureIndex * 2 + 2);
 
                                 return (
-                                    <MatchCard
-                                        key={match.id}
-                                        match={match}
-                                        homeTeam={homeTeam}
-                                        awayTeam={awayTeam}
-                                    />
+                                    <div key={`fixture-${fixtureIndex + 1}`} className="fixture-group">
+                                        <h5 className="fixture-title">Fixture {fixtureIndex + 1}</h5>
+                                        {fixtureMatches.map(match => {
+                                            const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
+                                            const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
+
+                                            if (!homeTeam || !awayTeam) return null;
+
+                                            return (
+                                                <MatchCard
+                                                    key={match.id}
+                                                    match={match}
+                                                    homeTeam={homeTeam}
+                                                    awayTeam={awayTeam}
+                                                />
+                                            );
+                                        })}
+                                    </div>
                                 );
                             })}
                         </div>
