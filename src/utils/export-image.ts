@@ -14,48 +14,21 @@ export const exportBracketToImage = async (
         // Temporarily adjust styling to capture the full overflowing bracket correctly
         const originalOverflow = scrollContainer.style.overflow;
         const originalMaxWidth = wrapperElement.style.maxWidth;
-        // The wrapper's parent restricts bounds, so we must force it to expand as well
-        const wrapperParent = wrapperElement.parentElement;
-        const originalParentWidth = wrapperParent ? wrapperParent.style.width : '';
 
-        if (wrapperParent) {
-            wrapperParent.style.width = 'fit-content';
-        }
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
-        wrapperElement.style.width = 'max-content';
-
-        // 1. Calculate the true, uncropped width of the entire Bracket matrix
-        const targetWidth = scrollContainer.scrollWidth;
-        const targetHeight = scrollContainer.scrollHeight;
-
-        // Prevent out-of-memory crashes on iOS by dropping the scale on mobile devices
-        const isMobile = window.innerWidth <= 768;
-        const exportScale = isMobile ? 1.2 : 2;
 
         const canvas = await html2canvas(wrapperElement, {
-            scale: exportScale,
+            scale: 2, // High resolution
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#0a0a0c', // Ensure the background bleeds correctly
             logging: false,
-            // 2. FORCE html2canvas to render the entire width, ignoring the phone's narrow screen limits
-            width: targetWidth,
-            height: targetHeight,
-            windowWidth: targetWidth,
-            windowHeight: targetHeight,
-            // 3. FORCE the capture camera to shift to the actual scroll position so it doesn't crop the right side
-            x: scrollContainer.scrollLeft,
-            scrollX: 0
         });
 
         // Restore styles
-        if (wrapperParent) {
-            wrapperParent.style.width = originalParentWidth;
-        }
         scrollContainer.style.overflow = originalOverflow;
         wrapperElement.style.maxWidth = originalMaxWidth;
-        wrapperElement.style.width = '';
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
