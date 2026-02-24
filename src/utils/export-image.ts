@@ -22,7 +22,6 @@ export const exportBracketToImage = async (
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
 
-        // Prevent out-of-memory crashes on iOS
         const isMobile = window.innerWidth <= 768;
         const exportScale = isMobile ? 1.5 : 2;
 
@@ -42,12 +41,27 @@ export const exportBracketToImage = async (
         scrollContainer.style.overflow = originalOverflow;
         wrapperElement.style.maxWidth = originalMaxWidth;
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        // Mobile browsers block async link.click() downloads (gesture context expires).
+        // Use the Web Share API on mobile to open the native OS share/save sheet.
+        const blob = await new Promise<Blob>((resolve, reject) =>
+            canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', 0.95)
+        );
 
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = dataUrl;
-        link.click();
+        const file = new File([blob], filename, { type: 'image/jpeg' });
+        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'My WC 2026 Bracket',
+            });
+        } else {
+            // Desktop fallback: direct download via anchor click
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
     } catch (err) {
         console.error('Error generating image:', err);
         alert("There was an issue generating the bracket image.");
