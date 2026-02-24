@@ -18,12 +18,24 @@ export const exportBracketToImage = async (
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
 
+        // Calculate explicit dimensions to prevent Mobile Safari viewport cropping
+        const targetWidth = scrollContainer.scrollWidth;
+        const targetHeight = scrollContainer.scrollHeight;
+
+        // Prevent out-of-memory crashes on iOS by dropping the scale on mobile devices
+        const isMobile = window.innerWidth <= 768;
+        const exportScale = isMobile ? 1.2 : 2;
+
         const canvas = await html2canvas(wrapperElement, {
-            scale: 2, // High resolution
+            scale: exportScale,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#0a0a0c', // Ensure the background bleeds correctly
             logging: false,
+            width: targetWidth,
+            height: targetHeight,
+            windowWidth: targetWidth,
+            windowHeight: targetHeight,
         });
 
         // Restore styles
