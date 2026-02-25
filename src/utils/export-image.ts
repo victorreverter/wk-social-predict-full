@@ -1,6 +1,36 @@
 import html2canvas from 'html2canvas';
 import type { Match } from '../types';
 
+/**
+ * html2canvas cannot render <img src="*.svg"> on mobile browsers — they appear as coloured
+ * rectangles. This helper fetches every SVG flag inside a container, encodes it as a
+ * base64 data URL, swaps the src, and returns a function that restores the originals.
+ */
+async function inlineSvgImages(container: HTMLElement): Promise<() => void> {
+    const imgs = Array.from(container.querySelectorAll<HTMLImageElement>('img[src]')).filter(
+        (img) => img.src.endsWith('.svg') || img.src.includes('.svg?')
+    );
+
+    const restoreMap: Array<{ img: HTMLImageElement; original: string }> = [];
+
+    await Promise.all(
+        imgs.map(async (img) => {
+            try {
+                const res = await fetch(img.src);
+                const text = await res.text();
+                const b64 = btoa(unescape(encodeURIComponent(text)));
+                const dataUrl = `data:image/svg+xml;base64,${b64}`;
+                restoreMap.push({ img, original: img.src });
+                img.src = dataUrl;
+            } catch {
+                // If fetch fails, leave the src as-is
+            }
+        })
+    );
+
+    return () => restoreMap.forEach(({ img, original }) => { img.src = original; });
+}
+
 export const exportBracketToImage = async (
     _matchesList: Match[],
     filename: string = 'wc2026-prediction.jpg'
@@ -22,6 +52,9 @@ export const exportBracketToImage = async (
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
 
+        // 2. Pre-convert all SVG flags to base64 so html2canvas renders them correctly on mobile
+        const restoreSvgs = await inlineSvgImages(wrapperElement);
+
         const isMobile = window.innerWidth <= 768;
         const exportScale = isMobile ? 1.5 : 2;
 
@@ -37,7 +70,8 @@ export const exportBracketToImage = async (
             windowHeight: fullHeight,
         });
 
-        // Restore styles
+        // 3. Restore SVG srcs and layout styles
+        restoreSvgs();
         scrollContainer.style.overflow = originalOverflow;
         wrapperElement.style.maxWidth = originalMaxWidth;
 
