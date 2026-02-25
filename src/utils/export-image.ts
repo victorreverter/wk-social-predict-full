@@ -2,28 +2,50 @@ import html2canvas from 'html2canvas';
 import type { Match } from '../types';
 
 /**
- * html2canvas cannot render <img src="*.svg"> on mobile browsers — they appear as coloured
- * rectangles. This helper fetches every SVG flag inside a container, encodes it as a
- * base64 data URL, swaps the src, and returns a function that restores the originals.
+ * Draws an SVG (by URL) onto an offscreen canvas and returns a PNG data URL.
+ * Forces the browser's own SVG renderer to rasterize the flag first,
+ * completely bypassing html2canvas's broken SVG support on mobile.
  */
-async function inlineSvgImages(container: HTMLElement): Promise<() => void> {
-    const imgs = Array.from(container.querySelectorAll<HTMLImageElement>('img[src]')).filter(
-        (img) => img.src.endsWith('.svg') || img.src.includes('.svg?')
-    );
+function svgToPng(svgUrl: string, w: number, h: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const cvs = document.createElement('canvas');
+            cvs.width = w * 3;   // 3× for sharpness
+            cvs.height = h * 3;
+            const ctx = cvs.getContext('2d');
+            if (!ctx) return reject(new Error('No 2d context'));
+            ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+            resolve(cvs.toDataURL('image/png'));
+        };
+        img.onerror = () => reject(new Error(`Failed to load ${svgUrl}`));
+        img.src = svgUrl;
+    });
+}
 
+/**
+ * On MOBILE only: replaces every .team-flag <img> with a pre-rasterized PNG.
+ * Returns a function that restores all original srcs after the canvas is captured.
+ */
+async function rasterizeSvgFlags(container: HTMLElement): Promise<() => void> {
+    const imgs = Array.from(
+        container.querySelectorAll<HTMLImageElement>('img.team-flag')
+    );
     const restoreMap: Array<{ img: HTMLImageElement; original: string }> = [];
 
     await Promise.all(
         imgs.map(async (img) => {
             try {
-                const res = await fetch(img.src);
-                const text = await res.text();
-                const b64 = btoa(unescape(encodeURIComponent(text)));
-                const dataUrl = `data:image/svg+xml;base64,${b64}`;
+                const png = await svgToPng(
+                    img.src,
+                    img.naturalWidth || 24,
+                    img.naturalHeight || 16
+                );
                 restoreMap.push({ img, original: img.src });
-                img.src = dataUrl;
+                img.src = png;
             } catch {
-                // If fetch fails, leave the src as-is
+                // Leave as-is if anything fails — better partial than crash
             }
         })
     );
@@ -41,22 +63,23 @@ export const exportBracketToImage = async (
 
         if (!wrapperElement || !scrollContainer) throw new Error('Bracket element not found');
 
-        // 1. Measure the full uncropped width before touching anything
+        // Measure the full uncropped width before touching anything
         const fullWidth = scrollContainer.scrollWidth;
         const fullHeight = scrollContainer.scrollHeight;
 
-        // Temporarily expand overflow so html2canvas doesn't clip hidden content
         const originalOverflow = scrollContainer.style.overflow;
         const originalMaxWidth = wrapperElement.style.maxWidth;
 
         scrollContainer.style.overflow = 'visible';
         wrapperElement.style.maxWidth = 'none';
 
-        // 2. Pre-convert all SVG flags to base64 so html2canvas renders them correctly on mobile
-        const restoreSvgs = await inlineSvgImages(wrapperElement);
-
         const isMobile = window.innerWidth <= 768;
         const exportScale = isMobile ? 1.5 : 2;
+
+        // On mobile: pre-rasterize all SVG flags to PNG so html2canvas renders them properly
+        const restoreSvgs = isMobile
+            ? await rasterizeSvgFlags(wrapperElement)
+            : () => { };
 
         const canvas = await html2canvas(wrapperElement, {
             scale: exportScale,
@@ -64,19 +87,18 @@ export const exportBracketToImage = async (
             allowTaint: true,
             backgroundColor: '#0a0a0c',
             logging: false,
-            // Simulate a wide viewport so "width: 100%" resolves to the full bracket width.
-            // This avoids flex-column gaps caused by physically overriding DOM width.
+            // Simulate a wide viewport so "width: 100%" resolves to the full bracket width
             windowWidth: fullWidth,
             windowHeight: fullHeight,
         });
 
-        // 3. Restore SVG srcs and layout styles
+        // Restore everything
         restoreSvgs();
         scrollContainer.style.overflow = originalOverflow;
         wrapperElement.style.maxWidth = originalMaxWidth;
 
-        // Mobile browsers block async link.click() downloads (gesture context expires).
-        // Use the Web Share API on mobile to open the native OS share/save sheet.
+        // Mobile: use Web Share API (link.click() is blocked in async context on iOS/Android)
+        // Desktop: direct download via anchor click
         const blob = await new Promise<Blob>((resolve, reject) =>
             canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/jpeg', 0.95)
         );
@@ -88,7 +110,6 @@ export const exportBracketToImage = async (
                 title: 'My WC 2026 Bracket',
             });
         } else {
-            // Desktop fallback: direct download via anchor click
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.download = filename;
@@ -98,6 +119,6 @@ export const exportBracketToImage = async (
         }
     } catch (err) {
         console.error('Error generating image:', err);
-        alert("There was an issue generating the bracket image.");
+        alert('There was an issue generating the bracket image.');
     }
 };
