@@ -74,10 +74,9 @@ export const exportBracketToImage = async (
         const origColMinWidth = bracketColumns?.style.minWidth ?? '';
 
         if (isMobile && bracketColumns) {
-            // The CSS min-width of 800px is too narrow for 9 bracket columns.
-            // Force a generous minimum so scrollWidth gives us the real content width,
-            // and each column gets enough room (~155px each for 9 cols in 1400px).
-            bracketColumns.style.minWidth = '1700px';
+            // Bump to 2400px to guarantee all 9 columns have ample room
+            // even for longest country names like "New Zealand" + W button.
+            bracketColumns.style.minWidth = '2400px';
         }
 
         // Measure the true content width AFTER forcing the comfortable minimum
@@ -90,10 +89,8 @@ export const exportBracketToImage = async (
 
         if (isMobile) {
             // Physically widen the wrapper so html2canvas captures the full bracket.
-            wrapperElement.style.width = `${fullWidth}px`;
-            // Set bracketColumns to the same explicit px so flex:1 columns
-            // don't stretch beyond their natural content size.
-            if (bracketColumns) bracketColumns.style.width = `${fullWidth}px`;
+            wrapperElement.style.width = `${fullWidth + 200}px`; // +200px safety margin
+            if (bracketColumns) bracketColumns.style.width = `${fullWidth + 200}px`;
         }
 
         // On mobile: pre-rasterize all SVG flags to PNG so html2canvas renders them properly
