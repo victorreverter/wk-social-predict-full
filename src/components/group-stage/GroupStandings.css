@@ -51,6 +51,10 @@
     min-width: 120px;
 }
 
+:root.light .team-col {
+    color: var(--text-primary);
+}
+
 .pos-col {
     width: 30px;
     color: var(--text-muted);

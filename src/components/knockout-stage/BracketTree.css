@@ -10,6 +10,12 @@
     box-shadow: inset 0 0 100px rgba(169, 0, 255, 0.05);
 }
 
+:root.light .bracket-tree-wrapper {
+    background: rgba(221, 221, 221, 0.5);
+    /* Close to #dddddd but translucent */
+    box-shadow: inset 0 0 100px rgba(169, 0, 255, 0.02);
+}
+
 .bracket-user-prediction-input-container {
     width: 100%;
     display: flex;

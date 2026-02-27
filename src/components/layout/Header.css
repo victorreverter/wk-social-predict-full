@@ -92,6 +92,12 @@
     transition: all var(--transition-fast);
 }
 
+:root.light .select-thirds-btn {
+    color: #000;
+    border-color: #00ca65;
+    /* slightly darker green for border contrast */
+}
+
 .select-thirds-btn:hover {
     background: #00e676;
     color: #000;

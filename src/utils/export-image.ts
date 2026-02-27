@@ -97,13 +97,14 @@ export const exportBracketToImage = async (
             ? await rasterizeSvgFlags(wrapperElement)
             : () => { };
 
+        const isLightMode = document.documentElement.classList.contains('light');
         const exportScale = isMobile ? 1.5 : 2;
 
         const canvas = await html2canvas(wrapperElement, {
             scale: exportScale,
             useCORS: true,
             allowTaint: true,
-            backgroundColor: '#0a0a0c',
+            backgroundColor: isLightMode ? '#dddddd' : '#0a0a0c',
             logging: false,
             windowWidth: fullWidth,
             windowHeight: fullHeight,
