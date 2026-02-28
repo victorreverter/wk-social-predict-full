@@ -24,6 +24,12 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+:root.light .modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 100px rgba(169, 0, 255, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .modal-content h2 {
     font-size: 2.2rem;
     margin-bottom: 0.5rem;
@@ -144,6 +150,15 @@
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+:root.light .btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+:root.light .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
