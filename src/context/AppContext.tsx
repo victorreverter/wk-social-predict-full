@@ -59,10 +59,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Apply theme changes to document and persist preference whenever it changes
     useEffect(() => {
         const root = document.documentElement;
+        const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+
         if (state.theme === 'light') {
             root.classList.add('light');
+            if (favicon) favicon.href = import.meta.env.BASE_URL + 'Favicon_Light.jpg';
         } else {
             root.classList.remove('light');
+            if (favicon) favicon.href = import.meta.env.BASE_URL + 'Favicon_Dark.jpg';
         }
 
         try {

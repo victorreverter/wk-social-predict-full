@@ -57,9 +57,17 @@
     outline: none;
 }
 
+:root.light .user-prediction-input {
+    color: var(--text-primary);
+}
+
 .user-prediction-input::placeholder {
     color: rgba(255, 255, 255, 0.3);
     font-weight: 500;
+}
+
+:root.light .user-prediction-input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
 }
 
 .bracket-view-container {
