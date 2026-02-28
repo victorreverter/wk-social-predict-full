@@ -65,6 +65,11 @@
     transition: all var(--transition-fast);
 }
 
+:root.light .score-input {
+    background: rgba(255, 255, 255, 0.8);
+    color: #000;
+}
+
 .score-input:focus {
     outline: none;
     border-color: var(--color-primary);

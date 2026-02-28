@@ -101,6 +101,12 @@
     transition: all var(--transition-fast);
 }
 
+:root.light .bracket-score-input,
+:root.light .pen-input {
+    background: #ffffff;
+    color: #000000;
+}
+
 .bracket-score-input {
     width: 24px;
     height: 24px;
