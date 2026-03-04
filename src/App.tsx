@@ -3,6 +3,7 @@ import { Header } from './components/layout/Header';
 import { GroupView } from './components/group-stage/GroupView';
 import { BracketTree } from './components/knockout-stage/BracketTree';
 import { ThirdPlaceSelection } from './components/shared/ThirdPlaceSelection';
+import { OnboardingModal } from './components/shared/OnboardingModal';
 import { useApp } from './context/AppContext';
 import './styles/global.css';
 
@@ -22,6 +23,7 @@ const App = () => {
       <div className="app-container">
         <Header />
         <MainContent />
+        <OnboardingModal />
       </div>
     </AppProvider>
   );
