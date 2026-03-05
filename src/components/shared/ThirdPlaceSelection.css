@@ -74,9 +74,9 @@
 }
 
 :root.light .third-card.selected {
-    background: rgba(138, 0, 212, 0.15);
-    border-color: #8a00d4;
-    box-shadow: 0 0 15px rgba(138, 0, 212, 0.25);
+    background: rgba(0, 102, 255, 0.1);
+    border-color: #004dc9;
+    box-shadow: 0 0 12px rgba(0, 102, 255, 0.2);
 }
 
 .third-card.disabled {
