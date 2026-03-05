@@ -73,6 +73,12 @@
     box-shadow: 0 0 20px rgba(169, 0, 255, 0.3);
 }
 
+:root.light .third-card.selected {
+    background: rgba(138, 0, 212, 0.15);
+    border-color: #8a00d4;
+    box-shadow: 0 0 15px rgba(138, 0, 212, 0.25);
+}
+
 .third-card.disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -134,6 +140,11 @@
     font-weight: 700;
     font-family: var(--font-family-display);
     color: var(--color-quaternary);
+}
+
+:root.light .selection-count {
+    color: #009eb3;
+    /* Darker cyan for better readability in light mode */
 }
 
 .modal-actions button {
