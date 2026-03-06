@@ -5,6 +5,7 @@ import { BracketTree } from './components/knockout-stage/BracketTree';
 import { ThirdPlaceSelection } from './components/shared/ThirdPlaceSelection';
 import { OnboardingModal } from './components/shared/OnboardingModal';
 import { AwardsView } from './components/awards/AwardsView';
+import { SummaryView } from './components/summary/SummaryView';
 import { useApp } from './context/AppContext';
 import './styles/global.css';
 
@@ -15,6 +16,7 @@ const MainContent = () => {
       {state.activeTab === 'GROUP' && <GroupView />}
       {state.activeTab === 'BRACKET' && <BracketTree />}
       {state.activeTab === 'AWARDS' && <AwardsView />}
+      {state.activeTab === 'SUMMARY' && <SummaryView />}
       <ThirdPlaceSelection />
     </main>
   );
