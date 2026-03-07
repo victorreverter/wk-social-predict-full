@@ -46,8 +46,9 @@
 
 .summary-section h3 {
     font-size: 1.5rem;
-    color: var(--color-tertiary);
-    border-bottom: 1px solid var(--border-subtle);
+    color: var(--color-primary);
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+    border-bottom: 2px solid rgba(0, 243, 255, 0.2);
     padding-bottom: 0.5rem;
 }
 
@@ -195,24 +196,37 @@
 
 /* Light Theme Overrides */
 :root.light .champion-card {
-    background: rgba(255, 193, 7, 0.1);
+    background: rgba(255, 193, 7, 0.15);
     border-color: #ffc107;
 }
 
 :root.light .champion-card h2 {
-    color: #ffb300;
+    color: #d69e00;
     text-shadow: none;
+}
+
+:root.light .summary-section h3 {
+    color: var(--color-primary-dark);
+    text-shadow: none;
+    border-bottom: 2px solid var(--color-primary-dark);
 }
 
 :root.light .summary-team,
 :root.light .classified-team,
 :root.light .awards-summary-list li {
-    background: rgba(0, 0, 0, 0.02);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+:root.light .classified-team.advanced {
+    border-color: rgba(0, 150, 60, 0.4);
+    background: rgba(0, 200, 100, 0.15);
 }
 
 :root.light .team-pos {
-    background: rgba(0, 0, 0, 0.1);
-    color: var(--bg-main);
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffffff;
 }
 
 @media (max-width: 768px) {
