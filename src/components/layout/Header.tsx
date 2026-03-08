@@ -43,6 +43,12 @@ export const Header: React.FC = () => {
                     >
                         Awards
                     </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'TOURNAMENT_XI' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('TOURNAMENT_XI')}
+                    >
+                        Tournament XI
+                    </button>
                     {isComplete && (
                         <button
                             className={`tab-btn summary-btn ${activeTab === 'SUMMARY' ? 'active' : ''}`}

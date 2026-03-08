@@ -206,27 +206,38 @@
 }
 
 :root.light .summary-section h3 {
-    color: var(--color-primary-dark);
+    color: var(--color-primary);
     text-shadow: none;
-    border-bottom: 2px solid var(--color-primary-dark);
+    border-bottom: 2px solid rgba(213, 131, 255, 0.3);
 }
 
 :root.light .summary-team,
 :root.light .classified-team,
 :root.light .awards-summary-list li {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(213, 131, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(213, 131, 255, 0.05);
+    color: var(--text-primary);
 }
 
 :root.light .classified-team.advanced {
-    border-color: rgba(0, 150, 60, 0.4);
-    background: rgba(0, 200, 100, 0.15);
+    border-color: var(--color-primary);
+    background: rgba(213, 131, 255, 0.1);
 }
 
 :root.light .team-pos {
-    background: rgba(0, 0, 0, 0.75);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-quaternary));
     color: #ffffff;
+    box-shadow: 0 2px 4px rgba(213, 131, 255, 0.2);
+}
+
+:root.light .awards-summary-list li span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+:root.light .awards-summary-list li strong {
+    color: var(--color-primary);
 }
 
 @media (max-width: 768px) {

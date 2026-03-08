@@ -14,6 +14,7 @@ interface AppContextType {
     updateKnockoutMatchScore: (matchId: string, score: MatchScore) => void;
     updateKnockoutMatchEasyResult: (matchId: string, result: ResultType) => void;
     updateAward: (category: keyof AwardsState, value: string) => void;
+    updateTournamentXI: (positionId: string, playerName: string) => void;
     setSelectedThirds: (teamIds: string[]) => void;
     setThirdsModalDismissed: (dismissed: boolean) => void;
     setHelpModalOpen: (isOpen: boolean) => void;
@@ -54,6 +55,13 @@ const getFreshState = (): AppState => {
             mostYellowCards: '',
             mostRedCards: '',
             fifaFairPlay: ''
+        },
+        tournamentXI: {
+            GK: '',
+            LB: '', LCB: '', RCB: '', RB: '',
+            LDM: '', RDM: '',
+            LAM: '', CAM: '', RAM: '',
+            ST: ''
         }
     };
 };
@@ -198,6 +206,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }));
     };
 
+    const updateTournamentXI = (positionId: string, playerName: string) => {
+        setState(prev => ({
+            ...prev,
+            tournamentXI: {
+                ...prev.tournamentXI,
+                [positionId]: playerName
+            }
+        }));
+    };
+
     const resetPredictions = () => {
         setState(getFreshState());
     };
@@ -254,6 +272,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateKnockoutMatchScore,
         updateKnockoutMatchEasyResult,
         updateAward,
+        updateTournamentXI,
         setSelectedThirds,
         setThirdsModalDismissed,
         setHelpModalOpen,

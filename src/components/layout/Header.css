@@ -15,6 +15,7 @@
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .header-logo .wc-logo {
@@ -35,6 +36,8 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .mode-switcher,
@@ -152,7 +155,7 @@
     transform: translateY(-2px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .app-header {
         flex-direction: column;
         height: auto;
@@ -170,15 +173,16 @@
 
     .tab-switcher,
     .mode-switcher {
-        flex: 1 1 45%;
+        flex: 1 1 auto;
         justify-content: center;
+        flex-wrap: wrap;
     }
 
     .mode-btn,
     .tab-btn {
         padding: 0.4rem 0.5rem;
         font-size: 0.8rem;
-        flex: 1;
+        flex: 1 1 auto;
         text-align: center;
         white-space: nowrap;
     }
