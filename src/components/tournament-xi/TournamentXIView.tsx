@@ -31,18 +31,20 @@ export const TournamentXIView: React.FC = () => {
             </div>
 
             <div className={`soccer-field ${theme}`}>
-                <div className="field-lines">
-                    <div className="center-circle"></div>
-                    <div className="halfway-line"></div>
-                    <div className="penalty-area top">
-                        <div className="six-yard-box"></div>
-                        <div className="penalty-spot"></div>
-                        <div className="penalty-arc"></div>
-                    </div>
-                    <div className="penalty-area bottom">
-                        <div className="six-yard-box"></div>
-                        <div className="penalty-spot"></div>
-                        <div className="penalty-arc"></div>
+                <div className="soccer-field-bg">
+                    <div className="field-lines">
+                        <div className="center-circle"></div>
+                        <div className="halfway-line"></div>
+                        <div className="penalty-area top">
+                            <div className="six-yard-box"></div>
+                            <div className="penalty-spot"></div>
+                            <div className="penalty-arc"></div>
+                        </div>
+                        <div className="penalty-area bottom">
+                            <div className="six-yard-box"></div>
+                            <div className="penalty-spot"></div>
+                            <div className="penalty-arc"></div>
+                        </div>
                     </div>
                 </div>
 
