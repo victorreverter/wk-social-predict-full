@@ -45,9 +45,18 @@ const getMatchWinner = (match?: Match): string => {
     return '';
 };
 
+// Formation rows for the 1-4-2-3-1 layout
+const XI_ROWS = [
+    { row: 'st', positions: ['ST'] },
+    { row: 'am', positions: ['LAM', 'CAM', 'RAM'] },
+    { row: 'dm', positions: ['LDM', 'RDM'] },
+    { row: 'def', positions: ['LB', 'LCB', 'RCB', 'RB'] },
+    { row: 'gk', positions: ['GK'] },
+];
+
 export const SummaryView: React.FC = () => {
     const { state } = useApp();
-    const { groupMatches, knockoutMatches, awards } = state;
+    const { groupMatches, knockoutMatches, awards, tournamentXI } = state;
 
     // Progression
     const classified32 = getTeamsInStage('R32', 16, knockoutMatches);
@@ -136,6 +145,54 @@ export const SummaryView: React.FC = () => {
                                 </li>
                             ))}
                         </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Team of the Tournament ── */}
+            <div className="summary-section xi-summary-section glass-panel">
+                <h3>⚽ Your Team of the Tournament</h3>
+                <p className="section-desc">Your 1-4-2-3-1 selection for the best XI of the tournament.</p>
+
+                <div className="xi-summary-field-wrap">
+                    {/* SVG pitch (background + lines) */}
+                    <svg
+                        className="xi-summary-field-svg"
+                        viewBox="0 0 400 500"
+                        preserveAspectRatio="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <rect x="2" y="2" width="396" height="496" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="3" rx="8" />
+                        <line x1="2" y1="250" x2="398" y2="250" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <circle cx="200" cy="250" r="60" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <circle cx="200" cy="250" r="4" fill="rgba(255,255,255,0.8)" />
+                        <rect x="90" y="2" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <rect x="145" y="2" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <circle cx="200" cy="72" r="3" fill="rgba(255,255,255,0.8)" />
+                        <path d="M 155 92 A 55 55 0 0 0 245 92" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <rect x="90" y="408" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <rect x="145" y="463" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                        <circle cx="200" cy="428" r="3" fill="rgba(255,255,255,0.8)" />
+                        <path d="M 155 408 A 55 55 0 0 1 245 408" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+                    </svg>
+
+                    {/* Players layout */}
+                    <div className="xi-summary-players">
+                        {XI_ROWS.map(({ row, positions }) => (
+                            <div key={row} className={`xi-summary-row xi-row-${row}`}>
+                                {positions.map(pos => (
+                                    <div key={pos} className="xi-summary-slot">
+                                        <div className="xi-summary-shirt">
+                                            <div className="xi-shirt-icon" />
+                                            <span className="xi-pos-badge">{pos}</span>
+                                        </div>
+                                        <span className="xi-player-label">
+                                            {tournamentXI[pos] || '—'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
