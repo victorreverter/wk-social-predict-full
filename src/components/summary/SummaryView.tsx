@@ -8,6 +8,10 @@ const getTeamName = (teamId: string) => {
     return initialTeams.find(t => t.id === teamId)?.name || teamId;
 };
 
+const getTeam = (teamId: string) => {
+    return initialTeams.find(t => t.id === teamId);
+};
+
 const getGroupPosition = (teamId: string, groupMatches: Record<string, Match>) => {
     const team = initialTeams.find(t => t.id === teamId);
     if (!team) return '';
@@ -77,7 +81,12 @@ export const SummaryView: React.FC = () => {
                 <h3>👑 Tournament Champion</h3>
                 <div className="champion-card">
                     <span className="champion-icon">🏆</span>
-                    <h2>{getTeamName(champion)}</h2>
+                    <div className="champion-team-wrap">
+                        {getTeam(champion) && (
+                            <img src={`${import.meta.env.BASE_URL}flags/${getTeam(champion)?.code}.svg`} className="champion-flag" alt="" />
+                        )}
+                        <h2>{getTeamName(champion)}</h2>
+                    </div>
                 </div>
             </div>
 
@@ -89,28 +98,48 @@ export const SummaryView: React.FC = () => {
                         <div className="progression-tier">
                             <h4>Finalists</h4>
                             <div className="team-list list-2">
-                                {finals.map(id => <div key={id} className="summary-team">{getTeamName(id)}</div>)}
+                                {finals.map(id => (
+                                    <div key={id} className="summary-team">
+                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
+                                        <span>{getTeamName(id)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
                         <div className="progression-tier">
                             <h4>Semi-Finalists</h4>
                             <div className="team-list list-4">
-                                {semiFinals.map(id => <div key={id} className="summary-team">{getTeamName(id)}</div>)}
+                                {semiFinals.map(id => (
+                                    <div key={id} className="summary-team">
+                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
+                                        <span>{getTeamName(id)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
                         <div className="progression-tier">
                             <h4>Quarter-Finalists</h4>
                             <div className="team-list list-8">
-                                {quarterFinals.map(id => <div key={id} className="summary-team">{getTeamName(id)}</div>)}
+                                {quarterFinals.map(id => (
+                                    <div key={id} className="summary-team">
+                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
+                                        <span>{getTeamName(id)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
                         <div className="progression-tier">
                             <h4>Round of 16</h4>
                             <div className="team-list list-16">
-                                {roundOf16.map(id => <div key={id} className="summary-team">{getTeamName(id)}</div>)}
+                                {roundOf16.map(id => (
+                                    <div key={id} className="summary-team">
+                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
+                                        <span>{getTeamName(id)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -141,7 +170,10 @@ export const SummaryView: React.FC = () => {
                             {classified32.map(id => (
                                 <li key={id} className={`classified-team ${roundOf16.includes(id) ? 'advanced' : ''}`}>
                                     <span className="team-pos">{getGroupPosition(id, groupMatches)}</span>
-                                    <span className="team-name">{getTeamName(id)}</span>
+                                    <div className="classified-team-info">
+                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
+                                        <span className="team-name">{getTeamName(id)}</span>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
