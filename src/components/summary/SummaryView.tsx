@@ -49,6 +49,22 @@ const getMatchWinner = (match?: Match): string => {
     return '';
 };
 
+const getMatchLoser = (match?: Match): string => {
+    if (!match || match.status !== 'FINISHED') return '';
+    if (match.result === 'HOME_WIN') return match.awayTeamId;
+    if (match.result === 'AWAY_WIN') return match.homeTeamId;
+
+    if (match.score.homeGoals !== null && match.score.awayGoals !== null) {
+        if (match.score.homeGoals > match.score.awayGoals) return match.awayTeamId;
+        if (match.score.homeGoals < match.score.awayGoals) return match.homeTeamId;
+        if (match.score.homePenalties !== null && match.score.homePenalties !== undefined && match.score.awayPenalties !== null && match.score.awayPenalties !== undefined) {
+            if (match.score.homePenalties > match.score.awayPenalties) return match.awayTeamId;
+            if (match.score.homePenalties < match.score.awayPenalties) return match.homeTeamId;
+        }
+    }
+    return '';
+};
+
 // Formation rows for the 1-4-2-3-1 layout
 const XI_ROWS = [
     { row: 'st', positions: ['ST'] },
@@ -69,6 +85,8 @@ export const SummaryView: React.FC = () => {
     const semiFinals = getTeamsInStage('SF', 2, knockoutMatches);
     const finals = getTeamsInStage('F', 1, knockoutMatches);
     const champion = getMatchWinner(knockoutMatches['k_F_1']);
+    const secondPlaceWinner = getMatchLoser(knockoutMatches['k_F_1']);
+    const thirdPlaceWinner = getMatchWinner(knockoutMatches['k_3RD_1']);
 
     return (
         <div className="summary-view fade-in">
@@ -88,6 +106,30 @@ export const SummaryView: React.FC = () => {
                         <h2>{getTeamName(champion)}</h2>
                     </div>
                 </div>
+
+                {secondPlaceWinner && (
+                    <div className="silver-card">
+                        <span className="silver-icon">🥈</span>
+                        <div className="silver-team-wrap">
+                            {getTeam(secondPlaceWinner) && (
+                                <img src={`${import.meta.env.BASE_URL}flags/${getTeam(secondPlaceWinner)?.code}.svg`} className="silver-flag" alt="" />
+                            )}
+                            <h3>{getTeamName(secondPlaceWinner)}</h3>
+                        </div>
+                    </div>
+                )}
+
+                {thirdPlaceWinner && (
+                    <div className="bronze-card">
+                        <span className="bronze-icon">🥉</span>
+                        <div className="bronze-team-wrap">
+                            {getTeam(thirdPlaceWinner) && (
+                                <img src={`${import.meta.env.BASE_URL}flags/${getTeam(thirdPlaceWinner)?.code}.svg`} className="bronze-flag" alt="" />
+                            )}
+                            <h3>{getTeamName(thirdPlaceWinner)}</h3>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="summary-grid">

@@ -100,6 +100,95 @@
     margin: 0;
 }
 
+/* Silver Card (2nd Place) */
+.silver-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+    padding: 2rem 2.5rem;
+    background: rgba(192, 192, 192, 0.1);
+    border: 2px solid rgba(192, 192, 192, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(192, 192, 192, 0.15);
+    margin-top: 1.5rem;
+}
+
+.silver-card .silver-icon {
+    font-size: 3.2rem;
+}
+
+.silver-team-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+}
+
+.silver-flag {
+    width: 56px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.silver-team-wrap h3 {
+    font-size: 2.8rem;
+    color: #e0e0e0;
+    /* Sleek silver */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(224, 224, 224, 0.4);
+    margin: 0;
+    border-bottom: none;
+}
+
+/* Bronze Card (3rd Place) */
+.bronze-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    background: rgba(205, 127, 50, 0.1);
+    border: 2px solid rgba(205, 127, 50, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(205, 127, 50, 0.1);
+    margin-top: 1rem;
+}
+
+.bronze-card .bronze-icon {
+    font-size: 2.5rem;
+}
+
+.bronze-team-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.bronze-flag {
+    width: 48px;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.bronze-team-wrap h3 {
+    font-size: 2.2rem;
+    color: #cd7f32;
+    /* Bronze color */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(205, 127, 50, 0.5);
+    margin: 0;
+    border-bottom: none;
+    /* override summary-section h3 */
+}
+
 /* Knockout Progression */
 .progression-tier {
     margin-bottom: 1rem;
@@ -236,7 +325,27 @@
     text-shadow: none;
 }
 
-:root.light .summary-section h3 {
+:root.light .silver-card {
+    background: rgba(160, 160, 160, 0.15);
+    border-color: #a0a0a0;
+}
+
+:root.light .silver-card h3 {
+    color: #606060;
+    text-shadow: none;
+}
+
+:root.light .bronze-card {
+    background: rgba(205, 127, 50, 0.15);
+    border-color: #cd7f32;
+}
+
+:root.light .bronze-card h3 {
+    color: #a05e20;
+    text-shadow: none;
+}
+
+:root.light .summary-section>h3 {
     color: var(--color-primary);
     text-shadow: none;
     border-bottom: 2px solid rgba(213, 131, 255, 0.3);
@@ -303,6 +412,40 @@
 
     .champion-card .champion-icon {
         font-size: 2.5rem;
+    }
+
+    .silver-card {
+        padding: 1.25rem;
+        gap: 0.85rem;
+    }
+
+    .silver-team-wrap h3 {
+        font-size: 1.75rem;
+    }
+
+    .silver-flag {
+        width: 42px;
+    }
+
+    .silver-card .silver-icon {
+        font-size: 2.1rem;
+    }
+
+    .bronze-card {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .bronze-team-wrap h3 {
+        font-size: 1.5rem;
+    }
+
+    .bronze-flag {
+        width: 36px;
+    }
+
+    .bronze-card .bronze-icon {
+        font-size: 1.8rem;
     }
 
     .team-list.list-16,
