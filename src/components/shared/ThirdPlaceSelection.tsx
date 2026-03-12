@@ -60,9 +60,27 @@ export const ThirdPlaceSelection: React.FC = () => {
         }
     };
 
+    const handleClose = () => {
+        setThirdsModalDismissed(true);
+        setActiveTab('GROUP');
+    };
+
+    const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) {
+            handleClose();
+        }
+    };
+
     return (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={handleOverlayClick}>
             <div className="modal-content glass-panel">
+                <button
+                    className="modal-close-btn"
+                    onClick={handleClose}
+                    aria-label="Close"
+                >
+                    ×
+                </button>
                 <h2 className="text-gradient">Select Qualifying 3rd-Place Teams</h2>
                 <p>The Group Stage is complete! Choose exactly 8 third-place teams to advance to the Round of 32.</p>
                 <div className="thirds-grid">
