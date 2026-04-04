@@ -1,4 +1,5 @@
 import type { Team, Match } from '../types';
+import { CHRONOLOGICAL_MATCH_PAIRINGS } from './pairings';
 
 export const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
@@ -53,42 +54,30 @@ export const initialTeams: Team[] = [
     { id: 'L4', name: 'Panama', code: 'PAN', group: 'L' }
 ];
 
-// Generates the 6 matches per group (round-robin for 4 teams)
+// Generates the 72 group matches chronologically
 export const generateInitialGroupMatches = (): Record<string, Match> => {
     const matches: Record<string, Match> = {};
-    let matchCounter = 1;
 
-    groups.forEach((group) => {
-        const groupTeams = initialTeams.filter(t => t.group === group);
-
-        // Matchups for a 4-team group (1v2, 3v4, 1v3, 2v4, 1v4, 2v3)
-        const matchups = [
-            [0, 1], [2, 3], // Matchday 1
-            [0, 2], [3, 1], // Matchday 2
-            [3, 0], [1, 2], // Matchday 3
-        ];
-
-        matchups.forEach(([homeIdx, awayIdx]) => {
-            const matchId = `m${matchCounter}`;
-            const scheduleInfo = GROUP_MATCH_SCHEDULE_DATA[matchCounter];
-            
-            matches[matchId] = {
-                id: matchId,
-                homeTeamId: groupTeams[homeIdx].id,
-                awayTeamId: groupTeams[awayIdx].id,
-                date: scheduleInfo?.date || 'TBD',
-                localTime: scheduleInfo?.localTime || 'TBD',
-                venue: scheduleInfo?.venue || 'TBD',
-                stage: 'GROUP',
-                group: group,
-                status: 'NOT_PLAYED',
-                score: {
-                    homeGoals: null,
-                    awayGoals: null,
-                }
-            };
-            matchCounter++;
-        });
+    CHRONOLOGICAL_MATCH_PAIRINGS.forEach((pairing, index) => {
+        const matchNum = index + 1;
+        const matchId = `m${matchNum}`;
+        const scheduleInfo = GROUP_MATCH_SCHEDULE_DATA[matchNum];
+        
+        matches[matchId] = {
+            id: matchId,
+            homeTeamId: pairing.homeId,
+            awayTeamId: pairing.awayId,
+            date: scheduleInfo?.date || 'TBD',
+            localTime: scheduleInfo?.localTime || 'TBD',
+            venue: scheduleInfo?.venue || 'TBD',
+            stage: 'GROUP',
+            group: pairing.group,
+            status: 'NOT_PLAYED',
+            score: {
+                homeGoals: null,
+                awayGoals: null,
+            }
+        };
     });
 
     return matches;

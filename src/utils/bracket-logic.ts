@@ -84,7 +84,7 @@ export const THIRD_PLACE_FIXTURE: RoundFixture = {
 };
 
 export const FINAL_FIXTURE: RoundFixture = {
-  matchNum: 104, date: '2026-07-19T20:00:00Z', venue: 'MetLife Stadium, East Rutherford',    localTime: 'TBD', homeFrom: 101, awayFrom: 102,
+  matchNum: 104, date: '2026-07-19T20:00:00Z', venue: 'MetLife Stadium, East Rutherford',    localTime: '16:00 EDT', homeFrom: 101, awayFrom: 102,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
