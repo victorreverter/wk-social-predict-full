@@ -17,29 +17,30 @@ import { calculateGroupStandings } from './standings';
  */
 interface R32Fixture {
   matchNum: number;  // Official FIFA match number (73–88)
-  date: string;      // ISO date
+  date: string;      // ISO UTC date
   venue: string;
+  localTime: string; // e.g. "12:00 PDT"
   homeSlot: string;
   awaySlot: string;
 }
 
 export const R32_FIXTURES: R32Fixture[] = [
-  { matchNum: 73, date: '2026-06-28', venue: 'SoFi Stadium, Inglewood',            homeSlot: 'RU_A', awaySlot: 'RU_B' },
-  { matchNum: 74, date: '2026-06-29', venue: 'Gillette Stadium, Foxborough',        homeSlot: 'W_E',  awaySlot: 'T3'   },
-  { matchNum: 75, date: '2026-06-29', venue: 'Estadio BBVA, Guadalupe',             homeSlot: 'W_F',  awaySlot: 'RU_C' },
-  { matchNum: 76, date: '2026-06-29', venue: 'NRG Stadium, Houston',                homeSlot: 'W_C',  awaySlot: 'RU_F' },
-  { matchNum: 77, date: '2026-06-30', venue: 'MetLife Stadium, East Rutherford',    homeSlot: 'W_I',  awaySlot: 'T3'   },
-  { matchNum: 78, date: '2026-06-30', venue: 'AT&T Stadium, Arlington',             homeSlot: 'RU_E', awaySlot: 'RU_I' },
-  { matchNum: 79, date: '2026-06-30', venue: 'Estadio Azteca, Mexico City',         homeSlot: 'W_A',  awaySlot: 'T3'   },
-  { matchNum: 80, date: '2026-07-01', venue: 'Mercedes-Benz Stadium, Atlanta',      homeSlot: 'W_L',  awaySlot: 'T3'   },
-  { matchNum: 81, date: '2026-07-01', venue: "Levi's Stadium, Santa Clara",         homeSlot: 'W_D',  awaySlot: 'T3'   },
-  { matchNum: 82, date: '2026-07-01', venue: 'Lumen Field, Seattle',                homeSlot: 'W_G',  awaySlot: 'T3'   },
-  { matchNum: 83, date: '2026-07-02', venue: 'BMO Field, Toronto',                  homeSlot: 'RU_K', awaySlot: 'RU_L' },
-  { matchNum: 84, date: '2026-07-02', venue: 'SoFi Stadium, Inglewood',             homeSlot: 'W_H',  awaySlot: 'RU_J' },
-  { matchNum: 85, date: '2026-07-02', venue: 'BC Place, Vancouver',                 homeSlot: 'W_B',  awaySlot: 'T3'   },
-  { matchNum: 86, date: '2026-07-03', venue: 'Hard Rock Stadium, Miami Gardens',    homeSlot: 'W_J',  awaySlot: 'RU_H' },
-  { matchNum: 87, date: '2026-07-03', venue: 'Arrowhead Stadium, Kansas City',      homeSlot: 'W_K',  awaySlot: 'T3'   },
-  { matchNum: 88, date: '2026-07-03', venue: 'AT&T Stadium, Arlington',             homeSlot: 'RU_D', awaySlot: 'RU_G' },
+  { matchNum: 73, date: '2026-06-28T19:00:00Z', venue: 'SoFi Stadium, Inglewood',            localTime: '12:00 PDT', homeSlot: 'RU_A', awaySlot: 'RU_B' },
+  { matchNum: 74, date: '2026-06-29T20:30:00Z', venue: 'Gillette Stadium, Foxborough',        localTime: '16:30 EDT', homeSlot: 'W_E',  awaySlot: 'T3'   },
+  { matchNum: 75, date: '2026-06-30T01:00:00Z', venue: 'Estadio BBVA, Guadalupe',             localTime: '19:00 CST', homeSlot: 'W_F',  awaySlot: 'RU_C' },
+  { matchNum: 76, date: '2026-06-29T17:00:00Z', venue: 'NRG Stadium, Houston',                localTime: '12:00 CDT', homeSlot: 'W_C',  awaySlot: 'RU_F' },
+  { matchNum: 77, date: '2026-06-30T21:00:00Z', venue: 'MetLife Stadium, East Rutherford',    localTime: '17:00 EDT', homeSlot: 'W_I',  awaySlot: 'T3'   },
+  { matchNum: 78, date: '2026-06-30T17:00:00Z', venue: 'AT&T Stadium, Arlington',             localTime: '12:00 CDT', homeSlot: 'RU_E', awaySlot: 'RU_I' },
+  { matchNum: 79, date: '2026-07-01T01:00:00Z', venue: 'Estadio Azteca, Mexico City',         localTime: '19:00 CST', homeSlot: 'W_A',  awaySlot: 'T3'   },
+  { matchNum: 80, date: '2026-07-01T16:00:00Z', venue: 'Mercedes-Benz Stadium, Atlanta',      localTime: '12:00 EDT', homeSlot: 'W_L',  awaySlot: 'T3'   },
+  { matchNum: 81, date: '2026-07-02T00:00:00Z', venue: "Levi's Stadium, Santa Clara",         localTime: '17:00 PDT', homeSlot: 'W_D',  awaySlot: 'T3'   },
+  { matchNum: 82, date: '2026-07-01T20:00:00Z', venue: 'Lumen Field, Seattle',                localTime: '13:00 PDT', homeSlot: 'W_G',  awaySlot: 'T3'   },
+  { matchNum: 83, date: '2026-07-02T23:00:00Z', venue: 'BMO Field, Toronto',                  localTime: '19:00 EDT', homeSlot: 'RU_K', awaySlot: 'RU_L' },
+  { matchNum: 84, date: '2026-07-02T19:00:00Z', venue: 'SoFi Stadium, Inglewood',             localTime: '12:00 PDT', homeSlot: 'W_H',  awaySlot: 'RU_J' },
+  { matchNum: 85, date: '2026-07-03T03:00:00Z', venue: 'BC Place, Vancouver',                 localTime: '20:00 PDT', homeSlot: 'W_B',  awaySlot: 'T3'   },
+  { matchNum: 86, date: '2026-07-03T22:00:00Z', venue: 'Hard Rock Stadium, Miami Gardens',    localTime: '18:00 EDT', homeSlot: 'W_J',  awaySlot: 'RU_H' },
+  { matchNum: 87, date: '2026-07-04T01:30:00Z', venue: 'Arrowhead Stadium, Kansas City',      localTime: '20:30 CDT', homeSlot: 'W_K',  awaySlot: 'T3'   },
+  { matchNum: 88, date: '2026-07-03T18:00:00Z', venue: 'AT&T Stadium, Arlington',             localTime: '13:00 CDT', homeSlot: 'RU_D', awaySlot: 'RU_G' },
 ];
 
 /**
@@ -50,39 +51,40 @@ interface RoundFixture {
   matchNum: number;
   date: string;
   venue: string;
+  localTime: string;
   homeFrom: number; // FIFA match number of the preceding match that provides the home team
   awayFrom: number; // FIFA match number of the preceding match that provides the away team
 }
 
 export const R16_FIXTURES: RoundFixture[] = [
-  { matchNum: 89, date: '2026-07-04', venue: 'Lincoln Financial Field, Philadelphia', homeFrom: 74, awayFrom: 77 },
-  { matchNum: 90, date: '2026-07-04', venue: 'NRG Stadium, Houston',                  homeFrom: 73, awayFrom: 75 },
-  { matchNum: 91, date: '2026-07-05', venue: 'MetLife Stadium, East Rutherford',       homeFrom: 76, awayFrom: 78 },
-  { matchNum: 92, date: '2026-07-05', venue: 'Estadio Azteca, Mexico City',            homeFrom: 79, awayFrom: 80 },
-  { matchNum: 93, date: '2026-07-06', venue: 'AT&T Stadium, Arlington',               homeFrom: 83, awayFrom: 84 },
-  { matchNum: 94, date: '2026-07-06', venue: 'Lumen Field, Seattle',                  homeFrom: 81, awayFrom: 82 },
-  { matchNum: 95, date: '2026-07-07', venue: 'Mercedes-Benz Stadium, Atlanta',        homeFrom: 86, awayFrom: 88 },
-  { matchNum: 96, date: '2026-07-07', venue: 'BC Place, Vancouver',                   homeFrom: 85, awayFrom: 87 },
+  { matchNum: 89, date: '2026-07-04T21:00:00Z', venue: 'Lincoln Financial Field, Philadelphia', localTime: '17:00 EDT', homeFrom: 74, awayFrom: 77 },
+  { matchNum: 90, date: '2026-07-04T17:00:00Z', venue: 'NRG Stadium, Houston',                  localTime: '12:00 CDT', homeFrom: 73, awayFrom: 75 },
+  { matchNum: 91, date: '2026-07-05T20:00:00Z', venue: 'MetLife Stadium, East Rutherford',       localTime: '16:00 EDT', homeFrom: 76, awayFrom: 78 },
+  { matchNum: 92, date: '2026-07-06T00:00:00Z', venue: 'Estadio Azteca, Mexico City',            localTime: '18:00 CST', homeFrom: 79, awayFrom: 80 },
+  { matchNum: 93, date: '2026-07-06T19:00:00Z', venue: 'AT&T Stadium, Arlington',               localTime: '14:00 CDT', homeFrom: 83, awayFrom: 84 },
+  { matchNum: 94, date: '2026-07-07T00:00:00Z', venue: 'Lumen Field, Seattle',                  localTime: '17:00 PDT', homeFrom: 81, awayFrom: 82 },
+  { matchNum: 95, date: '2026-07-07T16:00:00Z', venue: 'Mercedes-Benz Stadium, Atlanta',        localTime: '12:00 EDT', homeFrom: 86, awayFrom: 88 },
+  { matchNum: 96, date: '2026-07-07T20:00:00Z', venue: 'BC Place, Vancouver',                   localTime: '13:00 PDT', homeFrom: 85, awayFrom: 87 },
 ];
 
 export const QF_FIXTURES: RoundFixture[] = [
-  { matchNum: 97,  date: '2026-07-09', venue: 'Gillette Stadium, Foxborough',       homeFrom: 89, awayFrom: 90 },
-  { matchNum: 98,  date: '2026-07-10', venue: 'SoFi Stadium, Inglewood',            homeFrom: 93, awayFrom: 94 },
-  { matchNum: 99,  date: '2026-07-11', venue: 'Hard Rock Stadium, Miami Gardens',   homeFrom: 91, awayFrom: 92 },
-  { matchNum: 100, date: '2026-07-11', venue: 'Arrowhead Stadium, Kansas City',     homeFrom: 95, awayFrom: 96 },
+  { matchNum: 97,  date: '2026-07-09T20:00:00Z', venue: 'Gillette Stadium, Foxborough',       localTime: '16:00 EDT', homeFrom: 89, awayFrom: 90 },
+  { matchNum: 98,  date: '2026-07-10T19:00:00Z', venue: 'SoFi Stadium, Inglewood',            localTime: '12:00 PDT', homeFrom: 93, awayFrom: 94 },
+  { matchNum: 99,  date: '2026-07-11T21:00:00Z', venue: 'Hard Rock Stadium, Miami Gardens',   localTime: '17:00 EDT', homeFrom: 91, awayFrom: 92 },
+  { matchNum: 100, date: '2026-07-12T01:00:00Z', venue: 'Arrowhead Stadium, Kansas City',     localTime: '20:00 CDT', homeFrom: 95, awayFrom: 96 },
 ];
 
 export const SF_FIXTURES: RoundFixture[] = [
-  { matchNum: 101, date: '2026-07-14', venue: 'AT&T Stadium, Arlington',            homeFrom: 97,  awayFrom: 98  },
-  { matchNum: 102, date: '2026-07-15', venue: 'Mercedes-Benz Stadium, Atlanta',     homeFrom: 99,  awayFrom: 100 },
+  { matchNum: 101, date: '2026-07-14T19:00:00Z', venue: 'AT&T Stadium, Arlington',            localTime: '14:00 CDT', homeFrom: 97,  awayFrom: 98  },
+  { matchNum: 102, date: '2026-07-15T19:00:00Z', venue: 'Mercedes-Benz Stadium, Atlanta',     localTime: '15:00 EDT', homeFrom: 99,  awayFrom: 100 },
 ];
 
 export const THIRD_PLACE_FIXTURE: RoundFixture = {
-  matchNum: 103, date: '2026-07-18', venue: 'Hard Rock Stadium, Miami Gardens',    homeFrom: 101, awayFrom: 102,
+  matchNum: 103, date: '2026-07-18T21:00:00Z', venue: 'Hard Rock Stadium, Miami Gardens',    localTime: '17:00 EDT', homeFrom: 101, awayFrom: 102,
 };
 
 export const FINAL_FIXTURE: RoundFixture = {
-  matchNum: 104, date: '2026-07-19', venue: 'MetLife Stadium, East Rutherford',    homeFrom: 101, awayFrom: 102,
+  matchNum: 104, date: '2026-07-19T20:00:00Z', venue: 'MetLife Stadium, East Rutherford',    localTime: 'TBD', homeFrom: 101, awayFrom: 102,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,23 +132,24 @@ export const determineQualifiedTeams = (
 export const generateInitialKnockoutMatches = (): Record<string, Match> => {
   const matches: Record<string, Match> = {};
 
-  const makeEmpty = (matchNum: number, stage: string, date: string, venue: string): Match => ({
+  const makeEmpty = (matchNum: number, stage: string, date: string, venue: string, localTime: string): Match => ({
     id: matchIdFromNum(matchNum),
     homeTeamId: 'TBD',
     awayTeamId: 'TBD',
-    date: `${date}T12:00:00Z`,
+    date,
     stage,
     venue,
+    localTime,
     status: 'NOT_PLAYED',
     score: { homeGoals: null, awayGoals: null, homePenalties: null, awayPenalties: null },
   });
 
-  R32_FIXTURES.forEach(f => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'R32', f.date, f.venue); });
-  R16_FIXTURES.forEach(f => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'R16', f.date, f.venue); });
-  QF_FIXTURES.forEach(f  => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'QF',  f.date, f.venue); });
-  SF_FIXTURES.forEach(f  => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'SF',  f.date, f.venue); });
-  matches[matchIdFromNum(THIRD_PLACE_FIXTURE.matchNum)] = makeEmpty(THIRD_PLACE_FIXTURE.matchNum, '3RD', THIRD_PLACE_FIXTURE.date, THIRD_PLACE_FIXTURE.venue);
-  matches[matchIdFromNum(FINAL_FIXTURE.matchNum)]       = makeEmpty(FINAL_FIXTURE.matchNum,       'F',   FINAL_FIXTURE.date,       FINAL_FIXTURE.venue);
+  R32_FIXTURES.forEach(f => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'R32', f.date, f.venue, f.localTime); });
+  R16_FIXTURES.forEach(f => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'R16', f.date, f.venue, f.localTime); });
+  QF_FIXTURES.forEach(f  => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'QF',  f.date, f.venue, f.localTime); });
+  SF_FIXTURES.forEach(f  => { matches[matchIdFromNum(f.matchNum)] = makeEmpty(f.matchNum, 'SF',  f.date, f.venue, f.localTime); });
+  matches[matchIdFromNum(THIRD_PLACE_FIXTURE.matchNum)] = makeEmpty(THIRD_PLACE_FIXTURE.matchNum, '3RD', THIRD_PLACE_FIXTURE.date, THIRD_PLACE_FIXTURE.venue, THIRD_PLACE_FIXTURE.localTime);
+  matches[matchIdFromNum(FINAL_FIXTURE.matchNum)]       = makeEmpty(FINAL_FIXTURE.matchNum,       'F',   FINAL_FIXTURE.date,       FINAL_FIXTURE.venue, FINAL_FIXTURE.localTime);
 
   return matches;
 };

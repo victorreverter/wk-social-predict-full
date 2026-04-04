@@ -80,9 +80,26 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
         );
     };
 
+    const formattedUserDate = new Date(match.date).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
     return (
         <div className="bracket-match-node glass-panel">
-            <div className="match-id-badge">{match.id.startsWith('m') ? `M${match.id.slice(1)}` : match.id.replace('k_', '').toUpperCase()}</div>
+            <div className="match-header">
+                <div className="match-id-badge">{match.id.startsWith('m') ? `M${match.id.slice(1)}` : match.id.replace('k_', '').toUpperCase()}</div>
+                {match.date && !match.date.includes('TBD') && (
+                    <div className="match-date-info" title={match.venue ? `Venue: ${match.venue}` : undefined}>
+                        <span className="user-time" title="Your Local Time">({formattedUserDate} local)</span>
+                        {match.localTime && match.localTime !== 'TBD' && (
+                            <span className="venue-time" title="Venue Local Time"> • {match.localTime} match</span>
+                        )}
+                    </div>
+                )}
+            </div>
 
             <div className="bracket-teams-container">
                 {renderTeam(homeTeam, match.score.homePenalties, true)}

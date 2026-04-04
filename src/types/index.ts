@@ -29,6 +29,7 @@ export interface Match {
   stage: string; // 'GROUP', 'R32', 'R16', 'QF', 'SF', '3RD', 'F'
   group?: string; // e.g., 'A'
   venue?: string; // Official stadium name (knockout matches only)
+  localTime?: string; // Venue local time string e.g. "12:00 PDT"
   score: MatchScore;
   status: MatchStatus;
   result?: ResultType; // Derived in Easy mode, calculated in Hard
