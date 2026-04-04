@@ -69,12 +69,16 @@ export const generateInitialGroupMatches = (): Record<string, Match> => {
         ];
 
         matchups.forEach(([homeIdx, awayIdx]) => {
-            const matchId = `m${matchCounter++}`;
+            const matchId = `m${matchCounter}`;
+            const scheduleInfo = GROUP_MATCH_SCHEDULE_DATA[matchCounter];
+            
             matches[matchId] = {
                 id: matchId,
                 homeTeamId: groupTeams[homeIdx].id,
                 awayTeamId: groupTeams[awayIdx].id,
-                date: '2026-06-11T12:00:00Z', // Placeholder date
+                date: scheduleInfo?.date || 'TBD',
+                localTime: scheduleInfo?.localTime || 'TBD',
+                venue: scheduleInfo?.venue || 'TBD',
                 stage: 'GROUP',
                 group: group,
                 status: 'NOT_PLAYED',
@@ -83,8 +87,83 @@ export const generateInitialGroupMatches = (): Record<string, Match> => {
                     awayGoals: null,
                 }
             };
+            matchCounter++;
         });
     });
 
     return matches;
+};
+export const GROUP_MATCH_SCHEDULE_DATA: Record<number, { date: string; localTime: string; venue: string }> = {
+  1: { date: "2026-06-11T19:00:00.000Z", localTime: "1:00 p.m.", venue: "Estadio Azteca, Mexico City" },
+  2: { date: "2026-06-12T02:00:00.000Z", localTime: "8:00 p.m.", venue: "Estadio Akron, Zapopan" },
+  3: { date: "2026-06-12T19:00:00.000Z", localTime: "3:00 p.m.", venue: "BMO Field, Toronto" },
+  4: { date: "2026-06-13T01:00:00.000Z", localTime: "6:00 p.m.", venue: "SoFi Stadium, Inglewood" },
+  5: { date: "2026-06-14T01:00:00.000Z", localTime: "9:00 p.m.", venue: "Gillette Stadium, Foxborough" },
+  6: { date: "2026-06-14T04:00:00.000Z", localTime: "9:00 p.m.", venue: "BC Place, Vancouver" },
+  7: { date: "2026-06-13T22:00:00.000Z", localTime: "6:00 p.m.", venue: "MetLife Stadium, East Rutherford" },
+  8: { date: "2026-06-13T19:00:00.000Z", localTime: "12:00 p.m.", venue: "Levi's Stadium, Santa Clara" },
+  9: { date: "2026-06-14T23:00:00.000Z", localTime: "7:00 p.m.", venue: "Lincoln Financial Field, Philadelphia" },
+  10: { date: "2026-06-14T17:00:00.000Z", localTime: "12:00 p.m.", venue: "NRG Stadium, Houston" },
+  11: { date: "2026-06-14T20:00:00.000Z", localTime: "3:00 p.m.", venue: "AT&T Stadium, Arlington" },
+  12: { date: "2026-06-15T02:00:00.000Z", localTime: "8:00 p.m.", venue: "Estadio BBVA, Guadalupe" },
+  13: { date: "2026-06-15T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Hard Rock Stadium, Miami Gardens" },
+  14: { date: "2026-06-15T16:00:00.000Z", localTime: "12:00 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
+  15: { date: "2026-06-16T01:00:00.000Z", localTime: "6:00 p.m.", venue: "SoFi Stadium, Inglewood" },
+  16: { date: "2026-06-15T19:00:00.000Z", localTime: "12:00 p.m.", venue: "Lumen Field, Seattle" },
+  17: { date: "2026-06-16T19:00:00.000Z", localTime: "3:00 p.m.", venue: "MetLife Stadium, East Rutherford" },
+  18: { date: "2026-06-16T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Gillette Stadium, Foxborough" },
+  19: { date: "2026-06-17T01:00:00.000Z", localTime: "8:00 p.m.", venue: "Arrowhead Stadium, Kansas City" },
+  20: { date: "2026-06-17T04:00:00.000Z", localTime: "9:00 p.m.", venue: "Levi's Stadium, Santa Clara" },
+  21: { date: "2026-06-17T23:00:00.000Z", localTime: "7:00 p.m.", venue: "BMO Field, Toronto" },
+  22: { date: "2026-06-17T20:00:00.000Z", localTime: "3:00 p.m.", venue: "AT&T Stadium, Arlington" },
+  23: { date: "2026-06-17T17:00:00.000Z", localTime: "12:00 p.m.", venue: "NRG Stadium, Houston" },
+  24: { date: "2026-06-18T02:00:00.000Z", localTime: "8:00 p.m.", venue: "Estadio Azteca, Mexico City" },
+  25: { date: "2026-06-18T16:00:00.000Z", localTime: "12:00 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
+  26: { date: "2026-06-18T19:00:00.000Z", localTime: "12:00 p.m.", venue: "SoFi Stadium, Inglewood" },
+  27: { date: "2026-06-18T22:00:00.000Z", localTime: "3:00 p.m.", venue: "BC Place, Vancouver" },
+  28: { date: "2026-06-19T01:00:00.000Z", localTime: "7:00 p.m.", venue: "Estadio Akron, Zapopan" },
+  29: { date: "2026-06-20T00:30:00.000Z", localTime: "8:30 p.m.", venue: "Lincoln Financial Field, Philadelphia" },
+  30: { date: "2026-06-19T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Gillette Stadium, Foxborough" },
+  31: { date: "2026-06-20T03:00:00.000Z", localTime: "8:00 p.m.", venue: "Levi's Stadium, Santa Clara" },
+  32: { date: "2026-06-19T19:00:00.000Z", localTime: "12:00 p.m.", venue: "Lumen Field, Seattle" },
+  33: { date: "2026-06-20T20:00:00.000Z", localTime: "4:00 p.m.", venue: "BMO Field, Toronto" },
+  34: { date: "2026-06-21T00:00:00.000Z", localTime: "7:00 p.m.", venue: "Arrowhead Stadium, Kansas City" },
+  35: { date: "2026-06-20T17:00:00.000Z", localTime: "12:00 p.m.", venue: "NRG Stadium, Houston" },
+  36: { date: "2026-06-21T04:00:00.000Z", localTime: "10:00 p.m.", venue: "Estadio BBVA, Guadalupe" },
+  37: { date: "2026-06-21T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Hard Rock Stadium, Miami Gardens" },
+  38: { date: "2026-06-21T16:00:00.000Z", localTime: "12:00 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
+  39: { date: "2026-06-21T19:00:00.000Z", localTime: "12:00 p.m.", venue: "SoFi Stadium, Inglewood" },
+  40: { date: "2026-06-22T01:00:00.000Z", localTime: "6:00 p.m.", venue: "BC Place, Vancouver" },
+  41: { date: "2026-06-23T00:00:00.000Z", localTime: "8:00 p.m.", venue: "MetLife Stadium, East Rutherford" },
+  42: { date: "2026-06-22T21:00:00.000Z", localTime: "5:00 p.m.", venue: "Lincoln Financial Field, Philadelphia" },
+  43: { date: "2026-06-22T17:00:00.000Z", localTime: "12:00 p.m.", venue: "AT&T Stadium, Arlington" },
+  44: { date: "2026-06-23T03:00:00.000Z", localTime: "8:00 p.m.", venue: "Levi's Stadium, Santa Clara" },
+  45: { date: "2026-06-23T20:00:00.000Z", localTime: "4:00 p.m.", venue: "Gillette Stadium, Foxborough" },
+  46: { date: "2026-06-23T23:00:00.000Z", localTime: "7:00 p.m.", venue: "BMO Field, Toronto" },
+  47: { date: "2026-06-23T17:00:00.000Z", localTime: "12:00 p.m.", venue: "NRG Stadium, Houston" },
+  48: { date: "2026-06-24T02:00:00.000Z", localTime: "8:00 p.m.", venue: "Estadio Akron, Zapopan" },
+  49: { date: "2026-06-24T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Hard Rock Stadium, Miami Gardens" },
+  50: { date: "2026-06-24T22:00:00.000Z", localTime: "6:00 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
+  51: { date: "2026-06-24T19:00:00.000Z", localTime: "12:00 p.m.", venue: "BC Place, Vancouver" },
+  52: { date: "2026-06-24T19:00:00.000Z", localTime: "12:00 p.m.", venue: "Lumen Field, Seattle" },
+  53: { date: "2026-06-25T01:00:00.000Z", localTime: "7:00 p.m.", venue: "Estadio Azteca, Mexico City" },
+  54: { date: "2026-06-25T01:00:00.000Z", localTime: "7:00 p.m.", venue: "Estadio BBVA, Guadalupe" },
+  55: { date: "2026-06-25T20:00:00.000Z", localTime: "4:00 p.m.", venue: "Lincoln Financial Field, Philadelphia" },
+  56: { date: "2026-06-25T20:00:00.000Z", localTime: "4:00 p.m.", venue: "MetLife Stadium, East Rutherford" },
+  57: { date: "2026-06-25T23:00:00.000Z", localTime: "6:00 p.m.", venue: "AT&T Stadium, Arlington" },
+  58: { date: "2026-06-25T23:00:00.000Z", localTime: "6:00 p.m.", venue: "Arrowhead Stadium, Kansas City" },
+  59: { date: "2026-06-26T02:00:00.000Z", localTime: "7:00 p.m.", venue: "SoFi Stadium, Inglewood" },
+  60: { date: "2026-06-26T02:00:00.000Z", localTime: "7:00 p.m.", venue: "Levi's Stadium, Santa Clara" },
+  61: { date: "2026-06-26T19:00:00.000Z", localTime: "3:00 p.m.", venue: "Gillette Stadium, Foxborough" },
+  62: { date: "2026-06-26T19:00:00.000Z", localTime: "3:00 p.m.", venue: "BMO Field, Toronto" },
+  63: { date: "2026-06-27T03:00:00.000Z", localTime: "8:00 p.m.", venue: "Lumen Field, Seattle" },
+  64: { date: "2026-06-27T03:00:00.000Z", localTime: "8:00 p.m.", venue: "BC Place, Vancouver" },
+  65: { date: "2026-06-27T00:00:00.000Z", localTime: "7:00 p.m.", venue: "NRG Stadium, Houston" },
+  66: { date: "2026-06-27T00:00:00.000Z", localTime: "6:00 p.m.", venue: "Estadio Akron, Zapopan" },
+  67: { date: "2026-06-27T21:00:00.000Z", localTime: "5:00 p.m.", venue: "MetLife Stadium, East Rutherford" },
+  68: { date: "2026-06-27T21:00:00.000Z", localTime: "5:00 p.m.", venue: "Lincoln Financial Field, Philadelphia" },
+  69: { date: "2026-06-28T02:00:00.000Z", localTime: "9:00 p.m.", venue: "Arrowhead Stadium, Kansas City" },
+  70: { date: "2026-06-28T02:00:00.000Z", localTime: "9:00 p.m.", venue: "AT&T Stadium, Arlington" },
+  71: { date: "2026-06-27T23:30:00.000Z", localTime: "7:30 p.m.", venue: "Hard Rock Stadium, Miami Gardens" },
+  72: { date: "2026-06-27T23:30:00.000Z", localTime: "7:30 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
 };

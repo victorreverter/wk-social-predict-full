@@ -16,6 +16,29 @@
     background: rgba(236, 255, 0, 0.03);
 }
 
+.match-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.6rem;
+}
+
+.match-card-id {
+    background: #a900ff;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.match-card-date {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
 .match-teams {
     display: flex;
     justify-content: space-between;

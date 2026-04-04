@@ -30,6 +30,18 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
 
     return (
         <div className={`match-card glass-panel ${match.status === 'FINISHED' ? 'finished' : ''}`}>
+            <div className="match-card-header">
+                <span className="match-card-id">{match.id.toUpperCase()}</span>
+                <span className="match-card-date">
+                    {match.date && !match.date.includes('TBD') 
+                        ? new Date(match.date).toLocaleString(undefined, {
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        }) + ' local' 
+                        : 'TBD'
+                    }
+                    {match.localTime ? ` • ${match.localTime} match` : ''}
+                </span>
+            </div>
             <div className="match-teams">
                 <div className="team home">
                     <span className="team-name">{homeTeam.name}</span>
