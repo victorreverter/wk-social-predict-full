@@ -3,6 +3,7 @@
     margin-bottom: 0.4rem;
     transition: all var(--transition-normal);
     border: 1px solid var(--border-subtle);
+    cursor: pointer;
 }
 
 .match-card:hover {

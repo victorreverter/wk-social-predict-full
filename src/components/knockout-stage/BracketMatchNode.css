@@ -5,6 +5,7 @@
     transition: all var(--transition-normal);
     padding: 0;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .bracket-match-node:hover {
