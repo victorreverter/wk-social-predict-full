@@ -1,7 +1,7 @@
 // types/index.ts
 
 export type PredictionMode = 'EASY' | 'HARD';
-export type ViewTab = 'GROUP' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI';
+export type ViewTab = 'GROUP' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
 export type MatchStatus = 'NOT_PLAYED' | 'FINISHED';
 export type ResultType = 'HOME_WIN' | 'AWAY_WIN' | 'DRAW';
 export type Theme = 'light' | 'dark';

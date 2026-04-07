@@ -1,10 +1,12 @@
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { usePredictorCompletion } from '../../hooks/usePredictorCompletion';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import './Header.css';
 
 export const Header: React.FC = () => {
     const { state, setMode, setActiveTab, resetPredictions, autoFillGroups, setThirdsModalDismissed, setHelpModalOpen } = useApp();
+    const { profile, signOut, openAuthModal, isLocked } = useAuth();
     const { mode, activeTab, groupMatches } = state;
     const { isComplete } = usePredictorCompletion();
 
@@ -57,6 +59,20 @@ export const Header: React.FC = () => {
                             Summary
                         </button>
                     )}
+                    <button
+                        className={`tab-btn leaderboard-tab ${activeTab === 'LEADERBOARD' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('LEADERBOARD')}
+                    >
+                        🏅 Leaderboard
+                    </button>
+                    {profile?.is_master && (
+                        <button
+                            className={`tab-btn admin-tab ${activeTab === 'ADMIN' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('ADMIN')}
+                        >
+                            ⚙️ Admin
+                        </button>
+                    )}
                 </div>
 
                 <div className="mode-switcher">
@@ -96,6 +112,29 @@ export const Header: React.FC = () => {
                     ?
                 </button>
                 <ThemeToggle />
+
+                {/* ── Auth area ── */}
+                {isLocked && (
+                    <span className="lock-badge" title="Predictions are locked">
+                        🔒 Locked
+                    </span>
+                )}
+                {profile ? (
+                    <div className="user-menu">
+                        <div className="user-avatar" title={profile.display_name ?? profile.username}>
+                            {profile.avatar_url
+                                ? <img src={profile.avatar_url} alt="avatar" />
+                                : <span>{(profile.display_name ?? profile.username).charAt(0).toUpperCase()}</span>}
+                        </div>
+                        <button className="signout-btn" onClick={signOut} title="Sign out">
+                            ↩
+                        </button>
+                    </div>
+                ) : (
+                    <button className="login-btn" onClick={openAuthModal}>
+                        Sign In
+                    </button>
+                )}
             </div>
         </header>
     );
