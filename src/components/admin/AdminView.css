@@ -29,6 +29,91 @@
 .admin-section-tabs {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ── Reset area ─────────────────────────────────────────── */
+.admin-reset-area {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.admin-reset-btn {
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 80, 80, 0.4);
+    color: #ff6b6b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.admin-reset-btn:hover:not(:disabled) {
+    background: rgba(255, 80, 80, 0.12);
+    border-color: #ff6b6b;
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.2);
+}
+
+.admin-reset-confirm {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: rgba(255,50,50,0.08);
+    border: 1px solid rgba(255,80,80,0.3);
+    border-radius: 10px;
+    padding: 0.4rem 0.8rem;
+    animation: fadeIn 0.15s ease;
+}
+
+.admin-reset-confirm span {
+    font-size: 0.8rem;
+    color: #ff9090;
+    font-weight: 600;
+}
+
+.admin-reset-confirm-yes {
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.admin-reset-confirm-yes:hover:not(:disabled) {
+    background: #ff2222;
+    transform: translateY(-1px);
+}
+
+.admin-reset-confirm-yes:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-reset-confirm-no {
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.admin-reset-confirm-no:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
 }
 
 .admin-sec-btn {

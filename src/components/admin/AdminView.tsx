@@ -132,6 +132,7 @@ export const AdminView: React.FC = () => {
     const [officialAwards, setOfficialAwards]   = useState<Record<string, string>>({});
     const [saving, setSaving] = useState<string | null>(null);
     const [toast, setToast]   = useState<string | null>(null);
+    const [confirmReset, setConfirmReset] = useState(false);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -177,6 +178,15 @@ export const AdminView: React.FC = () => {
         showToast(error ? `❌ ${error.message}` : `✅ Award saved!`);
     };
 
+    const resetAllResults = async () => {
+        setSaving('reset');
+        const { error } = await supabase.from('official_matches').delete().neq('match_id', '__never__');
+        if (!error) setOfficialMatches({});
+        setSaving(null);
+        setConfirmReset(false);
+        showToast(error ? `❌ ${error.message}` : `🗑️ All match results cleared!`);
+    };
+
     const setMatchField = (matchId: string, field: keyof OfficialMatch, value: string | boolean | number | null) => {
         setOfficialMatches(prev => ({
             ...prev,
@@ -197,6 +207,23 @@ export const AdminView: React.FC = () => {
                     <button className={`admin-sec-btn ${section === 'group'    ? 'active' : ''}`} onClick={() => setSection('group')}>⚽ Group Stage</button>
                     <button className={`admin-sec-btn ${section === 'knockout' ? 'active' : ''}`} onClick={() => setSection('knockout')}>🏆 Knockout Rounds</button>
                     <button className={`admin-sec-btn ${section === 'awards'   ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
+                    <div className="admin-reset-area">
+                        {!confirmReset ? (
+                            <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
+                                🗑️ Reset All Results
+                            </button>
+                        ) : (
+                            <div className="admin-reset-confirm">
+                                <span>Are you sure? This deletes all match results.</span>
+                                <button className="admin-reset-confirm-yes" onClick={resetAllResults} disabled={saving === 'reset'}>
+                                    {saving === 'reset' ? '…' : '✓ Yes, reset'}
+                                </button>
+                                <button className="admin-reset-confirm-no" onClick={() => setConfirmReset(false)}>
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
