@@ -171,6 +171,74 @@
     color: var(--text-secondary);
 }
 
+/* ── Match body (teams + optional penalty row) ──────────── */
+.admin-match-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ── Knockout hint ──────────────────────────────────────── */
+.admin-ko-hint {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    line-height: 1.5;
+}
+
+.admin-ko-hint strong {
+    color: var(--color-primary);
+}
+
+/* ── Penalty row ────────────────────────────────────────── */
+.admin-pens-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-left: 0.5rem;
+    border-left: 2px solid rgba(255,152,0,0.4);
+}
+
+.admin-pens-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: #ff9800;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.admin-pens-toggle input[type="checkbox"] {
+    accent-color: #ff9800;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+.admin-pens-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pens-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #ff9800;
+}
+
+.score-input--small {
+    width: 40px !important;
+    height: 36px !important;
+    font-size: 1rem !important;
+}
+
 /* ── Save Button ────────────────────────────────────────── */
 .admin-save-btn {
     padding: 0.45rem 1.1rem;
