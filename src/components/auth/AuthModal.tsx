@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './AuthModal.css';
 
 type AuthView = 'LOGIN' | 'REGISTER';
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 export const AuthModal: React.FC = () => {
-    const { signIn, signUp, closeAuthModal } = useAuth();
+    const { signIn, signUp, checkUsername, closeAuthModal } = useAuth();
 
     const [view, setView]         = useState<AuthView>('LOGIN');
     const [username, setUsername] = useState('');
@@ -13,24 +14,42 @@ export const AuthModal: React.FC = () => {
     const [error, setError]       = useState<string | null>(null);
     const [loading, setLoading]   = useState(false);
     const [success, setSuccess]   = useState<string | null>(null);
+    const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
 
-    const reset = () => { setError(null); setSuccess(null); setLoading(false); };
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // ── Debounced username availability check (register only) ──
+    useEffect(() => {
+        if (view !== 'REGISTER') { setUsernameStatus('idle'); return; }
+
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        if (username.trim().length < 3) { setUsernameStatus('idle'); return; }
+        if (!/^[a-z0-9_]+$/i.test(username.trim())) { setUsernameStatus('invalid'); return; }
+
+        setUsernameStatus('checking');
+        debounceRef.current = setTimeout(async () => {
+            const available = await checkUsername(username.trim());
+            setUsernameStatus(available ? 'available' : 'taken');
+        }, 500);
+
+        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    }, [username, view, checkUsername]);
+
+    const reset = () => { setError(null); setSuccess(null); setLoading(false); setUsernameStatus('idle'); };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         reset();
 
-        if (username.trim().length < 3) {
-            setError('Username must be at least 3 characters.');
-            return;
-        }
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters.');
-            return;
-        }
-        // Usernames must be alphanumeric + underscores only
+        if (username.trim().length < 3) { setError('Username must be at least 3 characters.'); return; }
+        if (password.length < 6)        { setError('Password must be at least 6 characters.'); return; }
         if (!/^[a-z0-9_]+$/i.test(username.trim())) {
             setError('Username can only contain letters, numbers, and underscores.');
+            return;
+        }
+        if (view === 'REGISTER' && usernameStatus === 'taken') {
+            setError('That username is already taken. Please choose another.');
             return;
         }
 
@@ -43,19 +62,26 @@ export const AuthModal: React.FC = () => {
         } else {
             const err = await signUp(username.trim(), password);
             if (err) { setError(friendlyError(err)); setLoading(false); }
-            else {
-                setSuccess('Account created! You can now sign in.');
-                setLoading(false);
-            }
+            else { setSuccess('Account created! You can now sign in.'); setLoading(false); }
         }
     };
 
-    // Map Supabase error messages to user-friendly versions
     const friendlyError = (msg: string): string => {
         if (msg.includes('Invalid login credentials')) return 'Incorrect username or password.';
         if (msg.includes('User already registered'))   return 'This username is already taken.';
         if (msg.includes('Password should be'))        return 'Password must be at least 6 characters.';
         return msg;
+    };
+
+    const usernameIndicator = () => {
+        if (view !== 'REGISTER' || username.trim().length < 3) return null;
+        switch (usernameStatus) {
+            case 'checking':  return <span className="username-hint checking">⏳ Checking…</span>;
+            case 'available': return <span className="username-hint available">✅ Available!</span>;
+            case 'taken':     return <span className="username-hint taken">❌ Not available</span>;
+            case 'invalid':   return <span className="username-hint taken">⚠️ Letters, numbers & _ only</span>;
+            default:          return null;
+        }
     };
 
     return (
@@ -87,7 +113,10 @@ export const AuthModal: React.FC = () => {
                 ) : (
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="auth-field">
-                            <label>Username</label>
+                            <div className="auth-field-header">
+                                <label>Username</label>
+                                {usernameIndicator()}
+                            </div>
                             <input
                                 type="text"
                                 placeholder="your_username"
@@ -96,6 +125,10 @@ export const AuthModal: React.FC = () => {
                                 required
                                 autoComplete="username"
                                 autoFocus
+                                className={
+                                    view === 'REGISTER' && usernameStatus === 'taken' ? 'input-error' :
+                                    view === 'REGISTER' && usernameStatus === 'available' ? 'input-ok' : ''
+                                }
                             />
                         </div>
 
@@ -113,7 +146,11 @@ export const AuthModal: React.FC = () => {
 
                         {error && <div className="auth-error">{error}</div>}
 
-                        <button type="submit" className="auth-submit-btn" disabled={loading}>
+                        <button
+                            type="submit"
+                            className="auth-submit-btn"
+                            disabled={loading || (view === 'REGISTER' && usernameStatus === 'taken')}
+                        >
                             {loading ? 'Please wait…' : view === 'LOGIN' ? 'Sign In' : 'Create Account'}
                         </button>
                     </form>
@@ -123,11 +160,11 @@ export const AuthModal: React.FC = () => {
                     <div className="auth-switch">
                         {view === 'LOGIN' ? (
                             <>No account?{' '}
-                                <button onClick={() => { setView('REGISTER'); reset(); }}>Sign up free</button>
+                                <button onClick={() => { setView('REGISTER'); reset(); setUsername(''); setPassword(''); }}>Sign up free</button>
                             </>
                         ) : (
                             <>Already have an account?{' '}
-                                <button onClick={() => { setView('LOGIN'); reset(); }}>Sign in</button>
+                                <button onClick={() => { setView('LOGIN'); reset(); setUsername(''); setPassword(''); }}>Sign in</button>
                             </>
                         )}
                     </div>

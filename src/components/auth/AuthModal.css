@@ -88,6 +88,12 @@
     gap: 0.4rem;
 }
 
+.auth-field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .auth-field label {
     font-size: 0.8rem;
     font-weight: 600;
@@ -96,6 +102,18 @@
     letter-spacing: 0.05em;
 }
 
+/* ── Username availability indicator ────────────────────── */
+.username-hint {
+    font-size: 0.75rem;
+    font-weight: 700;
+    animation: fadeIn 0.15s ease;
+}
+
+.username-hint.checking  { color: var(--text-secondary); }
+.username-hint.available { color: #00e676; }
+.username-hint.taken     { color: #ff6b6b; }
+
+/* ── Input fields ───────────────────────────────────────── */
 .auth-field input {
     background: rgba(255,255,255,0.06);
     border: 1px solid var(--border-subtle);
@@ -113,9 +131,17 @@
     box-shadow: 0 0 0 3px rgba(236,255,0,0.12);
 }
 
-.auth-field input::placeholder {
-    color: var(--text-muted);
+.auth-field input.input-ok {
+    border-color: #00e676;
+    box-shadow: 0 0 0 3px rgba(0,230,118,0.10);
 }
+
+.auth-field input.input-error {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 3px rgba(255,80,80,0.10);
+}
+
+.auth-field input::placeholder { color: var(--text-muted); }
 
 :root.light .auth-field input {
     background: rgba(0,0,0,0.04);

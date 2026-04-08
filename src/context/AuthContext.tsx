@@ -21,6 +21,7 @@ interface AuthContextType {
     signIn: (username: string, password: string) => Promise<string | null>;
     signUp: (username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
+    checkUsername: (username: string) => Promise<boolean>;
     openAuthModal: () => void;
     closeAuthModal: () => void;
     isAuthModalOpen: boolean;
@@ -102,6 +103,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setProfile(null);
     };
 
+    const checkUsername = async (username: string): Promise<boolean> => {
+        const { data } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', username.trim().toLowerCase())
+            .maybeSingle();
+        return !data; // true = available
+    };
+
     const openAuthModal  = () => setIsAuthModalOpen(true);
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
@@ -115,6 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             signIn,
             signUp,
             signOut,
+            checkUsername,
             openAuthModal,
             closeAuthModal,
             isAuthModalOpen,
