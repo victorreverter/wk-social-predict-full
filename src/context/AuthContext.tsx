@@ -25,6 +25,7 @@ interface AuthContextType {
     openAuthModal: () => void;
     closeAuthModal: () => void;
     isAuthModalOpen: boolean;
+    updateLockDate: (dateStr: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +61,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const lockDate = data?.value ? new Date(data.value) : FALLBACK_LOCK_DATE;
         setIsLocked(new Date() >= lockDate);
+    };
+
+    // ── Update the lock date in DB (Master only) ─────────────
+    const updateLockDate = async (dateStr: string): Promise<{ error: string | null }> => {
+        const { error } = await supabase
+            .from('config')
+            .upsert({ key: 'predictions_locked_at', value: dateStr }, { onConflict: 'key' });
+        
+        if (!error) {
+            const lockDate = new Date(dateStr);
+            setIsLocked(new Date() >= lockDate);
+        }
+        return { error: error?.message || null };
     };
 
     // ── Session bootstrap & realtime listener ─────────────────
@@ -129,6 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             openAuthModal,
             closeAuthModal,
             isAuthModalOpen,
+            updateLockDate,
         }}>
             {children}
         </AuthContext.Provider>

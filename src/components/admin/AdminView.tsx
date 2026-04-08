@@ -6,6 +6,7 @@ import {
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
 } from '../../utils/bracket-logic';
 import { scoreXI } from '../../lib/scoreXI';
+import { useAuth } from '../../context/AuthContext';
 import './AdminView.css';
 
 // ── Types ──────────────────────────────────────────────────
@@ -141,6 +142,8 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
+    const { isLocked, updateLockDate } = useAuth();
+    
     const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
     const [activeKoRound, setActiveKoRound] = useState<string>('R32');
@@ -231,6 +234,15 @@ export const AdminView: React.FC = () => {
         showToast(error ? `❌ ${error.message}` : `🗑️ All match results cleared!`);
     };
 
+    const toggleLock = async () => {
+        setSaving('lock');
+        // If it's already locked, push lock to 2050. If open, set lock to past date (2000).
+        const newDateStr = isLocked ? '2050-01-01T00:00:00Z' : '2000-01-01T00:00:00Z';
+        const { error } = await updateLockDate(newDateStr);
+        setSaving(null);
+        showToast(error ? `❌ ${error}` : `✅ Predictions ${isLocked ? 'Unlocked' : 'Locked'}`);
+    };
+
     const setMatchField = (matchId: string, field: keyof OfficialMatch, value: string | boolean | number | null) => {
         setOfficialMatches(prev => ({
             ...prev,
@@ -253,6 +265,15 @@ export const AdminView: React.FC = () => {
                     <button className={`admin-sec-btn ${section === 'awards'   ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
                     <button className={`admin-sec-btn ${section === 'xi'       ? 'active' : ''}`} onClick={() => setSection('xi')}>👕 Tournament XI</button>
                     <div className="admin-reset-area">
+                        <button 
+                            className={`admin-lock-btn ${isLocked ? 'locked' : 'unlocked'}`}
+                            onClick={toggleLock}
+                            disabled={saving === 'lock'}
+                            title={isLocked ? "Unlock predictions (test mode)" : "Lock predictions immediately"}
+                        >
+                            {saving === 'lock' ? '…' : isLocked ? '🔓 Un-Lock' : '🔒 Lock Users!'}
+                        </button>
+                        
                         {!confirmReset ? (
                             <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
                                 🗑️ Reset All Results
