@@ -5,6 +5,7 @@ import {
     R32_FIXTURES, R16_FIXTURES, QF_FIXTURES, SF_FIXTURES,
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
 } from '../../utils/bracket-logic';
+import { scoreXI } from '../../lib/scoreXI';
 import './AdminView.css';
 
 // ── Types ──────────────────────────────────────────────────
@@ -123,13 +124,30 @@ const MatchRow: React.FC<{
     );
 };
 
+// XI slots: GK + 10 position-agnostic field players
+const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
+    { key: 'GK',  label: 'Goalkeeper',     isGK: true  },
+    { key: 'FP1', label: 'Field Player 1', isGK: false },
+    { key: 'FP2', label: 'Field Player 2', isGK: false },
+    { key: 'FP3', label: 'Field Player 3', isGK: false },
+    { key: 'FP4', label: 'Field Player 4', isGK: false },
+    { key: 'FP5', label: 'Field Player 5', isGK: false },
+    { key: 'FP6', label: 'Field Player 6', isGK: false },
+    { key: 'FP7', label: 'Field Player 7', isGK: false },
+    { key: 'FP8', label: 'Field Player 8', isGK: false },
+    { key: 'FP9', label: 'Field Player 9', isGK: false },
+    { key: 'FP10',label: 'Field Player 10',isGK: false },
+];
+
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
-    const [section, setSection]           = useState<'group' | 'knockout' | 'awards'>('group');
+    const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
     const [activeKoRound, setActiveKoRound] = useState<string>('R32');
     const [officialMatches, setOfficialMatches] = useState<Record<string, OfficialMatch>>({});
     const [officialAwards, setOfficialAwards]   = useState<Record<string, string>>({});
+    const [officialXI, setOfficialXI]     = useState<Record<string, string>>({});
+    const [xiScoring, setXiScoring]       = useState<string | null>(null);
     const [saving, setSaving] = useState<string | null>(null);
     const [toast, setToast]   = useState<string | null>(null);
     const [confirmReset, setConfirmReset] = useState(false);
@@ -148,6 +166,12 @@ export const AdminView: React.FC = () => {
             const map: Record<string, string> = {};
             (aData as OfficialAward[]).forEach(r => { map[r.category] = r.value; });
             setOfficialAwards(map);
+        }
+        const { data: xData } = await supabase.from('official_tournament_xi').select('position, player_name');
+        if (xData) {
+            const map: Record<string, string> = {};
+            (xData as { position: string; player_name: string }[]).forEach(r => { map[r.position] = r.player_name; });
+            setOfficialXI(map);
         }
     }, []);
 
@@ -176,6 +200,26 @@ export const AdminView: React.FC = () => {
         );
         setSaving(null);
         showToast(error ? `❌ ${error.message}` : `✅ Award saved!`);
+    };
+
+    // ── Save all XI + auto-score ──────────────────────────
+    const saveAllXI = async () => {
+        setSaving('xi_all');
+        const rows = XI_SLOTS
+            .filter(s => officialXI[s.key]?.trim())
+            .map(s => ({ position: s.key, player_name: officialXI[s.key].trim(), updated_at: new Date().toISOString() }));
+
+        const { error } = await supabase.from('official_tournament_xi').upsert(rows, { onConflict: 'position' });
+        if (error) { setSaving(null); showToast(`❌ ${error.message}`); return; }
+
+        // Auto-score all users (Option A)
+        setXiScoring('⏳ Calculating scores…');
+        const { usersScored, error: scoreErr } = await scoreXI();
+        setXiScoring(null);
+        setSaving(null);
+        showToast(scoreErr
+            ? `❌ Saved but scoring failed: ${scoreErr}`
+            : `✅ XI saved & ${usersScored} user${usersScored !== 1 ? 's' : ''} scored!`);
     };
 
     const resetAllResults = async () => {
@@ -207,6 +251,7 @@ export const AdminView: React.FC = () => {
                     <button className={`admin-sec-btn ${section === 'group'    ? 'active' : ''}`} onClick={() => setSection('group')}>⚽ Group Stage</button>
                     <button className={`admin-sec-btn ${section === 'knockout' ? 'active' : ''}`} onClick={() => setSection('knockout')}>🏆 Knockout Rounds</button>
                     <button className={`admin-sec-btn ${section === 'awards'   ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
+                    <button className={`admin-sec-btn ${section === 'xi'       ? 'active' : ''}`} onClick={() => setSection('xi')}>👕 Tournament XI</button>
                     <div className="admin-reset-area">
                         {!confirmReset ? (
                             <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
@@ -297,6 +342,52 @@ export const AdminView: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            {/* ── TOURNAMENT XI ────────────────────────────────── */}
+            {section === 'xi' && (
+                <div className="admin-xi">
+                    <div className="admin-xi-header">
+                        <div>
+                            <h3>Official Tournament XI</h3>
+                            <p className="admin-ko-hint">
+                                Enter 1 Goalkeeper + 10 field players. Name matching is <strong>accent-insensitive</strong> — "Mbappé" matches "Mbappe". Click <strong>Save All &amp; Score</strong> to persist and instantly recalculate all user points.
+                            </p>
+                        </div>
+                        <div className="admin-xi-actions">
+                            {xiScoring && <span className="xi-scoring-status">{xiScoring}</span>}
+                            <button
+                                className="admin-save-btn admin-save-btn--large"
+                                onClick={saveAllXI}
+                                disabled={saving === 'xi_all'}
+                            >
+                                {saving === 'xi_all' ? '…' : '💾 Save All & Score'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="admin-xi-list">
+                        {XI_SLOTS.map(({ key, label, isGK }) => (
+                            <div key={key} className={`admin-xi-row glass-panel ${isGK ? 'admin-xi-row--gk' : ''}`}>
+                                <span className={`admin-xi-badge ${isGK ? 'badge-gk' : 'badge-fp'}`}>
+                                    {isGK ? '🧤' : '👕'}
+                                </span>
+                                <span className="admin-xi-label">{label}</span>
+                                <input
+                                    type="text"
+                                    className="admin-award-input admin-xi-input"
+                                    placeholder={isGK ? 'Goalkeeper name…' : 'Player name…'}
+                                    value={officialXI[key] ?? ''}
+                                    onChange={e => setOfficialXI(prev => ({ ...prev, [key]: e.target.value }))}
+                                />
+                                <span className={`admin-xi-pts ${isGK ? 'pts-gk' : 'pts-fp'}`}>
+                                    {isGK ? '5 pts' : '3 pts'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+

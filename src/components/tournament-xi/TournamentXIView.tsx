@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import './TournamentXIView.css';
 
 type FormationConfig = {
@@ -53,12 +55,56 @@ const FORMATIONS: Record<string, FormationConfig> = {
 export const TournamentXIView: React.FC = () => {
     const { state, updateTournamentXI } = useApp();
     const { tournamentXI, theme } = state;
+    const { session, isLocked } = useAuth();
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [saveMsg, setSaveMsg] = useState<string>('');
+
     const activeFormation = FORMATIONS[selectedFormation];
 
-    const handleNameChange = (pos: string, value: string) => {
-        updateTournamentXI(pos, value);
+    // ── Load predictions from Supabase on mount ──────────────
+    const loadPredictions = useCallback(async () => {
+        if (!session) return;
+        const { data } = await supabase
+            .from('user_predictions_xi')
+            .select('position, player_name')
+            .eq('user_id', session.user.id);
+        if (data) {
+            data.forEach((row: { position: string; player_name: string }) => {
+                updateTournamentXI(row.position, row.player_name);
+            });
+        }
+    }, [session, updateTournamentXI]);
+
+    useEffect(() => { loadPredictions(); }, [loadPredictions]);
+
+    // ── Save predictions to Supabase ─────────────────────────
+    const savePredictions = async () => {
+        if (!session) return;
+        setSaveStatus('saving');
+
+        const rows = Object.entries(tournamentXI)
+            .filter(([, name]) => name.trim())
+            .map(([position, player_name]) => ({
+                user_id: session.user.id,
+                position,
+                player_name: player_name.trim(),
+                pts_earned: 0,
+            }));
+
+        const { error } = await supabase
+            .from('user_predictions_xi')
+            .upsert(rows, { onConflict: 'user_id,position' });
+
+        if (error) {
+            setSaveStatus('error');
+            setSaveMsg('Failed to save. Please try again.');
+        } else {
+            setSaveStatus('saved');
+            setSaveMsg(`✅ XI saved! (${rows.length} players)`);
+        }
+        setTimeout(() => { setSaveStatus('idle'); setSaveMsg(''); }, 3000);
     };
 
     return (
@@ -70,8 +116,8 @@ export const TournamentXIView: React.FC = () => {
 
             <div className="formation-selector">
                 {Object.keys(FORMATIONS).map(fmt => (
-                    <button 
-                        key={fmt} 
+                    <button
+                        key={fmt}
                         className={`formation-btn ${selectedFormation === fmt ? 'active' : ''}`}
                         onClick={() => setSelectedFormation(fmt)}
                     >
@@ -81,43 +127,25 @@ export const TournamentXIView: React.FC = () => {
             </div>
 
             <div className={`soccer-field ${theme}`}>
-                {/* SVG Field Lines — scales perfectly with parent */}
+                {/* SVG Field Lines */}
                 <svg
                     className="field-lines-svg"
                     viewBox="0 0 400 500"
                     preserveAspectRatio="none"
                     xmlns="http://www.w3.org/2000/svg"
                 >
-                    {/* Outer border */}
                     <rect x="2" y="2" width="396" height="496" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="3" rx="8" />
-
-                    {/* Halfway line */}
                     <line x1="2" y1="250" x2="398" y2="250" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-
-                    {/* Center circle */}
                     <circle cx="200" cy="250" r="60" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    {/* Center spot */}
                     <circle cx="200" cy="250" r="4" fill="rgba(255,255,255,0.8)" />
-
-                    {/* Top penalty area */}
                     <rect x="90" y="2" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    {/* Top 6-yard box */}
                     <rect x="145" y="2" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    {/* Top penalty spot */}
                     <circle cx="200" cy="72" r="3" fill="rgba(255,255,255,0.8)" />
-                    {/* Top penalty arc (outside box) */}
                     <path d="M 155 92 A 55 55 0 0 0 245 92" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-
-                    {/* Bottom penalty area */}
                     <rect x="90" y="408" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    {/* Bottom 6-yard box */}
                     <rect x="145" y="463" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    {/* Bottom penalty spot */}
                     <circle cx="200" cy="428" r="3" fill="rgba(255,255,255,0.8)" />
-                    {/* Bottom penalty arc (outside box going down) */}
                     <path d="M 155 408 A 55 55 0 0 1 245 408" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-
-                    {/* Corner arcs */}
                     <path d="M 2 22 A 20 20 0 0 1 22 2" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
                     <path d="M 378 2 A 20 20 0 0 1 398 22" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
                     <path d="M 2 478 A 20 20 0 0 0 22 498" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" />
@@ -138,14 +166,37 @@ export const TournamentXIView: React.FC = () => {
                                         className="player-input"
                                         placeholder="Player Name"
                                         value={tournamentXI[dataKey] || ''}
-                                        onChange={(e) => handleNameChange(dataKey, e.target.value)}
+                                        onChange={(e) => updateTournamentXI(dataKey, e.target.value)}
                                         maxLength={20}
+                                        disabled={isLocked}
                                     />
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* ── Save footer ──────────────────────────────── */}
+            <div className="xi-save-footer">
+                {!session ? (
+                    <p className="xi-login-prompt">🔒 Sign in to save your Tournament XI prediction</p>
+                ) : isLocked ? (
+                    <p className="xi-locked-msg">🔒 Predictions are locked — the tournament has started</p>
+                ) : (
+                    <div className="xi-save-row">
+                        {saveMsg && (
+                            <span className={`xi-save-msg ${saveStatus}`}>{saveMsg}</span>
+                        )}
+                        <button
+                            className="xi-save-btn"
+                            onClick={savePredictions}
+                            disabled={saveStatus === 'saving'}
+                        >
+                            {saveStatus === 'saving' ? '⏳ Saving…' : '☁️ Save My XI'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
