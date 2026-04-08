@@ -42,9 +42,9 @@
 }
 
 .admin-lock-btn {
-    padding: 0.45rem 1rem;
-    border-radius: 8px;
-    font-size: 0.82rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -74,12 +74,12 @@
 }
 
 .admin-reset-btn {
-    padding: 0.45rem 1rem;
-    border-radius: 8px;
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
     background: transparent;
     border: 1px solid rgba(255, 80, 80, 0.4);
     color: #ff6b6b;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -150,10 +150,10 @@
 }
 
 .admin-sec-btn {
-    padding: 0.5rem 1.2rem;
+    padding: 0.5rem 1.1rem;
     border-radius: 10px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     background: transparent;
