@@ -18,8 +18,8 @@ interface AuthContextType {
     profile: Profile | null;
     loading: boolean;
     isLocked: boolean; // predictions locked after June 11 2026
-    signIn: (email: string, password: string) => Promise<string | null>;
-    signUp: (email: string, password: string, username: string) => Promise<string | null>;
+    signIn: (username: string, password: string) => Promise<string | null>;
+    signUp: (username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
     openAuthModal: () => void;
     closeAuthModal: () => void;
@@ -80,14 +80,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     // ── Auth actions ──────────────────────────────────────────
-    const signIn = async (email: string, password: string): Promise<string | null> => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // We use a fake internal email so users only need username + password.
+    const toFakeEmail = (username: string) => `${username.trim().toLowerCase()}@wkpredictor.app`;
+
+    const signIn = async (username: string, password: string): Promise<string | null> => {
+        const { error } = await supabase.auth.signInWithPassword({ email: toFakeEmail(username), password });
         return error ? error.message : null;
     };
 
-    const signUp = async (email: string, password: string, username: string): Promise<string | null> => {
+    const signUp = async (username: string, password: string): Promise<string | null> => {
         const { error } = await supabase.auth.signUp({
-            email,
+            email: toFakeEmail(username),
             password,
             options: { data: { username } }
         });
