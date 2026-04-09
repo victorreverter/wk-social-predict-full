@@ -14,7 +14,7 @@ export const usePredictorCompletion = () => {
         const areAwardsFilled = Object.values(awards).every((value) => value.trim() !== '');
 
         return {
-            isComplete: isFinalFinished && areAwardsFilled,
+            isComplete: isFinalFinished,
             isFinalFinished,
             areAwardsFilled,
         };

@@ -58,8 +58,7 @@ export const TournamentXIView: React.FC = () => {
     const { session, isLocked } = useAuth();
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-    const [saveMsg, setSaveMsg] = useState<string>('');
+
 
     const activeFormation = FORMATIONS[selectedFormation];
 
@@ -79,33 +78,8 @@ export const TournamentXIView: React.FC = () => {
 
     useEffect(() => { loadPredictions(); }, [loadPredictions]);
 
-    // ── Save predictions to Supabase ─────────────────────────
-    const savePredictions = async () => {
-        if (!session) return;
-        setSaveStatus('saving');
+    // (Saving is now handled globally via App layout Header)
 
-        const rows = Object.entries(tournamentXI)
-            .filter(([, name]) => name.trim())
-            .map(([position, player_name]) => ({
-                user_id: session.user.id,
-                position,
-                player_name: player_name.trim(),
-                pts_earned: 0,
-            }));
-
-        const { error } = await supabase
-            .from('user_predictions_xi')
-            .upsert(rows, { onConflict: 'user_id,position' });
-
-        if (error) {
-            setSaveStatus('error');
-            setSaveMsg('Failed to save. Please try again.');
-        } else {
-            setSaveStatus('saved');
-            setSaveMsg(`✅ XI saved! (${rows.length} players)`);
-        }
-        setTimeout(() => { setSaveStatus('idle'); setSaveMsg(''); }, 3000);
-    };
 
     return (
         <div className="tournament-xi-container fade-in">
@@ -182,22 +156,13 @@ export const TournamentXIView: React.FC = () => {
             {/* ── Save footer ──────────────────────────────── */}
             <div className="xi-save-footer">
                 {!session ? (
-                    <p className="xi-login-prompt">🔒 Sign in to save your Tournament XI prediction</p>
+                    <p className="xi-login-prompt">🔒 Sign in to save your predictions</p>
                 ) : isLocked ? (
                     <p className="xi-locked-msg">🔒 Predictions are locked — the tournament has started</p>
                 ) : (
-                    <div className="xi-save-row">
-                        {saveMsg && (
-                            <span className={`xi-save-msg ${saveStatus}`}>{saveMsg}</span>
-                        )}
-                        <button
-                            className="xi-save-btn"
-                            onClick={savePredictions}
-                            disabled={saveStatus === 'saving'}
-                        >
-                            {saveStatus === 'saving' ? '⏳ Saving…' : '☁️ Save My XI'}
-                        </button>
-                    </div>
+                    <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        Save your XI (along with all other predictions) using the global <strong>Save Predictions</strong> button in the top menu.
+                    </p>
                 )}
             </div>
         </div>

@@ -292,3 +292,52 @@
     padding: 0.25rem 0.75rem;
     white-space: nowrap;
 }
+
+/* ── Global Save Button ────────────────────────────── */
+.global-save-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.save-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #00cbff, #00e676);
+    color: #000;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.save-btn:hover {
+    box-shadow: 0 0 18px rgba(0, 230, 118, 0.6);
+    transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+    background: #555;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.global-save-msg {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.global-save-msg.error {
+    color: #ff5252;
+}
+
+.global-save-msg.saved {
+    color: #00e676;
+}
