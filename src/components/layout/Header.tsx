@@ -6,6 +6,7 @@ import { ThemeToggle } from '../shared/ThemeToggle';
 import './Header.css';
 
 export const Header: React.FC = () => {
+
     const { state, setMode, setActiveTab, resetPredictions, autoFillGroups, setThirdsModalDismissed, setHelpModalOpen } = useApp();
     const { profile, signOut, openAuthModal, isLocked, isEaseModeEnabled } = useAuth();
     const { mode, activeTab, groupMatches } = state;

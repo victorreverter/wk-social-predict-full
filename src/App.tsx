@@ -11,7 +11,9 @@ import { SummaryView } from './components/summary/SummaryView';
 import { TournamentXIView } from './components/tournament-xi/TournamentXIView';
 import { AuthModal } from './components/auth/AuthModal';
 import { AdminView } from './components/admin/AdminView';
+import { CountdownWidget } from './components/shared/CountdownWidget';
 import { useApp } from './context/AppContext';
+
 import './styles/global.css';
 
 const MainContent = () => {
@@ -43,7 +45,9 @@ const AppShell = () => {
     <AppProvider>
       <div className="app-container">
         <Header />
+        <CountdownWidget />
         <MainContent />
+
         <OnboardingModal />
         {isAuthModalOpen && <AuthModal />}
       </div>
