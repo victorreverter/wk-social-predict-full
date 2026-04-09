@@ -35,16 +35,16 @@
 
 /* ── Reset area ─────────────────────────────────────────── */
 .admin-reset-area {
-    margin-left: auto;
+    /* margin-left: auto; */
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
 .admin-lock-btn {
-    padding: 0.5rem 1.1rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -74,12 +74,12 @@
 }
 
 .admin-reset-btn {
-    padding: 0.5rem 1.1rem;
-    border-radius: 10px;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
     background: transparent;
     border: 1px solid rgba(255, 80, 80, 0.4);
     color: #ff6b6b;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -97,8 +97,8 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
-    background: rgba(255,50,50,0.08);
-    border: 1px solid rgba(255,80,80,0.3);
+    background: rgba(255, 50, 50, 0.08);
+    border: 1px solid rgba(255, 80, 80, 0.3);
     border-radius: 10px;
     padding: 0.4rem 0.8rem;
     animation: fadeIn 0.15s ease;
@@ -145,15 +145,15 @@
 }
 
 .admin-reset-confirm-no:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
 }
 
 .admin-sec-btn {
-    padding: 0.5rem 1.1rem;
+    padding: 0.5rem 1.2rem;
     border-radius: 10px;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     background: transparent;
@@ -193,7 +193,7 @@
 }
 
 .admin-group-btn.active {
-    background: rgba(236,255,0,0.15);
+    background: rgba(236, 255, 0, 0.15);
     border-color: var(--color-primary);
     color: var(--color-primary);
 }
@@ -265,7 +265,7 @@
     text-align: center;
     font-size: 1.3rem;
     font-weight: 800;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     color: var(--text-primary);
@@ -276,11 +276,11 @@
 
 .score-input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(236,255,0,0.15);
+    box-shadow: 0 0 0 2px rgba(236, 255, 0, 0.15);
 }
 
 :root.light .score-input {
-    background: rgba(0,0,0,0.04);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 .score-sep {
@@ -301,7 +301,7 @@
 .admin-ko-hint {
     font-size: 0.82rem;
     color: var(--text-secondary);
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 0.6rem 1rem;
@@ -319,7 +319,7 @@
     gap: 1rem;
     flex-wrap: wrap;
     padding-left: 0.5rem;
-    border-left: 2px solid rgba(255,152,0,0.4);
+    border-left: 2px solid rgba(255, 152, 0, 0.4);
 }
 
 .admin-pens-toggle {
@@ -373,7 +373,7 @@
 
 .admin-save-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 0 12px rgba(236,255,0,0.3);
+    box-shadow: 0 0 12px rgba(236, 255, 0, 0.3);
 }
 
 .admin-save-btn:disabled {
@@ -412,7 +412,7 @@
     flex: 2;
     padding: 0.55rem 0.9rem;
     border-radius: 8px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--border-subtle);
     color: var(--text-primary);
     font-family: var(--font-primary);
@@ -426,7 +426,7 @@
 }
 
 :root.light .admin-award-input {
-    background: rgba(0,0,0,0.04);
+    background: rgba(0, 0, 0, 0.04);
 }
 
 /* ── Toast notification ─────────────────────────────────── */
@@ -435,7 +435,7 @@
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(20,20,20,0.95);
+    background: rgba(20, 20, 20, 0.95);
     border: 1px solid var(--border-subtle);
     color: white;
     padding: 0.7rem 1.5rem;
@@ -444,12 +444,12 @@
     font-size: 0.9rem;
     z-index: 2000;
     animation: slideUp 0.2s ease;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     white-space: nowrap;
 }
 
 :root.light .admin-toast {
-    background: rgba(255,255,255,0.95);
+    background: rgba(255, 255, 255, 0.95);
     color: #000;
 }
 
@@ -488,8 +488,15 @@
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 .admin-save-btn--large {
@@ -512,8 +519,8 @@
 }
 
 .admin-xi-row--gk {
-    border: 1px solid rgba(236,255,0,0.25);
-    background: rgba(236,255,0,0.04);
+    border: 1px solid rgba(236, 255, 0, 0.25);
+    background: rgba(236, 255, 0, 0.04);
 }
 
 .admin-xi-badge {
@@ -546,14 +553,13 @@
 }
 
 .pts-gk {
-    background: rgba(236,255,0,0.15);
+    background: rgba(236, 255, 0, 0.15);
     color: var(--color-primary);
-    border: 1px solid rgba(236,255,0,0.3);
+    border: 1px solid rgba(236, 255, 0, 0.3);
 }
 
 .pts-fp {
-    background: rgba(100,220,255,0.12);
+    background: rgba(100, 220, 255, 0.12);
     color: #64dcff;
-    border: 1px solid rgba(100,220,255,0.25);
+    border: 1px solid rgba(100, 220, 255, 0.25);
 }
-
