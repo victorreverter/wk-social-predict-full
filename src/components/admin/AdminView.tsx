@@ -144,7 +144,7 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
-    const { isLocked, updateLockDate } = useAuth();
+    const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode } = useAuth();
     
     const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
@@ -281,6 +281,15 @@ export const AdminView: React.FC = () => {
                             title={isLocked ? "Unlock predictions (test mode)" : "Lock predictions immediately"}
                         >
                             {saving === 'lock' ? '…' : isLocked ? '🔓 Un-Lock' : '🔒 Lock Users!'}
+                        </button>
+
+                        <button 
+                            className={`admin-lock-btn ${isEaseModeEnabled ? 'unlocked' : 'locked'}`}
+                            style={{ marginLeft: '0.5rem' }}
+                            onClick={() => updateEaseMode(!isEaseModeEnabled)}
+                            title={isEaseModeEnabled ? "Deactivate Ease Mode globally" : "Activate Ease Mode globally"}
+                        >
+                            {isEaseModeEnabled ? '⚡ Ease ON' : '🎯 Ease OFF'}
                         </button>
                         
                         {!confirmReset ? (

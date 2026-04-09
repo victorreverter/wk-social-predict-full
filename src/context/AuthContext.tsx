@@ -18,6 +18,7 @@ interface AuthContextType {
     profile: Profile | null;
     loading: boolean;
     isLocked: boolean; // predictions locked after June 11 2026
+    isEaseModeEnabled: boolean; // Global setting to allow/disallow Easy Mode
     signIn: (username: string, password: string) => Promise<string | null>;
     signUp: (username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
@@ -26,7 +27,9 @@ interface AuthContextType {
     closeAuthModal: () => void;
     isAuthModalOpen: boolean;
     updateLockDate: (dateStr: string) => Promise<{ error: string | null }>;
+    updateEaseMode: (enabled: boolean) => Promise<{ error: string | null }>;
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -39,6 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [profile, setProfile]         = useState<Profile | null>(null);
     const [loading, setLoading]         = useState(true);
     const [isLocked, setIsLocked]       = useState(false);
+    const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true); // Default to true
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
     // ── Fetch profile row for the authenticated user ──────────
@@ -51,16 +55,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (data) setProfile(data as Profile);
     };
 
-    // ── Check prediction lock from DB config ─────────────────
-    const checkLock = async () => {
+    // ── Check global config from DB ──────────────────────────
+    const fetchGlobalConfig = async () => {
         const { data } = await supabase
             .from('config')
-            .select('value')
-            .eq('key', 'predictions_locked_at')
-            .single();
+            .select('key, value');
 
-        const lockDate = data?.value ? new Date(data.value) : FALLBACK_LOCK_DATE;
-        setIsLocked(new Date() >= lockDate);
+        if (data) {
+            const lockRow = data.find(r => r.key === 'predictions_locked_at');
+            const easeRow = data.find(r => r.key === 'is_ease_mode_enabled');
+
+            if (lockRow) {
+                const lockDate = new Date(lockRow.value);
+                setIsLocked(new Date() >= lockDate);
+            } else {
+                setIsLocked(new Date() >= FALLBACK_LOCK_DATE);
+            }
+
+            if (easeRow) {
+                setIsEaseModeEnabled(easeRow.value === 'true');
+            }
+        } else {
+            setIsLocked(new Date() >= FALLBACK_LOCK_DATE);
+        }
     };
 
     // ── Update the lock date in DB (Master only) ─────────────
@@ -90,7 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             else setProfile(null);
         });
 
-        checkLock();
+        fetchGlobalConfig();
         return () => subscription.unsubscribe();
     }, []);
 
@@ -126,6 +143,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return !data; // true = available
     };
 
+    const updateEaseMode = async (enabled: boolean): Promise<{ error: string | null }> => {
+        const { error } = await supabase
+            .from('config')
+            .upsert({ key: 'is_ease_mode_enabled', value: String(enabled) }, { onConflict: 'key' });
+        
+        if (!error) {
+            setIsEaseModeEnabled(enabled);
+        }
+        return { error: error?.message || null };
+    };
+
     const openAuthModal  = () => setIsAuthModalOpen(true);
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
@@ -136,6 +164,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             profile,
             loading,
             isLocked,
+            isEaseModeEnabled,
             signIn,
             signUp,
             signOut,
@@ -144,6 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             closeAuthModal,
             isAuthModalOpen,
             updateLockDate,
+            updateEaseMode,
         }}>
             {children}
         </AuthContext.Provider>

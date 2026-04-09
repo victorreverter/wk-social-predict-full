@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePredictorCompletion } from '../../hooks/usePredictorCompletion';
@@ -6,9 +7,16 @@ import './Header.css';
 
 export const Header: React.FC = () => {
     const { state, setMode, setActiveTab, resetPredictions, autoFillGroups, setThirdsModalDismissed, setHelpModalOpen } = useApp();
-    const { profile, signOut, openAuthModal, isLocked } = useAuth();
+    const { profile, signOut, openAuthModal, isLocked, isEaseModeEnabled } = useAuth();
     const { mode, activeTab, groupMatches } = state;
     const { isComplete } = usePredictorCompletion();
+
+    // Effect to force HARD mode if Ease Mode is disabled globally
+    useEffect(() => {
+        if (!isEaseModeEnabled && mode === 'EASY') {
+            setMode('HARD');
+        }
+    }, [isEaseModeEnabled, mode, setMode]);
 
     const totalGroupMatches = Object.keys(groupMatches).length;
     const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
@@ -75,20 +83,22 @@ export const Header: React.FC = () => {
                     )}
                 </div>
 
-                <div className="mode-switcher">
-                    <button
-                        className={`mode-btn ${mode === 'EASY' ? 'active' : ''}`}
-                        onClick={() => setMode('EASY')}
-                    >
-                        Easy Mode
-                    </button>
-                    <button
-                        className={`mode-btn ${mode === 'HARD' ? 'active' : ''}`}
-                        onClick={() => setMode('HARD')}
-                    >
-                        Hard Mode
-                    </button>
-                </div>
+                {isEaseModeEnabled && (
+                    <div className="mode-switcher">
+                        <button
+                            className={`mode-btn ${mode === 'EASY' ? 'active' : ''}`}
+                            onClick={() => setMode('EASY')}
+                        >
+                            Easy Mode
+                        </button>
+                        <button
+                            className={`mode-btn ${mode === 'HARD' ? 'active' : ''}`}
+                            onClick={() => setMode('HARD')}
+                        >
+                            Hard Mode
+                        </button>
+                    </div>
+                )}
 
                 <button className="reset-btn" onClick={resetPredictions}>
                     Reset
