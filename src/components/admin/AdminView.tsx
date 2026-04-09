@@ -6,7 +6,9 @@ import {
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
 } from '../../utils/bracket-logic';
 import { scoreXI } from '../../lib/scoreXI';
+import { scoreAwards } from '../../lib/scoreAwards';
 import { useAuth } from '../../context/AuthContext';
+
 import './AdminView.css';
 
 // ── Types ──────────────────────────────────────────────────
@@ -201,9 +203,16 @@ export const AdminView: React.FC = () => {
             { category, value: officialAwards[category] ?? '', updated_at: new Date().toISOString() },
             { onConflict: 'category' }
         );
+        
+        if (!error) {
+            // Trigger auto-scoring for awards (now handles total points internally)
+            await scoreAwards();
+        }
+
         setSaving(null);
-        showToast(error ? `❌ ${error.message}` : `✅ Award saved!`);
+        showToast(error ? `❌ ${error.message}` : `✅ Award saved & users scored!`);
     };
+
 
     // ── Save all XI + auto-score ──────────────────────────
     const saveAllXI = async () => {

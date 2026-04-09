@@ -112,7 +112,9 @@ export const TournamentXIView: React.FC = () => {
             <div className="xi-header">
                 <h2>Team of the Tournament</h2>
                 <p>Select your ultimate 11 in a {selectedFormation} formation</p>
+                <p className="xi-hint">💡 Name matching is flexible! "Mbappé" or "mbappe" both work.</p>
             </div>
+
 
             <div className="formation-selector">
                 {Object.keys(FORMATIONS).map(fmt => (
