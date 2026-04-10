@@ -1,4 +1,5 @@
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import type { AwardsState } from '../../types';
 import './AwardsView.css';
 
@@ -18,6 +19,7 @@ const AWARD_CATEGORIES: { key: keyof AwardsState; label: string; icon: string; s
 
 export const AwardsView: React.FC = () => {
     const { state, updateAward } = useApp();
+    const { isLocked } = useAuth();
     const { awards } = state;
 
     return (
@@ -42,6 +44,7 @@ export const AwardsView: React.FC = () => {
                                 placeholder={shortPlaceholder}
                                 value={awards[key] || ''}
                                 onChange={(e) => updateAward(key, e.target.value)}
+                                disabled={isLocked}
                             />
                         </div>
                     </div>

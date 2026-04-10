@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Match, Team, ResultType } from '../../types';
 import './MatchCard.css';
 
@@ -11,6 +12,7 @@ interface Props {
 
 export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
     const { state, updateGroupMatchScore, updateGroupMatchEasyResult } = useApp();
+    const { isLocked } = useAuth();
     const { mode } = state;
 
     const handleEasyResult = (result: ResultType) => {
@@ -56,6 +58,7 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                             value={match.score.homeGoals === null ? '' : match.score.homeGoals}
                             onChange={(e) => handleHardScoreChange('home', e.target.value)}
                             placeholder="-"
+                            disabled={isLocked}
                         />
                     )}
                 </div>
@@ -71,6 +74,7 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                             value={match.score.awayGoals === null ? '' : match.score.awayGoals}
                             onChange={(e) => handleHardScoreChange('away', e.target.value)}
                             placeholder="-"
+                            disabled={isLocked}
                         />
                     )}
                     <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="team-flag" alt="" />
@@ -83,18 +87,21 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                     <button
                         className={`btn-easy win-btn ${match.result === 'HOME_WIN' ? 'active' : ''}`}
                         onClick={() => handleEasyResult('HOME_WIN')}
+                        disabled={isLocked}
                     >
                         W
                     </button>
                     <button
                         className={`btn-easy draw-btn ${match.result === 'DRAW' ? 'active' : ''}`}
                         onClick={() => handleEasyResult('DRAW')}
+                        disabled={isLocked}
                     >
                         D
                     </button>
                     <button
                         className={`btn-easy win-btn ${match.result === 'AWAY_WIN' ? 'active' : ''}`}
                         onClick={() => handleEasyResult('AWAY_WIN')}
+                        disabled={isLocked}
                     >
                         W
                     </button>

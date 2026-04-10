@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Match, Team, ResultType } from '../../types';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import './BracketMatchNode.css';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 
 export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam }) => {
     const { state, updateKnockoutMatchEasyResult, updateKnockoutMatchScore } = useApp();
+    const { isLocked } = useAuth();
     const { mode } = state;
 
     const handleEasyResult = (result: ResultType) => {
@@ -54,6 +56,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                                 title="Penalties"
                                 value={isHome ? (match.score?.homePenalties ?? '') : (match.score?.awayPenalties ?? '')}
                                 onChange={(e) => handleHardScoreChange(isHome ? 'home-pen' : 'away-pen', e.target.value)}
+                                disabled={isLocked}
                             />
                         )}
                         <input
@@ -63,6 +66,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             placeholder="-"
                             value={isHome ? (match.score?.homeGoals ?? '') : (match.score?.awayGoals ?? '')}
                             onChange={(e) => handleHardScoreChange(isHome ? 'home' : 'away', e.target.value)}
+                            disabled={isLocked}
                         />
                     </div>
                 ) : (
@@ -71,6 +75,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             className={`btn-easy-bracket ${match.result === (isHome ? 'HOME_WIN' : 'AWAY_WIN') ? 'active' : ''}`}
                             onClick={() => handleEasyResult(isHome ? 'HOME_WIN' : 'AWAY_WIN')}
                             title="Select Winner"
+                            disabled={isLocked}
                         >
                             W
                         </button>

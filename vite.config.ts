@@ -7,5 +7,14 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'docs',
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js']
+        }
+      }
+    }
   }
 })

@@ -2,18 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { determineQualifiedTeams } from '../../utils/bracket-logic';
 import { initialTeams } from '../../utils/data-init';
+import { useAuth } from '../../context/AuthContext';
 import './ThirdPlaceSelection.css';
 
 export const ThirdPlaceSelection: React.FC = () => {
     const { state, setSelectedThirds, setActiveTab, setThirdsModalDismissed } = useApp();
     const { groupMatches, selectedThirds } = state;
+    const { isLocked } = useAuth();
 
     const totalGroupMatches = Object.keys(groupMatches).length;
     const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
 
     // We only show if all matches are done and they haven't submitted 8 teams yet.
+    // Also, we prevent it entirely if the app is locked.
     const isGroupsFinished = totalGroupMatches === 72 && completedGroupMatches === 72;
-    const needsSelection = isGroupsFinished && selectedThirds.length !== 8;
+    const needsSelection = isGroupsFinished && selectedThirds.length !== 8 && !isLocked;
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);
 

@@ -121,11 +121,13 @@ export const Header: React.FC = () => {
                     </div>
                 )}
 
-                <button className="reset-btn" onClick={resetPredictions}>
-                    Reset
-                </button>
+                {!isLocked && (
+                    <button className="reset-btn" onClick={resetPredictions}>
+                        Reset
+                    </button>
+                )}
 
-                {isGroupsFinished && (
+                {isGroupsFinished && !isLocked && (
                     <button
                         className="select-thirds-btn"
                         onClick={() => setThirdsModalDismissed(false)}
@@ -133,9 +135,11 @@ export const Header: React.FC = () => {
                         Select 3rds
                     </button>
                 )}
-                <button className="auto-fill-btn" onClick={autoFillGroups}>
-                    Auto-Fill Groups
-                </button>
+                {!isLocked && (
+                    <button className="auto-fill-btn" onClick={autoFillGroups}>
+                        Auto-Fill Groups
+                    </button>
+                )}
                 <button
                     className="help-icon-btn"
                     onClick={() => setHelpModalOpen(true)}

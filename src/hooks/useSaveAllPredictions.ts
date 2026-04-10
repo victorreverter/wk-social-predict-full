@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -11,28 +11,38 @@ export const useSaveAllPredictions = () => {
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveMsg, setSaveMsg] = useState('');
 
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const setAlert = (status: 'error' | 'saved', msg: string) => {
+        setSaveStatus(status);
+        setSaveMsg(msg);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            setSaveStatus('idle');
+            setSaveMsg('');
+        }, 5000);
+    };
+
     const saveAll = async () => {
         if (!session) {
-            setSaveStatus('error');
-            setSaveMsg('Please sign in to save.');
+            setAlert('error', 'Please sign in to save.');
             return;
         }
 
         if (isLocked) {
-            setSaveStatus('error');
-            setSaveMsg('Predictions are locked.');
+            setAlert('error', 'Predictions are locked.');
             return;
         }
 
         // Required condition: you must finish groups and brackets
         if (!isFinalFinished) {
-            setSaveStatus('error');
-            setSaveMsg('Missing matches! Please complete the group stage and bracket entirely.');
+            setAlert('error', 'Missing matches! Please complete the group stage and bracket entirely.');
             return;
         }
 
         setSaveStatus('saving');
         setSaveMsg('');
+
 
         try {
             // 1. Matches (Group + Knockout)
@@ -148,24 +158,19 @@ export const useSaveAllPredictions = () => {
             const hasError = results.some(r => r.error);
             if (hasError) {
                 console.error(results.filter(r => r.error).map(r => r.error));
-                setSaveStatus('error');
                 const optionalNote = (!areAwardsFilled || xiRows.length < 11) ? " (Note: XI or Awards were incomplete but this shouldn't block saving)" : "";
-                setSaveMsg('Failed to save. Please try again.' + optionalNote);
+                setAlert('error', 'Failed to save. Please try again.' + optionalNote);
             } else {
-                setSaveStatus('saved');
                 let optionalNote = "";
                 if (!areAwardsFilled || xiRows.length < 11) {
                     optionalNote = " (Bracket saved, but Awards or XI are incomplete)";
                 }
-                setSaveMsg(`✅ All Predictions Saved!${optionalNote}`);
+                setAlert('saved', `✅ All Predictions Saved!${optionalNote}`);
             }
 
         } catch (err: any) {
-            setSaveStatus('error');
-            setSaveMsg(err.message || 'An unexpected error occurred.');
+            setAlert('error', err.message || 'An unexpected error occurred.');
         }
-
-        setTimeout(() => { if (saveStatus !== 'error') { setSaveStatus('idle'); setSaveMsg(''); } }, 4000);
     };
 
     return { saveAll, saveStatus, saveMsg };
