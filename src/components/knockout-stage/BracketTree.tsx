@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Match } from '../../types';
 import { BracketMatchNode } from './BracketMatchNode';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { initialTeams } from '../../utils/data-init';
 import { exportBracketToImage } from '../../utils/export-image';
 import './BracketTree.css';
@@ -40,8 +41,19 @@ const BRACKET_VISUAL_ORDER: { left: Record<string, number[]>; right: Record<stri
 
 export const BracketTree: React.FC = () => {
     const { state } = useApp();
+    const { profile } = useAuth();
     const [userName, setUserName] = useState('');
     const matchesList = Object.values(state.knockoutMatches);
+
+    useEffect(() => {
+        if (profile) {
+            const displayName = profile.display_name || profile.username;
+            if (displayName) {
+                const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                setUserName(capitalizedName);
+            }
+        }
+    }, [profile]);
 
     const handleExport = () => {
         exportBracketToImage(matchesList, 'my-wc2026-bracket.jpg');
