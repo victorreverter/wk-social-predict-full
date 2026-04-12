@@ -224,7 +224,7 @@ export const updateKnockoutBracket = (
 
   if (allGroupsDone || allowIncomplete) {
     const { groupWinners, groupRunnersUp, best8Thirds, allThirds } = determineQualifiedTeams(groupMatches);
-    const thirdsReady = (selectedThirds.length === 8 && Object.keys(groupWinners).length === 12) || allowIncomplete;
+    const thirdsReady = Object.keys(groupWinners).length === 12 || allowIncomplete;
 
     if (thirdsReady) {
       // Resolve the 8 selected third-placed teams in order (T3_0..T3_7)

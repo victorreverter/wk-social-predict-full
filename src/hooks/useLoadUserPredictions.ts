@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { determineQualifiedTeams } from '../utils/bracket-logic';
 
 export const useLoadUserPredictions = () => {
     const { session } = useAuth();
     const { state, loadFullState } = useApp();
+    const hasLoaded = useRef(false);
 
     useEffect(() => {
         if (!session?.user) return;
+        if (hasLoaded.current) return;
 
         const loadPredictions = async () => {
             try {
@@ -71,11 +74,20 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
+                // Rehydrate dynamically chosen 3rd-place teams based on what made it to R32
+                const { allThirds } = determineQualifiedTeams(loadedGroups);
+                const thirdPlaceIds = allThirds.map(t => t.teamId);
+                const r32Teams = koRes.data.filter((k: any) => k.round === 'R32').map((k: any) => k.team_id);
+                
+                // If they have explicitly chosen thirds saved in DB, restore them!
+                const loadedSelectedThirds = r32Teams.filter((teamId: string) => thirdPlaceIds.includes(teamId));
+
                 loadFullState({
                     groupMatches: loadedGroups,
                     knockoutMatches: loadedKo,
                     awards: loadedAwards,
-                    tournamentXI: loadedXI
+                    tournamentXI: loadedXI,
+                    selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds
                 });
                 
             } catch (err) {
@@ -84,6 +96,9 @@ export const useLoadUserPredictions = () => {
         };
 
         // Delay it highly slightly to ensure context binds completely
-        setTimeout(() => loadPredictions(), 500);
-    }, [session]);
+        setTimeout(() => {
+            loadPredictions();
+            hasLoaded.current = true;
+        }, 500);
+    }, [session?.user?.id]);
 };
