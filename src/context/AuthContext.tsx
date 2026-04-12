@@ -19,9 +19,10 @@ interface AuthContextType {
     loading: boolean;
     isLocked: boolean; // predictions locked after June 11 2026
     isEaseModeEnabled: boolean; // Global setting to allow/disallow Easy Mode
-    signIn: (username: string, password: string) => Promise<string | null>;
-    signUp: (username: string, password: string) => Promise<string | null>;
+    signIn: (email: string, password: string) => Promise<string | null>;
+    signUp: (email: string, username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
+    sendPasswordResetEmail: (email: string) => Promise<string | null>;
     checkUsername: (username: string) => Promise<boolean>;
     openAuthModal: () => void;
     closeAuthModal: () => void;
@@ -112,19 +113,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     // ── Auth actions ──────────────────────────────────────────
-    // We use a fake internal email so users only need username + password.
-    const toFakeEmail = (username: string) => `${username.trim().toLowerCase()}@wkpredictor.app`;
-
-    const signIn = async (username: string, password: string): Promise<string | null> => {
-        const { error } = await supabase.auth.signInWithPassword({ email: toFakeEmail(username), password });
+    const signIn = async (email: string, password: string): Promise<string | null> => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error ? error.message : null;
     };
 
-    const signUp = async (username: string, password: string): Promise<string | null> => {
+    const signUp = async (email: string, username: string, password: string): Promise<string | null> => {
         const { error } = await supabase.auth.signUp({
-            email: toFakeEmail(username),
+            email,
             password,
             options: { data: { username } }
+        });
+        return error ? error.message : null;
+    };
+
+    const sendPasswordResetEmail = async (email: string): Promise<string | null> => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin,
         });
         return error ? error.message : null;
     };
@@ -168,6 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             signIn,
             signUp,
             signOut,
+            sendPasswordResetEmail,
             checkUsername,
             openAuthModal,
             closeAuthModal,

@@ -213,3 +213,25 @@
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+
+.forgot-pw-link {
+    font-size: 0.8rem;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    color: var(--text-secondary) !important;
+}
+
+.forgot-pw-link:hover {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+}
+
+.auth-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1rem 0;
+    width: 100%;
+}
+:root.light .auth-divider {
+    background: rgba(0, 0, 0, 0.1);
+}

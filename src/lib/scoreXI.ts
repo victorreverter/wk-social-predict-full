@@ -47,14 +47,20 @@ export const scoreXI = async (): Promise<{ usersScored: number; error?: string }
     if (predErr) return { usersScored: 0, error: predErr.message };
     if (!preds?.length) return { usersScored: 0 };
 
+    // ── 2B. Load Scoring Rules ───────────────────────────────
+    const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
+    const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
+    const gkPoints = getPts('xi_goalkeeper', 5);
+    const fpPoints = getPts('xi_field_player', 3);
+
     // ── 3. Calculate new pts per row ─────────────────────────
     const updates = (preds as PredXIRow[]).map(pred => {
         const normName = normalizeForMatch(pred.player_name || '');
         let pts = 0;
         if (pred.position === 'GK') {
-            if (normGK && normName === normGK) pts = 5;
+            if (normGK && normName === normGK) pts = gkPoints;
         } else {
-            if (normFPs.includes(normName)) pts = 3;
+            if (normFPs.includes(normName)) pts = fpPoints;
         }
         return { id: pred.id, user_id: pred.user_id, pts_earned: pts };
     });

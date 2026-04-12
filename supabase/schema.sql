@@ -20,7 +20,10 @@ create table if not exists public.profiles (
 
 -- Expose to RLS: users can read all profiles, only edit own.
 alter table public.profiles enable row level security;
+drop policy if exists "Public read profiles" on public.profiles;
 create policy "Public read profiles"  on public.profiles for select using (true);
+
+drop policy if exists "Own profile update" on public.profiles;
 create policy "Own profile update"    on public.profiles for update using (auth.uid() = id);
 
 -- ── 2. Prediction Lock ────────────────────────────────────
@@ -48,7 +51,10 @@ create table if not exists public.official_matches (
 );
 
 alter table public.official_matches enable row level security;
+drop policy if exists "Public read official matches" on public.official_matches;
 create policy "Public read official matches"  on public.official_matches for select using (true);
+
+drop policy if exists "Master can write matches" on public.official_matches;
 create policy "Master can write matches"      on public.official_matches for all
   using  ((select is_master from public.profiles where id = auth.uid()))
   with check ((select is_master from public.profiles where id = auth.uid()));
@@ -61,7 +67,10 @@ create table if not exists public.official_awards (
 );
 
 alter table public.official_awards enable row level security;
+drop policy if exists "Public read official awards" on public.official_awards;
 create policy "Public read official awards"  on public.official_awards for select using (true);
+
+drop policy if exists "Master can write awards" on public.official_awards;
 create policy "Master can write awards"      on public.official_awards for all
   using  ((select is_master from public.profiles where id = auth.uid()))
   with check ((select is_master from public.profiles where id = auth.uid()));
@@ -75,7 +84,10 @@ create table if not exists public.official_knockout_teams (
 );
 
 alter table public.official_knockout_teams enable row level security;
+drop policy if exists "Public read knockout teams" on public.official_knockout_teams;
 create policy "Public read knockout teams"  on public.official_knockout_teams for select using (true);
+
+drop policy if exists "Master can write ko teams" on public.official_knockout_teams;
 create policy "Master can write ko teams"   on public.official_knockout_teams for all
   using  ((select is_master from public.profiles where id = auth.uid()))
   with check ((select is_master from public.profiles where id = auth.uid()));
@@ -96,8 +108,11 @@ create table if not exists public.user_predictions_matches (
 );
 
 alter table public.user_predictions_matches enable row level security;
+drop policy if exists "Users own match predictions" on public.user_predictions_matches;
 create policy "Users own match predictions" on public.user_predictions_matches for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Public read match preds" on public.user_predictions_matches;
 create policy "Public read match preds" on public.user_predictions_matches for select using (true);
 
 -- ── 7. User Award Predictions ────────────────────────────
@@ -111,8 +126,11 @@ create table if not exists public.user_predictions_awards (
 );
 
 alter table public.user_predictions_awards enable row level security;
+drop policy if exists "Users own award predictions" on public.user_predictions_awards;
 create policy "Users own award predictions" on public.user_predictions_awards for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Public read award preds" on public.user_predictions_awards;
 create policy "Public read award preds" on public.user_predictions_awards for select using (true);
 
 -- ── 8. User Knockout Progression Predictions ─────────────
@@ -126,9 +144,49 @@ create table if not exists public.user_predictions_knockout (
 );
 
 alter table public.user_predictions_knockout enable row level security;
+drop policy if exists "Users own ko predictions" on public.user_predictions_knockout;
 create policy "Users own ko predictions" on public.user_predictions_knockout for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Public read ko preds" on public.user_predictions_knockout;
 create policy "Public read ko preds" on public.user_predictions_knockout for select using (true);
+
+
+-- ── 8B. Official Tournament XI (Master Only) ──────────────
+create table if not exists public.official_tournament_xi (
+  position   text primary key,  -- 'GK', 'FP1', 'FP2', ..., 'FP10'
+  player_name text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.official_tournament_xi enable row level security;
+drop policy if exists "Public read official xi" on public.official_tournament_xi;
+create policy "Public read official xi"  on public.official_tournament_xi for select using (true);
+
+drop policy if exists "Master can write official xi" on public.official_tournament_xi;
+create policy "Master can write official xi" on public.official_tournament_xi for all
+  using  ((select is_master from public.profiles where id = auth.uid()))
+  with check ((select is_master from public.profiles where id = auth.uid()));
+
+
+-- ── 8C. User Tournament XI Predictions ────────────────────
+create table if not exists public.user_predictions_xi (
+  id          uuid primary key default uuid_generate_v4(),
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  position    text not null,   -- e.g. ST, CAM, etc. depending on formation
+  player_name text not null,
+  pts_earned  integer not null default 0,
+  unique (user_id, position)
+);
+
+alter table public.user_predictions_xi enable row level security;
+drop policy if exists "Users own xi predictions" on public.user_predictions_xi;
+create policy "Users own xi predictions" on public.user_predictions_xi for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Public read xi preds" on public.user_predictions_xi;
+create policy "Public read xi preds" on public.user_predictions_xi for select using (true);
+
 
 -- ── 9. Trigger: Auto-create profile on sign-up ───────────
 create or replace function public.handle_new_user()
@@ -167,11 +225,16 @@ insert into public.scoring_rules (rule_key, pts, description) values
   ('ko_reach_qf',            5,  'Team correctly predicted in QF'),
   ('ko_reach_sf',           10,  'Team correctly predicted in SF'),
   ('ko_reach_final',        15,  'Team correctly predicted in Final'),
-  ('ko_champion',           25,  'Correct World Cup Champion')
+  ('ko_champion',           25,  'Correct World Cup Champion'),
+  ('xi_goalkeeper',          5,  'Correct Goalkeeper in Tournament XI'),
+  ('xi_field_player',        3,  'Correct Field Player in Tournament XI')
 on conflict (rule_key) do nothing;
 
 alter table public.scoring_rules enable row level security;
+drop policy if exists "Public read rules" on public.scoring_rules;
 create policy "Public read rules"   on public.scoring_rules for select using (true);
+
+drop policy if exists "Master can edit rules" on public.scoring_rules;
 create policy "Master can edit rules" on public.scoring_rules for all
   using  ((select is_master from public.profiles where id = auth.uid()))
   with check ((select is_master from public.profiles where id = auth.uid()));

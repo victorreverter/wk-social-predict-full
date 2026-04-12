@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './AuthModal.css';
 
-type AuthView = 'LOGIN' | 'REGISTER';
+type AuthView = 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD';
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 export const AuthModal: React.FC = () => {
-    const { signIn, signUp, checkUsername, closeAuthModal } = useAuth();
+    const { signIn, signUp, checkUsername, closeAuthModal, sendPasswordResetEmail } = useAuth();
 
     const [view, setView]         = useState<AuthView>('LOGIN');
+    const [email, setEmail]       = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError]       = useState<string | null>(null);
@@ -42,27 +43,40 @@ export const AuthModal: React.FC = () => {
         e.preventDefault();
         reset();
 
-        if (username.trim().length < 3) { setError('Username must be at least 3 characters.'); return; }
-        if (password.length < 6)        { setError('Password must be at least 6 characters.'); return; }
-        if (!/^[a-z0-9_]+$/i.test(username.trim())) {
-            setError('Username can only contain letters, numbers, and underscores.');
+        const cleanEmail = email.trim();
+        if (!cleanEmail.includes('@')) { setError('Please enter a valid email address.'); return; }
+
+        if (view === 'FORGOT_PASSWORD') {
+            setLoading(true);
+            const err = await sendPasswordResetEmail(cleanEmail);
+            if (err) { setError(friendlyError(err)); setLoading(false); }
+            else { setSuccess('Confirmation link sent! Check your email inbox to reset your password.'); setLoading(false); }
             return;
         }
-        if (view === 'REGISTER' && usernameStatus === 'taken') {
-            setError('That username is already taken. Please choose another.');
-            return;
+
+        if (view === 'REGISTER') {
+            if (username.trim().length < 3) { setError('Username must be at least 3 characters.'); return; }
+            if (!/^[a-z0-9_]+$/i.test(username.trim())) {
+                setError('Username can only contain letters, numbers, and underscores.');
+                return;
+            }
+            if (usernameStatus === 'taken') {
+                setError('That username is already taken. Please choose another.');
+                return;
+            }
         }
+        if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
 
         setLoading(true);
 
         if (view === 'LOGIN') {
-            const err = await signIn(username.trim(), password);
+            const err = await signIn(cleanEmail, password);
             if (err) { setError(friendlyError(err)); setLoading(false); }
             else closeAuthModal();
-        } else {
-            const err = await signUp(username.trim(), password);
+        } else if (view === 'REGISTER') {
+            const err = await signUp(cleanEmail, username.trim(), password);
             if (err) { setError(friendlyError(err)); setLoading(false); }
-            else { setSuccess('Account created! You can now sign in.'); setLoading(false); }
+            else { setSuccess('Account created! Check your email internally or you can now sign in.'); setLoading(false); }
         }
     };
 
@@ -91,12 +105,14 @@ export const AuthModal: React.FC = () => {
 
                 <div className="auth-logo">⚽</div>
                 <h2 className="auth-title text-gradient">
-                    {view === 'LOGIN' ? 'Welcome Back' : 'Join the Predictor'}
+                    {view === 'LOGIN' ? 'Welcome Back' : view === 'FORGOT_PASSWORD' ? 'Reset Password' : 'Join the Predictor'}
                 </h2>
                 <p className="auth-subtitle">
                     {view === 'LOGIN'
-                        ? 'Sign in with your username and password.'
-                        : 'Create a free account — no email needed.'}
+                        ? 'Sign in to save your predictions.'
+                        : view === 'FORGOT_PASSWORD'
+                        ? 'Enter your email to receive a secure recovery link.'
+                        : 'Create a free account to compete on the leaderboard.'}
                 </p>
 
                 {success ? (
@@ -113,36 +129,52 @@ export const AuthModal: React.FC = () => {
                 ) : (
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="auth-field">
-                            <div className="auth-field-header">
-                                <label>Username</label>
-                                {usernameIndicator()}
-                            </div>
+                            <label>Email Address</label>
                             <input
-                                type="text"
-                                placeholder="your_username"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
+                                type="email"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
                                 required
-                                autoComplete="username"
+                                autoComplete="email"
                                 autoFocus
-                                className={
-                                    view === 'REGISTER' && usernameStatus === 'taken' ? 'input-error' :
-                                    view === 'REGISTER' && usernameStatus === 'available' ? 'input-ok' : ''
-                                }
                             />
                         </div>
 
-                        <div className="auth-field">
-                            <label>Password</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                required
-                                autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
-                            />
-                        </div>
+                        {view === 'REGISTER' && (
+                            <div className="auth-field">
+                                <div className="auth-field-header">
+                                    <label>Choose a Username</label>
+                                    {usernameIndicator()}
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="your_cool_name"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    required
+                                    autoComplete="username"
+                                    className={
+                                        view === 'REGISTER' && usernameStatus === 'taken' ? 'input-error' :
+                                        view === 'REGISTER' && usernameStatus === 'available' ? 'input-ok' : ''
+                                    }
+                                />
+                            </div>
+                        )}
+
+                        {view !== 'FORGOT_PASSWORD' && (
+                            <div className="auth-field">
+                                <label>Password</label>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    required
+                                    autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
+                                />
+                            </div>
+                        )}
 
                         {error && <div className="auth-error">{error}</div>}
 
@@ -151,21 +183,29 @@ export const AuthModal: React.FC = () => {
                             className="auth-submit-btn"
                             disabled={loading || (view === 'REGISTER' && usernameStatus === 'taken')}
                         >
-                            {loading ? 'Please wait…' : view === 'LOGIN' ? 'Sign In' : 'Create Account'}
+                            {loading ? 'Please wait…' : view === 'LOGIN' ? 'Sign In' : view === 'FORGOT_PASSWORD' ? 'Send Recovery Link' : 'Create Account'}
                         </button>
                     </form>
                 )}
 
                 {!success && (
                     <div className="auth-switch">
-                        {view === 'LOGIN' ? (
-                            <>No account?{' '}
-                                <button onClick={() => { setView('REGISTER'); reset(); setUsername(''); setPassword(''); }}>Sign up free</button>
+                        {view === 'LOGIN' && (
+                            <>
+                                <button className="forgot-pw-link" onClick={() => { setView('FORGOT_PASSWORD'); reset(); setEmail(''); setPassword(''); }}>Forgot your password?</button>
+                                <div className="auth-divider"></div>
+                                <div style={{marginTop:'0.5rem'}}>
+                                    No account? <button onClick={() => { setView('REGISTER'); reset(); setEmail(''); setUsername(''); setPassword(''); }}>Sign up free</button>
+                                </div>
                             </>
-                        ) : (
+                        )}
+                        {view === 'REGISTER' && (
                             <>Already have an account?{' '}
-                                <button onClick={() => { setView('LOGIN'); reset(); setUsername(''); setPassword(''); }}>Sign in</button>
+                                <button onClick={() => { setView('LOGIN'); reset(); setEmail(''); setUsername(''); setPassword(''); }}>Sign in</button>
                             </>
+                        )}
+                        {view === 'FORGOT_PASSWORD' && (
+                            <><button onClick={() => { setView('LOGIN'); reset(); setEmail(''); setPassword(''); }}>Back to Sign In</button></>
                         )}
                     </div>
                 )}
