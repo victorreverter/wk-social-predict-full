@@ -14,6 +14,7 @@ import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
 import { useApp } from './context/AppContext';
+import { useLoadUserPredictions } from './hooks/useLoadUserPredictions';
 
 import './styles/global.css';
 
@@ -34,18 +35,24 @@ const MainContent = () => {
   );
 };
 
+const AppContentWrapper = () => {
+  useLoadUserPredictions();
+  return (
+    <div className="app-container">
+      <Header />
+      <CountdownWidget />
+      <MainContent />
+    </div>
+  );
+};
+
 const AppShell = () => {
   const { isAuthModalOpen } = useAuth();
   return (
     <AppProvider>
-      <div className="app-container">
-        <Header />
-        <CountdownWidget />
-        <MainContent />
-
-        <OnboardingModal />
-        {isAuthModalOpen && <AuthModal />}
-      </div>
+      <AppContentWrapper />
+      <OnboardingModal />
+      {isAuthModalOpen && <AuthModal />}
     </AppProvider>
   );
 };

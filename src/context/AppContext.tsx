@@ -20,6 +20,7 @@ interface AppContextType {
     setHelpModalOpen: (isOpen: boolean) => void;
     resetPredictions: () => void;
     autoFillGroups: () => void;
+    loadFullState: (newState: Partial<AppState>) => void;
 }
 
 const getFreshState = (): AppState => {
@@ -262,6 +263,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const loadFullState = (newState: Partial<AppState>) => {
+        setState(prev => {
+            const nextState = { ...prev, ...newState };
+            
+            // In case we only load matches, we need to enforce the bracket logic 
+            // so we correctly re-map knockouts.
+            if (newState.groupMatches) {
+                nextState.knockoutMatches = updateKnockoutBracket(
+                    nextState.knockoutMatches, 
+                    nextState.groupMatches, 
+                    nextState.selectedThirds
+                );
+            }
+            
+            return nextState;
+        });
+    };
+
     const contextValue = React.useMemo(() => ({
         state,
         setMode,
@@ -277,7 +296,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setThirdsModalDismissed,
         setHelpModalOpen,
         resetPredictions,
-        autoFillGroups
+        autoFillGroups,
+        loadFullState
     }), [state]); // Only re-create context object if state actually changes
 
     return (
