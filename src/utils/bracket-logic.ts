@@ -210,7 +210,8 @@ const setTeams = (
 export const updateKnockoutBracket = (
   currentKnockout: Record<string, Match>,
   groupMatches: Record<string, Match>,
-  selectedThirds: string[] = []
+  selectedThirds: string[] = [],
+  allowIncomplete: boolean = false
 ): Record<string, Match> => {
   let ko = Object.keys(currentKnockout).length === 0
     ? generateInitialKnockoutMatches()
@@ -221,9 +222,9 @@ export const updateKnockoutBracket = (
   const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
   const allGroupsDone         = totalGroupMatches === 72 && completedGroupMatches === 72;
 
-  if (allGroupsDone) {
+  if (allGroupsDone || allowIncomplete) {
     const { groupWinners, groupRunnersUp, best8Thirds, allThirds } = determineQualifiedTeams(groupMatches);
-    const thirdsReady = selectedThirds.length === 8 && Object.keys(groupWinners).length === 12;
+    const thirdsReady = (selectedThirds.length === 8 && Object.keys(groupWinners).length === 12) || allowIncomplete;
 
     if (thirdsReady) {
       // Resolve the 8 selected third-placed teams in order (T3_0..T3_7)

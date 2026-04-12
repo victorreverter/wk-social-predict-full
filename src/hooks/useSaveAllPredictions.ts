@@ -79,33 +79,27 @@ export const useSaveAllPredictions = () => {
             
             // Extract progressing teams from knockout matches
             Object.values(state.knockoutMatches).forEach(m => {
-                // If it's a knockout match, it receives teams from the prior round.
-                // The presence of a team in this match implies they reached this round.
-                // Let's infer the round cleanly from match ID (e.g. k_R32_1)
-                const parts = m.id.split('_');
-                if (parts.length >= 2) {
-                    const roundCode = parts[1]; // R32, R16, QF, SF, F, 3RD
-                    if (roundCode !== '3RD' && roundCode !== 'F') { // Final and 3rd handled manually if needed, or included?
-                         if (m.homeTeamId && m.homeTeamId !== 'TBD') {
-                             koRows.push({ user_id: session.user.id, round: roundCode, team_id: m.homeTeamId, pts_earned: 0 });
-                         }
-                         if (m.awayTeamId && m.awayTeamId !== 'TBD') {
-                             koRows.push({ user_id: session.user.id, round: roundCode, team_id: m.awayTeamId, pts_earned: 0 });
-                         }
-                    }
-                    if (roundCode === 'F') {
-                         if (m.homeTeamId && m.homeTeamId !== 'TBD') {
-                             koRows.push({ user_id: session.user.id, round: 'F', team_id: m.homeTeamId, pts_earned: 0 });
-                         }
-                         if (m.awayTeamId && m.awayTeamId !== 'TBD') {
-                             koRows.push({ user_id: session.user.id, round: 'F', team_id: m.awayTeamId, pts_earned: 0 });
-                         }
-                    }
+                const roundCode = m.stage; // 'R32', 'R16', 'QF', 'SF', '3RD', 'F'
+                if (roundCode && roundCode !== '3RD' && roundCode !== 'F') { 
+                     if (m.homeTeamId && m.homeTeamId !== 'TBD') {
+                         koRows.push({ user_id: session.user.id, round: roundCode, team_id: m.homeTeamId, pts_earned: 0 });
+                     }
+                     if (m.awayTeamId && m.awayTeamId !== 'TBD') {
+                         koRows.push({ user_id: session.user.id, round: roundCode, team_id: m.awayTeamId, pts_earned: 0 });
+                     }
+                }
+                if (roundCode === 'F') {
+                     if (m.homeTeamId && m.homeTeamId !== 'TBD') {
+                         koRows.push({ user_id: session.user.id, round: 'F', team_id: m.homeTeamId, pts_earned: 0 });
+                     }
+                     if (m.awayTeamId && m.awayTeamId !== 'TBD') {
+                         koRows.push({ user_id: session.user.id, round: 'F', team_id: m.awayTeamId, pts_earned: 0 });
+                     }
                 }
             });
 
             // Champion
-            const finalMatch = state.knockoutMatches['k_F_1'];
+            const finalMatch = state.knockoutMatches['m104'];
             if (finalMatch) {
                  let champion = '';
                  if (finalMatch.result === 'HOME_WIN') champion = finalMatch.homeTeamId;

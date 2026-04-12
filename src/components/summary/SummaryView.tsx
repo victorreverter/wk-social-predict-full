@@ -22,15 +22,14 @@ const getGroupPosition = (teamId: string, groupMatches: Record<string, Match>) =
     return `${pos} Group ${team.group}`;
 };
 
-const getTeamsInStage = (stagePrefix: string, count: number, matches: Record<string, Match>) => {
+const getTeamsInStage = (stageCode: string, matches: Record<string, Match>) => {
     const teams: string[] = [];
-    for (let i = 1; i <= count; i++) {
-        const match = matches[`k_${stagePrefix}_${i}`];
-        if (match) {
+    Object.values(matches).forEach(match => {
+        if (match.stage === stageCode) {
             if (match.homeTeamId !== 'TBD') teams.push(match.homeTeamId);
             if (match.awayTeamId !== 'TBD') teams.push(match.awayTeamId);
         }
-    }
+    });
     return teams;
 };
 
@@ -119,14 +118,14 @@ export const SummaryView: React.FC = () => {
     const { groupMatches, knockoutMatches, awards, tournamentXI } = state;
 
     // Progression
-    const classified32 = getTeamsInStage('R32', 16, knockoutMatches);
-    const roundOf16 = getTeamsInStage('R16', 8, knockoutMatches);
-    const quarterFinals = getTeamsInStage('QF', 4, knockoutMatches);
-    const semiFinals = getTeamsInStage('SF', 2, knockoutMatches);
-    const finals = getTeamsInStage('F', 1, knockoutMatches);
-    const champion = getMatchWinner(knockoutMatches['k_F_1']);
-    const secondPlaceWinner = getMatchLoser(knockoutMatches['k_F_1']);
-    const thirdPlaceWinner = getMatchWinner(knockoutMatches['k_3RD_1']);
+    const classified32 = getTeamsInStage('R32', knockoutMatches);
+    const roundOf16 = getTeamsInStage('R16', knockoutMatches);
+    const quarterFinals = getTeamsInStage('QF', knockoutMatches);
+    const semiFinals = getTeamsInStage('SF', knockoutMatches);
+    const finals = getTeamsInStage('F', knockoutMatches);
+    const champion = getMatchWinner(knockoutMatches['m104']);
+    const secondPlaceWinner = getMatchLoser(knockoutMatches['m104']);
+    const thirdPlaceWinner = getMatchWinner(knockoutMatches['m103']);
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
     const activeFormation = FORMATIONS[selectedFormation];

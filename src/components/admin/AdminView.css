@@ -563,3 +563,26 @@
     color: #64dcff;
     border: 1px solid rgba(100, 220, 255, 0.25);
 }
+
+/* ── Save Visual Feedback System ──────────────────────── */
+
+.admin-match-card {
+    transition: all 0.3s ease;
+}
+
+.admin-match-card--saved {
+    border-color: rgba(0, 230, 118, 0.5) !important;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.15) !important;
+}
+
+.admin-save-btn {
+    transition: all 0.3s ease;
+}
+
+.admin-save-btn--saved {
+    background: #00e676 !important;
+    color: #000 !important;
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.4) !important;
+    border: none;
+    transform: scale(0.98);
+}

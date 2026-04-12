@@ -5,9 +5,11 @@ import {
     R32_FIXTURES, R16_FIXTURES, QF_FIXTURES, SF_FIXTURES,
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
 } from '../../utils/bracket-logic';
-import { scoreXI } from '../../lib/scoreXI';
 import { scoreAwards } from '../../lib/scoreAwards';
+import { scoreXI } from '../../lib/scoreXI';
 import { useAuth } from '../../context/AuthContext';
+import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
+import type { Match } from '../../types';
 
 import './AdminView.css';
 
@@ -75,13 +77,14 @@ const MatchRow: React.FC<{
     row: OfficialMatch;
     hasPens: boolean;
     saving: string | null;
+    isSavedData: boolean;
     onChange: (field: keyof OfficialMatch, value: string | boolean | number | null) => void;
     onSave: () => void;
-}> = ({ id, label, homeLabel, awayLabel, row, hasPens, saving, onChange, onSave }) => {
+}> = ({ id, label, homeLabel, awayLabel, row, hasPens, saving, isSavedData, onChange, onSave }) => {
     const isTie = row.home_goals !== null && row.away_goals !== null && row.home_goals === row.away_goals;
 
     return (
-        <div className="admin-match-card glass-panel">
+        <div className={`admin-match-card glass-panel ${isSavedData ? 'admin-match-card--saved' : ''}`}>
             <span className="admin-match-id">{label}</span>
             <div className="admin-match-body">
                 <div className="admin-match-teams">
@@ -120,8 +123,12 @@ const MatchRow: React.FC<{
                     </div>
                 )}
             </div>
-            <button className="admin-save-btn" onClick={onSave} disabled={saving === id}>
-                {saving === id ? '…' : 'Save'}
+            <button 
+                className={`admin-save-btn ${isSavedData ? 'admin-save-btn--saved' : ''}`} 
+                onClick={onSave} 
+                disabled={saving === id}
+            >
+                {saving === id ? '…' : isSavedData ? '✓ Saved' : 'Save'}
             </button>
         </div>
     );
@@ -152,12 +159,19 @@ export const AdminView: React.FC = () => {
     const [officialMatches, setOfficialMatches] = useState<Record<string, OfficialMatch>>({});
     const [officialAwards, setOfficialAwards]   = useState<Record<string, string>>({});
     const [officialXI, setOfficialXI]     = useState<Record<string, string>>({});
+    const [resolvedKo, setResolvedKo]     = useState<Record<string, Match>>({});
     const [xiScoring, setXiScoring]       = useState<string | null>(null);
     const [saving, setSaving] = useState<string | null>(null);
+    const [savedQueue, setSavedQueue] = useState<Record<string, boolean>>({});
     const [toast, setToast]   = useState<string | null>(null);
     const [confirmReset, setConfirmReset] = useState(false);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+
+    const flashSaved = (id: string) => {
+        setSavedQueue(p => ({ ...p, [id]: true }));
+        setTimeout(() => setSavedQueue(p => ({ ...p, [id]: false })), 2000);
+    };
 
     const loadData = useCallback(async () => {
         const { data: mData } = await supabase.from('official_matches').select('*');
@@ -182,6 +196,44 @@ export const AdminView: React.FC = () => {
 
     useEffect(() => { loadData(); }, [loadData]);
 
+    // ── Dynamically resolve Knockout Bracket based on Official Matches
+    useEffect(() => {
+        const fullGroupMatches = generateInitialGroupMatches();
+        Object.keys(fullGroupMatches).forEach(id => {
+            const om = officialMatches[id];
+            if (om) {
+                fullGroupMatches[id].score.homeGoals = om.home_goals;
+                fullGroupMatches[id].score.awayGoals = om.away_goals;
+                fullGroupMatches[id].score.homePenalties = om.home_penalties;
+                fullGroupMatches[id].score.awayPenalties = om.away_penalties;
+                fullGroupMatches[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
+            }
+        });
+
+        // Get thirds
+        const { best8Thirds } = determineQualifiedTeams(fullGroupMatches);
+        const thirdsIds = best8Thirds.map(t => t.teamId);
+
+        // First pass: resolve the empty knockout bracket up to R32 (allow incomplete data to preview live)
+        let ko = updateKnockoutBracket({}, fullGroupMatches, thirdsIds, true);
+
+        // Interleave official KNOCKOUT results so winners progress automatically
+        Object.keys(ko).forEach(id => {
+            const om = officialMatches[id];
+            if (om) {
+                ko[id].score.homeGoals = om.home_goals;
+                ko[id].score.awayGoals = om.away_goals;
+                ko[id].score.homePenalties = om.home_penalties;
+                ko[id].score.awayPenalties = om.away_penalties;
+                ko[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
+            }
+        });
+
+        // Second pass: force bracket recalculation so the R16 -> Finals pull from official matches
+        ko = updateKnockoutBracket(ko, fullGroupMatches, thirdsIds, true);
+        setResolvedKo(ko);
+    }, [officialMatches]);
+
     const saveMatch = async (matchId: string) => {
         const row = officialMatches[matchId];
         if (!row) return;
@@ -194,6 +246,7 @@ export const AdminView: React.FC = () => {
             updated_at: new Date().toISOString(),
         }, { onConflict: 'match_id' });
         setSaving(null);
+        if (!error) flashSaved(matchId);
         showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved!`);
     };
 
@@ -205,8 +258,8 @@ export const AdminView: React.FC = () => {
         );
         
         if (!error) {
-            // Trigger auto-scoring for awards (now handles total points internally)
             await scoreAwards();
+            flashSaved(category);
         }
 
         setSaving(null);
@@ -224,11 +277,11 @@ export const AdminView: React.FC = () => {
         const { error } = await supabase.from('official_tournament_xi').upsert(rows, { onConflict: 'position' });
         if (error) { setSaving(null); showToast(`❌ ${error.message}`); return; }
 
-        // Auto-score all users (Option A)
         setXiScoring('⏳ Calculating scores…');
         const { usersScored, error: scoreErr } = await scoreXI();
         setXiScoring(null);
         setSaving(null);
+        flashSaved('xi_all');
         showToast(scoreErr
             ? `❌ Saved but scoring failed: ${scoreErr}`
             : `✅ XI saved & ${usersScored} user${usersScored !== 1 ? 's' : ''} scored!`);
@@ -327,7 +380,7 @@ export const AdminView: React.FC = () => {
                             return (
                                 <MatchRow key={id} id={id} label={id.toUpperCase()}
                                     homeLabel={teamName(homeId)} awayLabel={teamName(awayId)}
-                                    row={row} hasPens={false} saving={saving}
+                                    row={row} hasPens={false} saving={saving} isSavedData={!!savedQueue[id]}
                                     onChange={(f, v) => setMatchField(id, f, v)}
                                     onSave={() => saveMatch(id)} />
                             );
@@ -352,10 +405,16 @@ export const AdminView: React.FC = () => {
                     <div className="admin-match-list">
                         {activeKoMatches.map(({ id, label, homeSlot, awaySlot }) => {
                             const row = officialMatches[id] ?? EMPTY_ROW(id);
+                            
+                            // Dynamic Bracket Auto-fills
+                            const koInfo = resolvedKo[id];
+                            const resolvedHome = koInfo?.homeTeamId && koInfo.homeTeamId !== 'TBD' ? teamName(koInfo.homeTeamId) : homeSlot;
+                            const resolvedAway = koInfo?.awayTeamId && koInfo.awayTeamId !== 'TBD' ? teamName(koInfo.awayTeamId) : awaySlot;
+
                             return (
                                 <MatchRow key={id} id={id} label={label}
-                                    homeLabel={homeSlot} awayLabel={awaySlot}
-                                    row={row} hasPens saving={saving}
+                                    homeLabel={resolvedHome} awayLabel={resolvedAway}
+                                    row={row} hasPens saving={saving} isSavedData={!!savedQueue[id]}
                                     onChange={(f, v) => setMatchField(id, f, v)}
                                     onSave={() => saveMatch(id)} />
                             );
@@ -374,8 +433,12 @@ export const AdminView: React.FC = () => {
                             <input type="text" className="admin-award-input" placeholder="Official winner…"
                                 value={officialAwards[key] ?? ''}
                                 onChange={e => setOfficialAwards(prev => ({ ...prev, [key]: e.target.value }))} />
-                            <button className="admin-save-btn" onClick={() => saveAward(key)} disabled={saving === key}>
-                                {saving === key ? '…' : 'Save'}
+                            <button 
+                                className={`admin-save-btn ${savedQueue[key] ? 'admin-save-btn--saved' : ''}`} 
+                                onClick={() => saveAward(key)} 
+                                disabled={saving === key}
+                            >
+                                {saving === key ? '…' : savedQueue[key] ? '✓ Saved' : 'Save'}
                             </button>
                         </div>
                     ))}
@@ -395,11 +458,11 @@ export const AdminView: React.FC = () => {
                         <div className="admin-xi-actions">
                             {xiScoring && <span className="xi-scoring-status">{xiScoring}</span>}
                             <button
-                                className="admin-save-btn admin-save-btn--large"
+                                className={`admin-save-btn admin-save-btn--large ${savedQueue['xi_all'] ? 'admin-save-btn--saved' : ''}`}
                                 onClick={saveAllXI}
                                 disabled={saving === 'xi_all'}
                             >
-                                {saving === 'xi_all' ? '…' : '💾 Save All & Score'}
+                                {saving === 'xi_all' ? '…' : savedQueue['xi_all'] ? '✓ Saved & Scored!' : '💾 Save All & Score'}
                             </button>
                         </div>
                     </div>
