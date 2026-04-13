@@ -7,6 +7,8 @@ import {
 } from '../../utils/bracket-logic';
 import { scoreAwards } from '../../lib/scoreAwards';
 import { scoreXI } from '../../lib/scoreXI';
+import { scoreMatches } from '../../lib/scoreMatches';
+import { scoreKnockout } from '../../lib/scoreKnockout';
 import { useAuth } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
 import type { Match } from '../../types';
@@ -245,9 +247,15 @@ export const AdminView: React.FC = () => {
             status: (row.home_goals !== null && row.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED',
             updated_at: new Date().toISOString(),
         }, { onConflict: 'match_id' });
+        
+        if (!error) {
+            await scoreMatches();
+            await scoreKnockout();
+            flashSaved(matchId);
+        }
+
         setSaving(null);
-        if (!error) flashSaved(matchId);
-        showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved!`);
+        showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved & users scored!`);
     };
 
     const saveAward = async (category: string) => {

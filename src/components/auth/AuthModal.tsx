@@ -81,8 +81,8 @@ export const AuthModal: React.FC = () => {
     };
 
     const friendlyError = (msg: string): string => {
-        if (msg.includes('Invalid login credentials')) return 'Incorrect username or password.';
-        if (msg.includes('User already registered'))   return 'This username is already taken.';
+        if (msg.includes('Invalid login credentials')) return 'Incorrect email or password.';
+        if (msg.includes('User already registered'))   return 'An account with this email already exists.';
         if (msg.includes('Password should be'))        return 'Password must be at least 6 characters.';
         return msg;
     };

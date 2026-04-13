@@ -23,7 +23,7 @@ interface PredXIRow {
     pts_earned: number;
 }
 
-export const scoreXI = async (): Promise<{ usersScored: number; error?: string }> => {
+export const scoreXI = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
     // ── 1. Load official XI ──────────────────────────────────
     const { data: official, error: offErr } = await supabase
         .from('official_tournament_xi')
@@ -40,9 +40,9 @@ export const scoreXI = async (): Promise<{ usersScored: number; error?: string }
         .map(r => normalizeForMatch(r.player_name));
 
     // ── 2. Load all user XI predictions ─────────────────────
-    const { data: preds, error: predErr } = await supabase
-        .from('user_predictions_xi')
-        .select('id, user_id, position, player_name, pts_earned');
+    let query = supabase.from('user_predictions_xi').select('id, user_id, position, player_name, pts_earned');
+    if (userId) query = query.eq('user_id', userId);
+    const { data: preds, error: predErr } = await query;
 
     if (predErr) return { usersScored: 0, error: predErr.message };
     if (!preds?.length) return { usersScored: 0 };

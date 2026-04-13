@@ -13,7 +13,7 @@ interface PredAwardRow {
 /**
  * Scores all user award predictions based on official_awards.
  */
-export const scoreAwards = async (): Promise<{ usersScored: number; error?: string }> => {
+export const scoreAwards = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
     // 1. Load official awards
     const { data: official, error: offErr } = await supabase
         .from('official_awards')
@@ -28,9 +28,10 @@ export const scoreAwards = async (): Promise<{ usersScored: number; error?: stri
     });
 
     // 2. Load all user predictions
-    const { data: preds, error: predErr } = await supabase
-        .from('user_predictions_awards')
-        .select('id, user_id, category, value, pts_earned');
+    let query = supabase.from('user_predictions_awards').select('id, user_id, category, value, pts_earned');
+    if (userId) query = query.eq('user_id', userId);
+    
+    const { data: preds, error: predErr } = await query;
 
     if (predErr) return { usersScored: 0, error: predErr.message };
     if (!preds?.length) return { usersScored: 0 };

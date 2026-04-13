@@ -3,7 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { usePredictorCompletion } from './usePredictorCompletion';
-
+import { scoreMatches } from '../lib/scoreMatches';
+import { scoreKnockout } from '../lib/scoreKnockout';
+import { scoreAwards } from '../lib/scoreAwards';
+import { scoreXI } from '../lib/scoreXI';
 export const useSaveAllPredictions = () => {
     const { state } = useApp();
     const { session, isLocked } = useAuth();
@@ -148,13 +151,19 @@ export const useSaveAllPredictions = () => {
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
             
             const results = await Promise.all(promises);
-            
             const hasError = results.some(r => r.error);
             if (hasError) {
                 console.error(results.filter(r => r.error).map(r => r.error));
                 const optionalNote = (!areAwardsFilled || xiRows.length < 11) ? " (Note: XI or Awards were incomplete but this shouldn't block saving)" : "";
                 setAlert('error', 'Failed to save. Please try again.' + optionalNote);
             } else {
+                // Dynamically re-score the EXACT user who just saved, so their leaderboard ranks identically update instantly
+                // We sequentially await them to fundamentally avoid database race conditions on recalculateUserPoints!
+                await scoreMatches(session.user.id);
+                await scoreKnockout(session.user.id);
+                await scoreAwards(session.user.id);
+                await scoreXI(session.user.id);
+
                 let optionalNote = "";
                 if (!areAwardsFilled || xiRows.length < 11) {
                     optionalNote = " (Bracket saved, but Awards or XI are incomplete)";
