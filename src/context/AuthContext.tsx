@@ -136,8 +136,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const sendPasswordResetEmail = async (email: string): Promise<string | null> => {
+        // Ensure accurate routing for sub-directory environments like GitHub Pages natively
+        const basePath = import.meta.env.BASE_URL.replace(/\/$/, ""); 
+        const redirectUrl = `${window.location.origin}${basePath}/`;
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin,
+            redirectTo: redirectUrl,
         });
         return error ? error.message : null;
     };
