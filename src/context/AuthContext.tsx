@@ -23,6 +23,9 @@ interface AuthContextType {
     signUp: (email: string, username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
     sendPasswordResetEmail: (email: string) => Promise<string | null>;
+    updatePassword: (password: string) => Promise<string | null>;
+    recoveryMode: boolean;
+    clearRecoveryMode: () => void;
     checkUsername: (username: string) => Promise<boolean>;
     openAuthModal: () => void;
     closeAuthModal: () => void;
@@ -45,6 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLocked, setIsLocked]       = useState(false);
     const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true); // Default to true
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [recoveryMode, setRecoveryMode] = useState(false);
 
     // ── Fetch profile row for the authenticated user ──────────
     const fetchProfile = async (userId: string) => {
@@ -102,7 +106,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setLoading(false);
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                setRecoveryMode(true);
+                setIsAuthModalOpen(true);
+            }
             setSession(session);
             if (session?.user) fetchProfile(session.user.id);
             else setProfile(null);
@@ -139,6 +147,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setProfile(null);
     };
 
+    const updatePassword = async (password: string): Promise<string | null> => {
+        const { error } = await supabase.auth.updateUser({ password });
+        return error ? error.message : null;
+    };
+
+    const clearRecoveryMode = () => setRecoveryMode(false);
+
     const checkUsername = async (username: string): Promise<boolean> => {
         const { data } = await supabase
             .from('profiles')
@@ -174,6 +189,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             signUp,
             signOut,
             sendPasswordResetEmail,
+            updatePassword,
+            recoveryMode,
+            clearRecoveryMode,
             checkUsername,
             openAuthModal,
             closeAuthModal,

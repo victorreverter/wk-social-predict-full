@@ -10,7 +10,7 @@ import './Header.css';
 export const Header: React.FC = () => {
 
     const { state, setMode, setActiveTab, resetPredictions, autoFillGroups, setThirdsModalDismissed, setHelpModalOpen } = useApp();
-    const { profile, signOut, openAuthModal, isLocked, isEaseModeEnabled } = useAuth();
+    const { profile, user, signOut, openAuthModal, isLocked, isEaseModeEnabled } = useAuth();
     const { mode, activeTab, groupMatches } = state;
     const { isComplete } = usePredictorCompletion();
     const { saveAll, saveStatus, saveMsg } = useSaveAllPredictions();
@@ -105,7 +105,7 @@ export const Header: React.FC = () => {
                     </div>
                 )}
 
-                {profile && (
+                {user ? (
                     <div className="global-save-wrapper">
                         {saveMsg && (
                             <span className={`global-save-msg ${saveStatus}`}>{saveMsg}</span>
@@ -119,7 +119,7 @@ export const Header: React.FC = () => {
                             {saveStatus === 'saving' ? '⏳ Saving...' : '💾 Save Predictions'}
                         </button>
                     </div>
-                )}
+                ) : null}
 
                 {!isLocked && (
                     <button className="reset-btn" onClick={resetPredictions}>
@@ -155,12 +155,12 @@ export const Header: React.FC = () => {
                         🔒 Locked
                     </span>
                 )}
-                {profile ? (
+                {user ? (
                     <div className="user-menu">
-                        <div className="user-avatar" title={profile.display_name ?? profile.username}>
-                            {profile.avatar_url
+                        <div className="user-avatar" title={profile?.display_name ?? profile?.username ?? user.email ?? 'User'}>
+                            {profile?.avatar_url
                                 ? <img src={profile.avatar_url} alt="avatar" />
-                                : <span>{(profile.display_name ?? profile.username).charAt(0).toUpperCase()}</span>}
+                                : <span>{(profile?.display_name ?? profile?.username ?? user.email ?? 'U').charAt(0).toUpperCase()}</span>}
                         </div>
                         <button className="signout-btn" onClick={signOut} title="Sign out">
                             ↩
