@@ -6,12 +6,13 @@ type AuthView = 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD' | 'UPDATE_PASSWORD';
 type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 export const AuthModal: React.FC = () => {
-    const { signIn, signUp, checkUsername, closeAuthModal, sendPasswordResetEmail, recoveryMode, updatePassword, clearRecoveryMode } = useAuth();
+    const { signIn, signUp, signOut, checkUsername, closeAuthModal, sendPasswordResetEmail, recoveryMode, updatePassword, clearRecoveryMode } = useAuth();
 
     const [view, setView]         = useState<AuthView>('LOGIN');
     const [email, setEmail]       = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError]       = useState<string | null>(null);
     const [loading, setLoading]   = useState(false);
     const [success, setSuccess]   = useState<string | null>(null);
@@ -44,7 +45,7 @@ export const AuthModal: React.FC = () => {
         return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     }, [username, view, checkUsername]);
 
-    const reset = () => { setError(null); setSuccess(null); setLoading(false); setUsernameStatus('idle'); };
+    const reset = () => { setError(null); setSuccess(null); setLoading(false); setUsernameStatus('idle'); setConfirmPassword(''); };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,14 +67,16 @@ export const AuthModal: React.FC = () => {
 
         if (view === 'UPDATE_PASSWORD') {
             if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+            if (password !== confirmPassword) { setError('Passwords do not match. Please try again.'); return; }
             setLoading(true);
             const err = await updatePassword(password);
             setLoading(false);
             if (err) { setError(friendlyError(err)); }
             else { 
-                setSuccess('Your password has been securely updated!');
+                // Sign out after reset for maximum security — user must re-login with new credentials
+                await signOut();
                 clearRecoveryMode();
-                setTimeout(() => closeAuthModal(), 2000); 
+                setSuccess('Password updated successfully! Please sign in with your new password.');
             }
             return;
         }
@@ -143,13 +146,13 @@ export const AuthModal: React.FC = () => {
 
                 {success ? (
                     <div className="auth-success">
-                        {success}
+                        <p>{success}</p>
                         <button
                             className="auth-submit-btn"
                             style={{ marginTop: '1rem' }}
                             onClick={() => { setView('LOGIN'); reset(); }}
                         >
-                            Go to Sign In
+                            Sign In Now
                         </button>
                     </div>
                 ) : (
@@ -204,12 +207,34 @@ export const AuthModal: React.FC = () => {
                             </div>
                         )}
 
+                        {view === 'UPDATE_PASSWORD' && (
+                            <div className="auth-field">
+                                <div className="auth-field-header">
+                                    <label>Confirm New Password</label>
+                                    {confirmPassword.length > 0 && (
+                                        password === confirmPassword
+                                            ? <span className="username-hint available">✅ Passwords match</span>
+                                            : <span className="username-hint taken">❌ Passwords don't match</span>
+                                    )}
+                                </div>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    required
+                                    autoComplete="new-password"
+                                    className={confirmPassword.length > 0 ? (password === confirmPassword ? 'input-ok' : 'input-error') : ''}
+                                />
+                            </div>
+                        )}
+
                         {error && <div className="auth-error">{error}</div>}
 
                         <button
                             type="submit"
                             className="auth-submit-btn"
-                            disabled={loading || (view === 'REGISTER' && usernameStatus === 'taken')}
+                            disabled={loading || (view === 'REGISTER' && usernameStatus === 'taken') || (view === 'UPDATE_PASSWORD' && password !== confirmPassword)}
                         >
                             {loading ? 'Please wait…' : view === 'LOGIN' ? 'Sign In' : view === 'FORGOT_PASSWORD' ? 'Send Recovery Link' : view === 'UPDATE_PASSWORD' ? 'Save New Password' : 'Create Account'}
                         </button>
