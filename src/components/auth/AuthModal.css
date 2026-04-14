@@ -235,3 +235,50 @@
 :root.light .auth-divider {
     background: rgba(0, 0, 0, 0.1);
 }
+
+/* ── Password Visibility Toggle ─────────────────────────── */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 2.8rem; /* room for the eye button */
+}
+
+.eye-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Dark mode default: white icon */
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.eye-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.eye-toggle:hover {
+    color: var(--color-primary);
+}
+
+/* Light mode: dark icon */
+:root.light .eye-toggle {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+:root.light .eye-toggle:hover {
+    color: var(--color-primary);
+}

@@ -17,6 +17,8 @@ export const AuthModal: React.FC = () => {
     const [loading, setLoading]   = useState(false);
     const [success, setSuccess]   = useState<string | null>(null);
     const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>('idle');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -45,7 +47,7 @@ export const AuthModal: React.FC = () => {
         return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     }, [username, view, checkUsername]);
 
-    const reset = () => { setError(null); setSuccess(null); setLoading(false); setUsernameStatus('idle'); setConfirmPassword(''); };
+    const reset = () => { setError(null); setSuccess(null); setLoading(false); setUsernameStatus('idle'); setConfirmPassword(''); setShowPassword(false); setShowConfirmPassword(false); };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -196,14 +198,34 @@ export const AuthModal: React.FC = () => {
                         {view !== 'FORGOT_PASSWORD' && (
                             <div className="auth-field">
                                 <label>{view === 'UPDATE_PASSWORD' ? 'New Password' : 'Password'}</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    required
-                                    autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
-                                />
+                                <div className="password-wrapper">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        required
+                                        autoComplete={view === 'LOGIN' ? 'current-password' : 'new-password'}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="eye-toggle"
+                                        onClick={() => setShowPassword(p => !p)}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -217,15 +239,35 @@ export const AuthModal: React.FC = () => {
                                             : <span className="username-hint taken">❌ Passwords don't match</span>
                                     )}
                                 </div>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
-                                    required
-                                    autoComplete="new-password"
-                                    className={confirmPassword.length > 0 ? (password === confirmPassword ? 'input-ok' : 'input-error') : ''}
-                                />
+                                <div className="password-wrapper">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        required
+                                        autoComplete="new-password"
+                                        className={confirmPassword.length > 0 ? (password === confirmPassword ? 'input-ok' : 'input-error') : ''}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="eye-toggle"
+                                        onClick={() => setShowConfirmPassword(p => !p)}
+                                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showConfirmPassword ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                                <line x1="1" y1="1" x2="23" y2="23"/>
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                <circle cx="12" cy="12" r="3"/>
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         )}
 
