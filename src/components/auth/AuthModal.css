@@ -143,6 +143,17 @@
 
 .auth-field input::placeholder { color: var(--text-muted); }
 
+/* Hide native browser password reveal button (Edge, Chrome, IE, Safari) */
+.auth-field input[type="password"]::-ms-reveal,
+.auth-field input[type="password"]::-ms-clear,
+.auth-field input[type="text"]::-ms-reveal,
+.password-wrapper input::-webkit-textfield-decoration-container,
+.password-wrapper input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+}
+
 :root.light .auth-field input {
     background: rgba(0,0,0,0.04);
     color: var(--text-primary);
