@@ -2,19 +2,22 @@ import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { usePredictorCompletion } from './usePredictorCompletion';
+
 import { scoreMatches } from '../lib/scoreMatches';
 import { scoreKnockout } from '../lib/scoreKnockout';
 import { scoreAwards } from '../lib/scoreAwards';
 import { scoreXI } from '../lib/scoreXI';
+import { rateLimiter } from '../lib/rateLimiter';
+
 export const useSaveAllPredictions = () => {
     const { state } = useApp();
     const { session, isLocked } = useAuth();
-    const { isFinalFinished, areAwardsFilled } = usePredictorCompletion();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveMsg, setSaveMsg] = useState('');
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    // Rate limiter is initialized in main.tsx
 
     const setAlert = (status: 'error' | 'saved', msg: string) => {
         setSaveStatus(status);
@@ -37,24 +40,42 @@ export const useSaveAllPredictions = () => {
             return;
         }
 
-        // Required condition: you must finish groups and brackets
-        if (!isFinalFinished) {
-            setAlert('error', 'Missing matches! Please complete the group stage and bracket entirely.');
+        const rateLimit = rateLimiter.check('PREDICTION_SAVE');
+        if (!rateLimit.allowed) {
+            const waitSeconds = Math.ceil((rateLimit.resetAt! - Date.now()) / 1000);
+            setAlert('error', `Too many save attempts. Please wait ${waitSeconds} seconds.`);
+            return;
+        }
+
+        // Validate at least some predictions exist
+        const allMatches = [
+            ...Object.values(state.groupMatches),
+            ...Object.values(state.knockoutMatches)
+        ];
+        const completedMatches = allMatches.filter(m => m.score || m.result).length;
+        
+        if (completedMatches === 0 && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
+            setAlert('error', 'No predictions to save. Complete at least 1 match or selection first.');
             return;
         }
 
         setSaveStatus('saving');
         setSaveMsg('');
 
+        // Ensure profile exists for this user (auto-creates if missing)
+        const { error: profileErr } = await supabase.rpc('ensure_profile');
+        if (profileErr) {
+            console.error('Profile check failed:', profileErr);
+            setAlert('error', 'Failed to verify account. Please sign in again.');
+            setSaveStatus('error');
+            return;
+        }
 
         try {
             // 1. Matches (Group + Knockout)
-            const allMatches = [
-                ...Object.values(state.groupMatches),
-                ...Object.values(state.knockoutMatches)
-            ].filter(m => m.status === 'FINISHED' || m.result);
+            const allMatchesWithPredictions = allMatches.filter(m => m.status === 'FINISHED' || m.result);
 
-            const matchRows = allMatches.map(m => {
+            const matchRows = allMatchesWithPredictions.map(m => {
                 let hg = m.score?.homeGoals ?? null;
                 let ag = m.score?.awayGoals ?? null;
 
@@ -151,11 +172,13 @@ export const useSaveAllPredictions = () => {
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
             
             const results = await Promise.all(promises);
+            console.log('Save results:', results.map((r, i) => ({ promise: i, error: r.error, data: r.data ? 'has data' : 'no data' })));
+            
             const hasError = results.some(r => r.error);
             if (hasError) {
-                console.error(results.filter(r => r.error).map(r => r.error));
-                const optionalNote = (!areAwardsFilled || xiRows.length < 11) ? " (Note: XI or Awards were incomplete but this shouldn't block saving)" : "";
-                setAlert('error', 'Failed to save. Please try again.' + optionalNote);
+                const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
+                console.error('Detailed save errors:', errors);
+                setAlert('error', 'Failed to save. Check console for details.');
             } else {
                 // Dynamically re-score the EXACT user who just saved, so their leaderboard ranks identically update instantly
                 // We sequentially await them to fundamentally avoid database race conditions on recalculateUserPoints!
@@ -164,14 +187,12 @@ export const useSaveAllPredictions = () => {
                 await scoreAwards(session.user.id);
                 await scoreXI(session.user.id);
 
-                let optionalNote = "";
-                if (!areAwardsFilled || xiRows.length < 11) {
-                    optionalNote = " (Bracket saved, but Awards or XI are incomplete)";
-                }
-                setAlert('saved', `✅ All Predictions Saved!${optionalNote}`);
+                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length;
+                setAlert('saved', `✅ Saved ${savedCount} predictions!`);
             }
 
         } catch (err: any) {
+            console.error('Save error:', err);
             setAlert('error', err.message || 'An unexpected error occurred.');
         }
     };

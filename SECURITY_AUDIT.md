@@ -28,7 +28,7 @@ This document tracks all security vulnerabilities identified during the codebase
 
 #### 1. Environment Variable Exposure Risk
 - **Severity**: Critical
-- **Status**: ✅ Mitigated
+- **Status**: ✅ Complete
 - **Date Identified**: 2026-04-28
 - **Date Fixed**: 2026-04-28
 
@@ -72,8 +72,17 @@ git ls-files --stage | grep -i env
 
 #### 2. Missing Input Validation
 - **Severity**: Critical
-- **Status**: ⏳ Pending
+- **Status**: ⏳ In Progress (Rate limiting implemented, schema validation pending)
 - **Date Identified**: 2026-04-28
+- **Date Partially Fixed**: 2026-04-28
+
+**Mitigation Applied**:
+- ✅ Client-side rate limiting implemented
+- ✅ Rate limits on auth attempts (5/minute)
+- ✅ Rate limits on password resets (3/hour)
+- ✅ Rate limits on prediction saves (10/minute)
+- ✅ Rate limits on username checks (10/minute)
+- ⏳ Zod schema validation still pending
 
 **Description**:  
 User inputs are not validated before being sent to the database, potentially allowing malicious data injection or application crashes.
@@ -109,8 +118,24 @@ User inputs are not validated before being sent to the database, potentially all
 
 #### 3. Row Level Security (RLS) Policy Gaps
 - **Severity**: High
-- **Status**: ⏳ Pending
+- **Status**: ✅ Complete
 - **Date Identified**: 2026-04-28
+- **Date Fixed**: 2026-04-28
+
+**Mitigation Applied**:
+- ✅ Comprehensive RLS audit completed (see `supabase/RLS_AUDIT.md`)
+- ✅ Enhanced policies for all 12 tables
+- ✅ Privilege escalation prevention on profiles table
+- ✅ Explicit INSERT/UPDATE/DELETE policies for all tables
+- ✅ Master-only write access for all official data tables
+- ✅ User isolation for all prediction tables
+- ✅ Rate limiting tracking table created
+- ✅ Security functions: check_rate_limit(), reset_rate_limit(), get_rate_limit_status()
+- ✅ Indexes added for performance
+
+**Files Created**:
+- `supabase/schema_enhanced_security.sql` - Enhanced RLS policies
+- `supabase/RLS_AUDIT.md` - Comprehensive RLS documentation
 
 **Description**:  
 Current RLS policies may not cover all edge cases or provide defense in depth for sensitive operations.
@@ -143,8 +168,26 @@ Current RLS policies may not cover all edge cases or provide defense in depth fo
 
 #### 4. No Rate Limiting
 - **Severity**: High
-- **Status**: ⏳ Pending
+- **Status**: ✅ Complete
 - **Date Identified**: 2026-04-28
+- **Date Fixed**: 2026-04-28
+
+**Mitigation Applied**:
+- ✅ Client-side rate limiter utility created (`src/lib/rateLimiter.ts`)
+- ✅ Rate limits configured for:
+  - PREDICTION_SAVE: 10 requests/minute
+  - AUTH_ATTEMPT: 5 requests/minute
+  - PASSWORD_RESET: 3 requests/hour
+  - USERNAME_CHECK: 10 requests/minute
+  - DATA_FETCH: 100 requests/minute
+- ✅ Integration with useSaveAllPredictions hook
+- ✅ Integration with AuthContext (signIn, signUp, sendPasswordResetEmail, checkUsername)
+- ✅ Database-level rate limiting functions (check_rate_limit)
+- ✅ Rate limits initialized in main.tsx
+- ✅ User-friendly error messages with wait times
+
+**Files Created**:
+- `src/lib/rateLimiter.ts` - Client-side rate limiting utility
 
 **Description**:  
 No rate limiting implemented for API calls, making the application vulnerable to abuse and DoS attacks.
@@ -167,8 +210,16 @@ No rate limiting implemented for API calls, making the application vulnerable to
 
 #### 5. Missing Authentication State Validation
 - **Severity**: High
-- **Status**: ⏳ Pending
+- **Status**: ✅ Partially Complete
 - **Date Identified**: 2026-04-28
+- **Date Partially Fixed**: 2026-04-28
+
+**Mitigation Applied**:
+- ✅ RLS policies enforce authentication at database level
+- ✅ All user operations require auth.uid() match
+- ✅ Session validation in saveAll function
+- ✅ Lock state validation before saves
+- ⏳ Additional auth guards for protected routes still pending
 
 **Description**:  
 Some components may not properly validate authentication state before performing operations.

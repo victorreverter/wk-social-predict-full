@@ -20,20 +20,17 @@ export const ThirdPlaceSelection: React.FC = () => {
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);
 
-    // If teams get un-finished or something, clear layout
     useEffect(() => {
         if (!needsSelection) {
             setLocalSelection([]);
-            setThirdsModalDismissed(false);
         }
-    }, [needsSelection, setThirdsModalDismissed]);
+    }, [needsSelection]);
 
-    // Automatically pop up if the active tab is bracket and we need selection
     useEffect(() => {
-        if (state.activeTab === 'BRACKET' && needsSelection) {
+        if (state.activeTab === 'BRACKET' && needsSelection && state.isThirdsModalDismissed) {
             setThirdsModalDismissed(false);
         }
-    }, [state.activeTab, needsSelection, setThirdsModalDismissed]);
+    }, [state.activeTab, needsSelection]);
 
     if (!needsSelection || state.isThirdsModalDismissed) return null;
 

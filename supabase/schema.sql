@@ -207,6 +207,30 @@ create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- ── 9B. RPC: Ensure profile exists (bypasses RLS) ──────────
+create or replace function public.ensure_profile(target_id uuid)
+returns jsonb
+language plpgsql security definer as $$
+declare
+  prof record;
+  uname text;
+begin
+  select * into prof from public.profiles where id = target_id;
+  if prof.id is not null then
+    return jsonb_build_object('found', true, 'id', prof.id);
+  end if;
+  
+  select coalesce(raw_user_meta_data->>'username', split_part(email, '@', 1), 'user_' || left(target_id::text, 8))
+  into uname from auth.users where id = target_id;
+  
+  insert into public.profiles (id, username, display_name, is_master, total_points)
+  values (target_id, uname, uname, false, 0)
+  on conflict (id) do nothing;
+  
+  return jsonb_build_object('created', true, 'id', target_id);
+end;
+$$;
+
 -- ── 10. Scoring Rules (editable by master) ───────────────
 create table if not exists public.scoring_rules (
   rule_key    text primary key,

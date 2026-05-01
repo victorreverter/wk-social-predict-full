@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { rateLimiter } from '../lib/rateLimiter';
 
 interface Profile {
     id: string;
@@ -49,6 +50,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true); // Default to true
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [recoveryMode, setRecoveryMode] = useState(false);
+
+    // Rate limiters are initialized in main.tsx
 
     // ── Fetch profile row for the authenticated user ──────────
     const fetchProfile = async (userId: string) => {
@@ -122,11 +125,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // ── Auth actions ──────────────────────────────────────────
     const signIn = async (email: string, password: string): Promise<string | null> => {
+        const rateLimit = rateLimiter.check('AUTH_ATTEMPT');
+        if (!rateLimit.allowed) {
+            const waitMinutes = Math.ceil((rateLimit.resetAt! - Date.now()) / 60000);
+            return `Too many login attempts. Please try again in ${waitMinutes} minute(s).`;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return error ? error.message : null;
     };
 
     const signUp = async (email: string, username: string, password: string): Promise<string | null> => {
+        const rateLimit = rateLimiter.check('AUTH_ATTEMPT');
+        if (!rateLimit.allowed) {
+            const waitMinutes = Math.ceil((rateLimit.resetAt! - Date.now()) / 60000);
+            return `Too many signup attempts. Please try again in ${waitMinutes} minute(s).`;
+        }
+
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -136,6 +151,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const sendPasswordResetEmail = async (email: string): Promise<string | null> => {
+        const rateLimit = rateLimiter.check('PASSWORD_RESET');
+        if (!rateLimit.allowed) {
+            const waitMinutes = Math.ceil((rateLimit.resetAt! - Date.now()) / 60000);
+            return `Too many password reset requests. Please try again in ${waitMinutes} minute(s).`;
+        }
+
         // Ensure accurate routing for sub-directory environments like GitHub Pages natively
         const basePath = import.meta.env.BASE_URL.replace(/\/$/, ""); 
         const redirectUrl = `${window.location.origin}${basePath}/`;
@@ -159,6 +180,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const clearRecoveryMode = () => setRecoveryMode(false);
 
     const checkUsername = async (username: string): Promise<boolean> => {
+        const rateLimit = rateLimiter.check('USERNAME_CHECK');
+        if (!rateLimit.allowed) {
+            throw new Error('Too many username checks. Please wait a moment.');
+        }
+
         const { data } = await supabase
             .from('profiles')
             .select('id')
