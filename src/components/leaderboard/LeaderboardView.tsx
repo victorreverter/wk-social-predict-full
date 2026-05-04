@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 import './LeaderboardView.css';
 
 interface ProfileData {
@@ -15,62 +16,94 @@ interface ProfileData {
 }
 
 export const LeaderboardView: React.FC = () => {
+    const { profile } = useAuth();
     const [leaderboard, setLeaderboard] = useState<ProfileData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+    const loadingRef = useRef(false);
+
+    const fetchLeaderboard = useCallback(async () => {
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        setError('');
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select(`
+                    id, username, display_name, avatar_url,
+                    user_predictions_matches (pts_earned),
+                    user_predictions_knockout (pts_earned),
+                    user_predictions_awards (pts_earned),
+                    user_predictions_xi (pts_earned)
+                `);
+
+            if (error) throw error;
+
+            const processed: ProfileData[] = (data || []).map((user: any) => {
+                const matches_pts = (user.user_predictions_matches || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
+                const ko_pts = (user.user_predictions_knockout || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
+                const awa_pts = (user.user_predictions_awards || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
+                const xi_pts = (user.user_predictions_xi || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
+
+                return {
+                    id: user.id,
+                    username: user.username,
+                    display_name: user.display_name,
+                    avatar_url: user.avatar_url,
+                    matches_pts,
+                    ko_pts,
+                    awa_pts,
+                    xi_pts,
+                    total: matches_pts + ko_pts + awa_pts + xi_pts,
+                };
+            });
+
+            processed.sort((a, b) => b.total - a.total);
+            setLeaderboard(processed);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load leaderboard data.');
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchLeaderboard = async () => {
-            setLoading(true);
-            setError('');
-            try {
-                // Fetch profiles with all their points arrays using Supabase PostgREST nested select
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select(`
-                        id, username, display_name, avatar_url,
-                        user_predictions_matches (pts_earned),
-                        user_predictions_knockout (pts_earned),
-                        user_predictions_awards (pts_earned),
-                        user_predictions_xi (pts_earned)
-                    `);
+        fetchLeaderboard();
 
-                if (error) throw error;
+        const handleRefresh = () => fetchLeaderboard();
+        window.addEventListener('leaderboard-refresh', handleRefresh);
 
-                // Aggregate points
-                const processed: ProfileData[] = (data || []).map((user: any) => {
-                    const matches_pts = (user.user_predictions_matches || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                    const ko_pts = (user.user_predictions_knockout || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                    const awa_pts = (user.user_predictions_awards || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                    const xi_pts = (user.user_predictions_xi || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                    
-                    return {
-                        id: user.id,
-                        username: user.username,
-                        display_name: user.display_name,
-                        avatar_url: user.avatar_url,
-                        matches_pts,
-                        ko_pts,
-                        awa_pts,
-                        xi_pts,
-                        total: matches_pts + ko_pts + awa_pts + xi_pts
-                    };
-                });
+        const tables: string[] = [
+            'user_predictions_matches',
+            'user_predictions_knockout',
+            'user_predictions_awards',
+            'user_predictions_xi',
+        ];
 
-                // Sort by total descending
-                processed.sort((a, b) => b.total - a.total);
-                
-                // Allow ties to have the same rank mathematically
-                setLeaderboard(processed);
-            } catch (err: any) {
-                setError(err.message || 'Failed to load leaderboard data.');
-            } finally {
-                setLoading(false);
+        let ch = supabase.channel('leaderboard-updates');
+
+        tables.forEach(table => {
+            ch = ch
+                .on('postgres_changes', { event: 'INSERT',  schema: 'public', table }, fetchLeaderboard)
+                .on('postgres_changes', { event: 'UPDATE',  schema: 'public', table }, fetchLeaderboard)
+                .on('postgres_changes', { event: 'DELETE',  schema: 'public', table }, fetchLeaderboard);
+        });
+
+        ch = ch
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, fetchLeaderboard)
+            .subscribe();
+
+        channelRef.current = ch;
+
+        return () => {
+            window.removeEventListener('leaderboard-refresh', handleRefresh);
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
             }
         };
-
-        fetchLeaderboard();
-    }, []);
+    }, [fetchLeaderboard]);
 
     if (loading) {
         return (
@@ -116,19 +149,18 @@ export const LeaderboardView: React.FC = () => {
                     </thead>
                     <tbody>
                         {leaderboard.map((user, index) => {
-                            // Logic to share rank numbers for tied players
                             let rank = index + 1;
                             if (index > 0 && leaderboard[index - 1].total === user.total) {
-                                // Find very first index that has this same score
                                 const firstTiedIndex = leaderboard.findIndex(u => u.total === user.total);
                                 rank = firstTiedIndex + 1;
                             }
 
                             const isTop3 = rank <= 3;
+                            const isCurrentUser = user.id === profile?.id;
                             const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
 
                             return (
-                                <tr key={user.id} className={isTop3 ? `top-rank-${rank}` : ''}>
+                                <tr key={user.id} className={`${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}>
                                     <td className="td-rank">
                                         {medal ? <span className="medal-icon">{medal}</span> : <span className="rank-num">{rank}</span>}
                                     </td>
@@ -140,6 +172,7 @@ export const LeaderboardView: React.FC = () => {
                                             <div className="lb-names">
                                                 <span className="lb-display-name">
                                                     {user.username.charAt(0).toUpperCase() + user.username.slice(1)}
+                                                    {isCurrentUser && <span className="you-suffix"> (you)</span>}
                                                 </span>
                                             </div>
                                         </div>

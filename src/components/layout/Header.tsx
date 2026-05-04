@@ -15,6 +15,14 @@ export const Header: React.FC = () => {
     const { isComplete } = usePredictorCompletion();
     const { saveAll, saveStatus, saveMsg } = useSaveAllPredictions();
 
+    const handleReset = async () => {
+        try {
+            await resetPredictions();
+        } catch (error) {
+            console.error('Reset failed:', error);
+        }
+    };
+
 
     // Effect to force HARD mode if Ease Mode is disabled globally
     useEffect(() => {
@@ -122,7 +130,7 @@ export const Header: React.FC = () => {
                 ) : null}
 
                 {!isLocked && (
-                    <button className="reset-btn" onClick={resetPredictions}>
+                    <button className="reset-btn" onClick={handleReset}>
                         Reset
                     </button>
                 )}

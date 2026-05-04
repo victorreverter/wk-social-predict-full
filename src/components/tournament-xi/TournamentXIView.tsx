@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabase';
 import './TournamentXIView.css';
 
 type FormationConfig = {
@@ -55,30 +54,11 @@ const FORMATIONS: Record<string, FormationConfig> = {
 export const TournamentXIView: React.FC = () => {
     const { state, updateTournamentXI } = useApp();
     const { tournamentXI, theme } = state;
-    const { session, isLocked } = useAuth();
+    const { isLocked, user } = useAuth();
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
 
-
     const activeFormation = FORMATIONS[selectedFormation];
-
-    // ── Load predictions from Supabase on mount ──────────────
-    const loadPredictions = useCallback(async () => {
-        if (!session) return;
-        const { data } = await supabase
-            .from('user_predictions_xi')
-            .select('position, player_name')
-            .eq('user_id', session.user.id);
-        if (data) {
-            data.forEach((row: { position: string; player_name: string }) => {
-                updateTournamentXI(row.position, row.player_name);
-            });
-        }
-    }, [session, updateTournamentXI]);
-
-    useEffect(() => { loadPredictions(); }, [loadPredictions]);
-
-    // (Saving is now handled globally via App layout Header)
 
 
     return (
@@ -155,7 +135,7 @@ export const TournamentXIView: React.FC = () => {
 
             {/* ── Save footer ──────────────────────────────── */}
             <div className="xi-save-footer">
-                {!session ? (
+                {!user ? (
                     <p className="xi-login-prompt">🔒 Sign in to save your predictions</p>
                 ) : isLocked ? (
                     <p className="xi-locked-msg">🔒 Predictions are locked — the tournament has started</p>

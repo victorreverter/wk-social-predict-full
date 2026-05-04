@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState } from '../types';
 import { generateInitialGroupMatches } from '../utils/data-init';
 import { generateInitialKnockoutMatches, updateKnockoutBracket } from '../utils/bracket-logic';
+import { supabase } from '../lib/supabase';
 
 interface AppContextType {
     state: AppState;
@@ -18,7 +19,7 @@ interface AppContextType {
     setSelectedThirds: (teamIds: string[]) => void;
     setThirdsModalDismissed: (dismissed: boolean) => void;
     setHelpModalOpen: (isOpen: boolean) => void;
-    resetPredictions: () => void;
+    resetPredictions: () => Promise<void>;
     autoFillGroups: () => void;
     loadFullState: (newState: Partial<AppState>) => void;
 }
@@ -217,8 +218,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }));
     };
 
-    const resetPredictions = () => {
+    const resetPredictions = async () => {
+        const { data, error } = await supabase.rpc('reset_tournament');
+
+        if (error) throw error;
+        if (!(data as any)?.success) throw new Error((data as any)?.message || 'Unknown error');
+
         setState(getFreshState());
+        window.dispatchEvent(new Event('leaderboard-refresh'));
     };
 
     const setSelectedThirds = (teamIds: string[]) => {

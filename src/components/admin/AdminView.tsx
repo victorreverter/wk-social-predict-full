@@ -10,6 +10,7 @@ import { scoreXI } from '../../lib/scoreXI';
 import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
 import { useAuth } from '../../context/AuthContext';
+import { useApp } from '../../context/AppContext';
 import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
 import type { Match } from '../../types';
 
@@ -154,6 +155,7 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
     const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode } = useAuth();
+    const { resetPredictions } = useApp();
     
     const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
@@ -297,11 +299,19 @@ export const AdminView: React.FC = () => {
 
     const resetAllResults = async () => {
         setSaving('reset');
-        const { error } = await supabase.from('official_matches').delete().neq('match_id', '__never__');
-        if (!error) setOfficialMatches({});
-        setSaving(null);
-        setConfirmReset(false);
-        showToast(error ? `❌ ${error.message}` : `🗑️ All match results cleared!`);
+
+        try {
+            await resetPredictions();
+            setOfficialMatches({});
+            setOfficialAwards({});
+            setOfficialXI({});
+            setConfirmReset(false);
+            showToast('🗑️ Tournament reset complete! All predictions and scores cleared.');
+        } catch (err: any) {
+            showToast(`❌ Reset failed: ${err?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(null);
+        }
     };
 
     const toggleLock = async () => {
@@ -355,11 +365,11 @@ export const AdminView: React.FC = () => {
                         
                         {!confirmReset ? (
                             <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
-                                🗑️ Reset All Results
+                                🗑️ Reset Tournament
                             </button>
                         ) : (
                             <div className="admin-reset-confirm">
-                                <span>Are you sure? This deletes all match results.</span>
+                                <span>Are you sure? This deletes ALL predictions, results, and resets ALL scores.</span>
                                 <button className="admin-reset-confirm-yes" onClick={resetAllResults} disabled={saving === 'reset'}>
                                     {saving === 'reset' ? '…' : '✓ Yes, reset'}
                                 </button>

@@ -177,12 +177,12 @@ export const useSaveAllPredictions = () => {
                 if (import.meta.env.DEV) console.error('Detailed save errors:', errors);
                 setAlert('error', 'Failed to save. Check console for details.');
             } else {
-                // Dynamically re-score the EXACT user who just saved, so their leaderboard ranks identically update instantly
-                // We sequentially await them to fundamentally avoid database race conditions on recalculateUserPoints!
                 await scoreMatches(session.user.id);
                 await scoreKnockout(session.user.id);
                 await scoreAwards(session.user.id);
                 await scoreXI(session.user.id);
+
+                window.dispatchEvent(new Event('leaderboard-refresh'));
 
                 const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length;
                 setAlert('saved', `✅ Saved ${savedCount} predictions!`);

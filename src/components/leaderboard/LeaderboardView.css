@@ -165,3 +165,77 @@
 html[data-theme='light'] .leaderboard-table tr:hover td {
     background: rgba(0, 0, 0, 0.02);
 }
+
+/* ── Current User Highlight ─────────────────────────────── */
+.current-user {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Dark mode: vibrant cyan */
+.current-user {
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.15), transparent);
+    border-left: 3px solid #22d3ee;
+}
+
+.current-user td:first-child {
+    padding-left: calc(1rem - 3px);
+}
+
+/* Light mode: vibrant purple */
+html[data-theme='light'] .current-user {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), transparent);
+    border-left: 3px solid #a855f7;
+}
+
+.current-user:hover {
+    filter: brightness(1.05);
+}
+
+.current-user-rank {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.you-suffix {
+    color: #22d3ee;
+    font-weight: 600;
+}
+
+html[data-theme='light'] .you-suffix {
+    color: #a855f7;
+}
+
+.current-user .lb-display-name {
+    color: #22d3ee;
+}
+
+html[data-theme='light'] .current-user .lb-display-name {
+    color: #a855f7;
+}
+
+.current-user .td-total {
+    color: #22d3ee;
+}
+
+html[data-theme='light'] .current-user .td-total {
+    color: #a855f7;
+}
+
+/* ── Override top-rank on current user ──────────────────── */
+.current-user.top-rank-1,
+.current-user.top-rank-2,
+.current-user.top-rank-3 {
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.15), transparent);
+    border-left: 3px solid #22d3ee;
+}
+
+html[data-theme='light'] .current-user.top-rank-1,
+html[data-theme='light'] .current-user.top-rank-2,
+html[data-theme='light'] .current-user.top-rank-3 {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), transparent);
+    border-left: 3px solid #a855f7;
+}
