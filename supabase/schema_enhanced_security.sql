@@ -301,7 +301,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   -- Only master can reset rate limits
   if (select is_master from public.profiles where id = auth.uid()) != true then
@@ -330,7 +330,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   rl record;
   window_start timestamptz;
@@ -383,7 +383,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   return query
   select
@@ -409,7 +409,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   return query
   select
