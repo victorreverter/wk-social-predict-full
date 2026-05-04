@@ -32,7 +32,7 @@ const getFreshState = (): AppState => {
             initialTheme = stored;
         }
     } catch (e) {
-        console.warn('Could not read from localStorage', e);
+        /* localStorage unavailable */
     }
 
     return {
@@ -97,7 +97,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         try {
             localStorage.setItem('wk-theme', state.theme);
         } catch (e) {
-            console.warn('Could not save to localStorage', e);
+            /* localStorage unavailable */
         }
     }, [state.theme]);
 

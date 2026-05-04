@@ -204,7 +204,6 @@ export async function withRateLimit<T>(
   try {
     return await operation();
   } catch (error) {
-    console.error(`Rate-limited operation failed: ${action}`, error);
     throw error;
   }
 }

@@ -23,7 +23,6 @@ export const useLoadUserPredictions = () => {
                 ]);
 
                 if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error) {
-                    console.error("Error loading predictions", { matchesRes, koRes, awardsRes, xiRes });
                     return;
                 }
 
@@ -90,9 +89,7 @@ export const useLoadUserPredictions = () => {
                     selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds
                 });
                 
-            } catch (err) {
-                console.error("Failed to load predictions: ", err);
-            }
+            } catch (err) {}
         };
 
         // Delay it highly slightly to ensure context binds completely

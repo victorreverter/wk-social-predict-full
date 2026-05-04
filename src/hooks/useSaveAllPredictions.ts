@@ -65,7 +65,6 @@ export const useSaveAllPredictions = () => {
         // Ensure profile exists for this user (auto-creates if missing)
         const { error: profileErr } = await supabase.rpc('ensure_profile');
         if (profileErr) {
-            console.error('Profile check failed:', profileErr);
             setAlert('error', 'Failed to verify account. Please sign in again.');
             setSaveStatus('error');
             return;
@@ -172,12 +171,10 @@ export const useSaveAllPredictions = () => {
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
             
             const results = await Promise.all(promises);
-            console.log('Save results:', results.map((r, i) => ({ promise: i, error: r.error, data: r.data ? 'has data' : 'no data' })));
-            
             const hasError = results.some(r => r.error);
             if (hasError) {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
-                console.error('Detailed save errors:', errors);
+                if (import.meta.env.DEV) console.error('Detailed save errors:', errors);
                 setAlert('error', 'Failed to save. Check console for details.');
             } else {
                 // Dynamically re-score the EXACT user who just saved, so their leaderboard ranks identically update instantly
@@ -192,7 +189,7 @@ export const useSaveAllPredictions = () => {
             }
 
         } catch (err: any) {
-            console.error('Save error:', err);
+            if (import.meta.env.DEV) console.error('Save error:', err);
             setAlert('error', err.message || 'An unexpected error occurred.');
         }
     };

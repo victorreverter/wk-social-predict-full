@@ -138,7 +138,7 @@ export const exportBracketToImage = async (
             URL.revokeObjectURL(url);
         }
     } catch (err) {
-        console.error('Error generating image:', err);
+        if (import.meta.env.DEV) console.error('Error generating image:', err);
         alert('There was an issue generating the bracket image.');
     }
 };

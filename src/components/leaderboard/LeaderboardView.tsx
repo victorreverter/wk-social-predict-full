@@ -63,7 +63,6 @@ export const LeaderboardView: React.FC = () => {
                 // Allow ties to have the same rank mathematically
                 setLeaderboard(processed);
             } catch (err: any) {
-                console.error(err);
                 setError(err.message || 'Failed to load leaderboard data.');
             } finally {
                 setLoading(false);
