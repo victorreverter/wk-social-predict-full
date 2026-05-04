@@ -249,6 +249,7 @@ create or replace function public.check_rate_limit(
 returns boolean
 language plpgsql
 security definer
+set search_path = ''
 as $$
 declare
   user_req_count integer;
@@ -299,7 +300,8 @@ create or replace function public.reset_rate_limit(target_user_id uuid, action_n
 returns void
 language plpgsql
 security definer
-as $$
+set search_path = ''
+as $
 begin
   -- Only master can reset rate limits
   if (select is_master from public.profiles where id = auth.uid()) != true then
@@ -327,7 +329,8 @@ returns table (
 )
 language plpgsql
 security definer
-as $$
+set search_path = ''
+as $
 declare
   rl record;
   window_start timestamptz;
@@ -379,7 +382,8 @@ returns table (
 )
 language plpgsql
 security definer
-as $$
+set search_path = ''
+as $
 begin
   return query
   select
@@ -404,7 +408,8 @@ returns table (
 )
 language plpgsql
 security definer
-as $$
+set search_path = ''
+as $
 begin
   return query
   select

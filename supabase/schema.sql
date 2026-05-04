@@ -190,7 +190,9 @@ create policy "Public read xi preds" on public.user_predictions_xi for select us
 
 -- ── 9. Trigger: Auto-create profile on sign-up ───────────
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = ''
+as $$
 begin
   insert into public.profiles (id, username, display_name, avatar_url)
   values (
@@ -210,7 +212,9 @@ create or replace trigger on_auth_user_created
 -- ── 9B. RPC: Ensure profile exists (bypasses RLS) ──────────
 create or replace function public.ensure_profile(target_id uuid)
 returns jsonb
-language plpgsql security definer as $$
+language plpgsql security definer
+set search_path = ''
+as $$
 declare
   prof record;
   uname text;
