@@ -38,9 +38,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Prediction lock: June 11 2026 18:00 UTC (opening game kick-off).
-// We fetch from DB config table but fall back to this hard-coded value.
-const FALLBACK_LOCK_DATE = new Date('2026-06-11T18:00:00Z');
+// Prediction lock: fetched from DB config table.
+// If the config is unavailable, default to far-future so predictions
+// are never locked until the admin explicitly sets a date.
+const FAR_FUTURE_LOCK = new Date('2099-12-31T23:59:59Z');
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [session, setSession]         = useState<Session | null>(null);
@@ -77,14 +78,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const lockDate = new Date(lockRow.value);
                 setIsLocked(new Date() >= lockDate);
             } else {
-                setIsLocked(new Date() >= FALLBACK_LOCK_DATE);
+                setIsLocked(new Date() >= FAR_FUTURE_LOCK);
             }
 
             if (easeRow) {
                 setIsEaseModeEnabled(easeRow.value === 'true');
             }
         } else {
-            setIsLocked(new Date() >= FALLBACK_LOCK_DATE);
+            setIsLocked(new Date() >= FAR_FUTURE_LOCK);
         }
     };
 
