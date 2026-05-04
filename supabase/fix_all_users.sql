@@ -5,7 +5,7 @@
 -- ============================================================
 
 -- ── Step 1: Create profiles for ALL existing users ────────
--- Uses user_id suffix to guarantee unique usernames
+-- Uses user_id suffix to guarantee unique usernames — NEVER uses email
 INSERT INTO public.profiles (id, username, display_name, is_master, total_points)
 SELECT 
   u.id,
@@ -16,8 +16,6 @@ SELECT
 FROM auth.users u
 LEFT JOIN public.profiles p ON u.id = p.id,
 LATERAL (
-  -- Derive a base name; if it happens to clash with an existing username,
-  -- append the first 8 chars of the uuid to ensure uniqueness.
   SELECT 
     CASE 
       WHEN EXISTS (SELECT 1 FROM public.profiles WHERE username = derived)
@@ -28,7 +26,6 @@ LATERAL (
   FROM (
     SELECT COALESCE(
       u.raw_user_meta_data->>'username',
-      split_part(u.email, '@', 1),
       'user_' || left(u.id::text, 8)
     ) AS derived
   ) base
@@ -65,8 +62,8 @@ BEGIN
     RETURN jsonb_build_object('status', 'exists', 'id', v_uid);
   END IF;
 
-  -- Derive a unique username from auth.users metadata
-  SELECT COALESCE(u.raw_user_meta_data->>'username', split_part(u.email, '@', 1), 'user_' || left(u.id::text, 8))
+  -- Derive a unique username from auth.users metadata — NEVER uses email
+  SELECT COALESCE(u.raw_user_meta_data->>'username', 'user_' || left(u.id::text, 8))
   INTO v_uname
   FROM auth.users u
   WHERE u.id = v_uid;

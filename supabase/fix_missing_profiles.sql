@@ -23,12 +23,12 @@ SELECT
   u.id,
   COALESCE(
     u.raw_user_meta_data->>'username',
-    SPLIT_PART(u.email, '@', 1),
     'user_' || LEFT(u.id::text, 8)
   ) as username,
   COALESCE(
     u.raw_user_meta_data->>'full_name',
-    SPLIT_PART(u.email, '@', 1)
+    u.raw_user_meta_data->>'username',
+    'user_' || LEFT(u.id::text, 8)
   ) as display_name,
   COALESCE(u.raw_user_meta_data->>'avatar_url', NULL) as avatar_url,
   false as is_master,
@@ -93,12 +93,12 @@ BEGIN
     NEW.id,
     COALESCE(
       NEW.raw_user_meta_data->>'username',
-      SPLIT_PART(NEW.email, '@', 1),
       'user_' || LEFT(NEW.id::text, 8)
     ),
     COALESCE(
       NEW.raw_user_meta_data->>'full_name',
-      SPLIT_PART(NEW.email, '@', 1)
+      NEW.raw_user_meta_data->>'username',
+      'user_' || LEFT(NEW.id::text, 8)
     ),
     NEW.raw_user_meta_data->>'avatar_url'
   )

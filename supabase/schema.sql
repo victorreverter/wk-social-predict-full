@@ -195,8 +195,8 @@ begin
   insert into public.profiles (id, username, display_name, avatar_url)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'username', 'user_' || left(new.id::text, 8)),
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'username', 'user_' || left(new.id::text, 8)),
     new.raw_user_meta_data->>'avatar_url'
   );
   return new;
@@ -220,7 +220,7 @@ begin
     return jsonb_build_object('found', true, 'id', prof.id);
   end if;
   
-  select coalesce(raw_user_meta_data->>'username', split_part(email, '@', 1), 'user_' || left(target_id::text, 8))
+  select coalesce(raw_user_meta_data->>'username', 'user_' || left(id::text, 8))
   into uname from auth.users where id = target_id;
   
   insert into public.profiles (id, username, display_name, is_master, total_points)

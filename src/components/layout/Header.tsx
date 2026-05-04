@@ -157,10 +157,10 @@ export const Header: React.FC = () => {
                 )}
                 {user ? (
                     <div className="user-menu">
-                        <div className="user-avatar" title={profile?.display_name ?? profile?.username ?? user.email ?? 'User'}>
+                        <div className="user-avatar" title={profile?.display_name ?? profile?.username ?? 'User'}>
                             {profile?.avatar_url
                                 ? <img src={profile.avatar_url} alt="avatar" />
-                                : <span>{(profile?.display_name ?? profile?.username ?? user.email ?? 'U').charAt(0).toUpperCase()}</span>}
+                                : <span>{(profile?.display_name ?? profile?.username ?? 'U').charAt(0).toUpperCase()}</span>}
                         </div>
                         <button className="signout-btn" onClick={signOut} title="Sign out">
                             ↩
