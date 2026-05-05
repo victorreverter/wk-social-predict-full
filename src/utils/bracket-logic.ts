@@ -1,6 +1,11 @@
 import type { Match, GroupStanding } from '../types';
 import { groups, initialTeams } from './data-init';
 import { calculateGroupStandings } from './standings';
+import { THIRD_PLACE_COMBOS } from './fifa-combos';
+
+type ThirdPlaceTeam = GroupStanding & { group: string };  // GroupStanding + which group it belongs to
+
+const T3_MATCH_ORDER: readonly number[] = [79, 85, 81, 74, 82, 77, 87, 80];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2026 FIFA World Cup – Official Knockout Bracket
@@ -100,19 +105,18 @@ export const determineQualifiedTeams = (
 ) => {
   const groupWinners: Record<string, GroupStanding>  = {};
   const groupRunnersUp: Record<string, GroupStanding> = {};
-  const allThirds: GroupStanding[] = [];
+  const allThirdsWithGroup: ThirdPlaceTeam[] = [];
 
   groups.forEach((group) => {
     const standings = calculateGroupStandings(group, initialTeams, allMatches);
     if (standings.length >= 3) {
       groupWinners[group]  = standings[0];
       groupRunnersUp[group] = standings[1];
-      allThirds.push(standings[2]);
+      allThirdsWithGroup.push({ ...standings[2], group });
     }
   });
 
-  // Sort thirds to find the best 8
-  const sortedThirds = [...allThirds].sort((a, b) => {
+  const sortedThirds = [...allThirdsWithGroup].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
     return b.goalsFor - a.goalsFor;
@@ -226,34 +230,39 @@ export const updateKnockoutBracket = (
     const { groupWinners, groupRunnersUp, best8Thirds, allThirds } = determineQualifiedTeams(groupMatches);
     const thirdsReady = Object.keys(groupWinners).length === 12 || allowIncomplete;
 
-    if (thirdsReady) {
-      // Resolve the 8 selected third-placed teams in order (T3_0..T3_7)
+    if (thirdsReady && best8Thirds.length === 8) {
       const chosenThirds = allThirds.filter(t => selectedThirds.includes(t.teamId));
 
-      // Build a lookup: slot string → teamId
-      const resolve = (slot: string, t3Index: number): string => {
+      // Build the FIFA combination key: sorted group letters of the 8 advancing thirds
+      const advancingGroups = best8Thirds.map(t => t.group).sort().join('');
+      const combo = THIRD_PLACE_COMBOS[advancingGroups];
+      // Fallback: if somehow the combination isn't found, use sequential assignment
+      const assignments: readonly string[] = combo ?? best8Thirds.map((_, i) => best8Thirds[i].group);
+
+      // Build lookup: group letter → TeamStanding (prioritize user-chosen thirds)
+      const thirdByGroup: Record<string, ThirdPlaceTeam> = {};
+      best8Thirds.forEach(t => { thirdByGroup[t.group] = t; });
+      if (chosenThirds.length > 0) {
+        chosenThirds.forEach(t => { thirdByGroup[t.group] = t; });
+      }
+
+      // Build a lookup for non-T3 slots
+      const resolveFixed = (slot: string): string => {
         if (slot.startsWith('W_'))  return groupWinners[slot.slice(2)]?.teamId  ?? 'TBD';
         if (slot.startsWith('RU_')) return groupRunnersUp[slot.slice(3)]?.teamId ?? 'TBD';
-        // T3: assigned in the order they appear in the fixture list
-        return chosenThirds[t3Index]?.teamId ?? best8Thirds[t3Index]?.teamId ?? 'TBD';
+        return 'TBD';
       };
 
-      // Track T3 index as we walk through fixtures
-      let t3Idx = 0;
+      // For each T3 slot in match order, assign the team from the combo lookup
       R32_FIXTURES.forEach(f => {
-        const homeIsT3 = f.homeSlot === 'T3';
-        const awayIsT3 = f.awaySlot === 'T3';
-        const home = homeIsT3 ? (chosenThirds[t3Idx]?.teamId   ?? best8Thirds[t3Idx]?.teamId   ?? 'TBD') : resolve(f.homeSlot, -1);
-        const away = awayIsT3 ? (chosenThirds[t3Idx]?.teamId   ?? best8Thirds[t3Idx]?.teamId   ?? 'TBD') : resolve(f.awaySlot, -1);
-        if (homeIsT3 || awayIsT3) t3Idx++;
+        const home = f.homeSlot === 'T3' ? (thirdByGroup[assignments[T3_MATCH_ORDER.indexOf(f.matchNum)]]?.teamId ?? 'TBD') : resolveFixed(f.homeSlot);
+        const away = f.awaySlot === 'T3' ? (thirdByGroup[assignments[T3_MATCH_ORDER.indexOf(f.matchNum)]]?.teamId ?? 'TBD') : resolveFixed(f.awaySlot);
         ko = setTeams(ko, f.matchNum, home, away);
       });
     } else {
-      // Reset R32 to TBD
       R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
     }
   } else {
-    // Groups not finished – reset R32
     R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
   }
 
