@@ -11,7 +11,7 @@ import { rateLimiter } from '../lib/rateLimiter';
 
 export const useSaveAllPredictions = () => {
     const { state } = useApp();
-    const { session, isLocked } = useAuth();
+    const { session, categoryLocks } = useAuth();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveMsg, setSaveMsg] = useState('');
 
@@ -35,15 +35,27 @@ export const useSaveAllPredictions = () => {
             return;
         }
 
-        if (isLocked) {
-            setAlert('error', 'Predictions are locked.');
-            return;
-        }
-
         const rateLimit = rateLimiter.check('PREDICTION_SAVE');
         if (!rateLimit.allowed) {
             const waitSeconds = Math.ceil((rateLimit.resetAt! - Date.now()) / 1000);
             setAlert('error', `Too many save attempts. Please wait ${waitSeconds} seconds.`);
+            return;
+        }
+
+        // Check per-category locks
+        const hasGroupMatches = Object.values(state.groupMatches).some(m => m.score || m.result);
+        const hasKnockout = Object.values(state.knockoutMatches).some(m => m.score || m.result);
+        const hasXI = Object.values(state.tournamentXI).some(v => v.trim());
+        const hasAwards = Object.values(state.awards).some(v => v.trim());
+
+        const blockedCategories: string[] = [];
+        if (hasGroupMatches && categoryLocks.GROUP_STAGE) blockedCategories.push('Group Stage');
+        if (hasKnockout && categoryLocks.BRACKET) blockedCategories.push('Bracket');
+        if (hasAwards && categoryLocks.AWARDS) blockedCategories.push('Awards');
+        if (hasXI && categoryLocks.TOURNAMENT_XI) blockedCategories.push('Tournament XI');
+
+        if (blockedCategories.length > 0) {
+            setAlert('error', `Cannot save: ${blockedCategories.join(', ')} predictions are locked by admin.`);
             return;
         }
 

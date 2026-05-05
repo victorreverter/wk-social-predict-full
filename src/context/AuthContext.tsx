@@ -13,13 +13,22 @@ interface Profile {
     total_points: number;
 }
 
+export type LockCategory = 'GROUP_STAGE' | 'BRACKET' | 'AWARDS' | 'TOURNAMENT_XI';
+
+interface LockConfig {
+    key: LockCategory;
+    locked_at: string | null;
+    locked_by: string | null;
+}
+
 interface AuthContextType {
     session: Session | null;
     user: User | null;
     profile: Profile | null;
     loading: boolean;
-    isLocked: boolean; // predictions locked after June 11 2026
-    isEaseModeEnabled: boolean; // Global setting to allow/disallow Easy Mode
+    isLocked: boolean;
+    categoryLocks: Record<LockCategory, boolean>;
+    isEaseModeEnabled: boolean;
     signIn: (email: string, password: string) => Promise<string | null>;
     signUp: (email: string, username: string, password: string) => Promise<string | null>;
     signOut: () => Promise<void>;
@@ -33,6 +42,8 @@ interface AuthContextType {
     isAuthModalOpen: boolean;
     updateLockDate: (dateStr: string) => Promise<{ error: string | null }>;
     updateEaseMode: (enabled: boolean) => Promise<{ error: string | null }>;
+    setCategoryLock: (category: LockCategory) => Promise<{ error: string | null }>;
+    clearCategoryLock: (category: LockCategory) => Promise<{ error: string | null }>;
 }
 
 
@@ -48,7 +59,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [profile, setProfile]         = useState<Profile | null>(null);
     const [loading, setLoading]         = useState(true);
     const [isLocked, setIsLocked]       = useState(false);
-    const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true); // Default to true
+    const [categoryLocks, setCategoryLocks] = useState<Record<LockCategory, boolean>>({
+        GROUP_STAGE: false,
+        BRACKET: false,
+        AWARDS: false,
+        TOURNAMENT_XI: false,
+    });
+    const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [recoveryMode, setRecoveryMode] = useState(false);
 
@@ -64,15 +81,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (data) setProfile(data as Profile);
     };
 
-    // ── Check global config from DB ──────────────────────────
+    // ── Check global config + category locks from DB ──────────────
     const fetchGlobalConfig = async () => {
-        const { data } = await supabase
+        const { data: configData } = await supabase
             .from('config')
             .select('key, value');
 
-        if (data) {
-            const lockRow = data.find(r => r.key === 'predictions_locked_at');
-            const easeRow = data.find(r => r.key === 'is_ease_mode_enabled');
+        if (configData) {
+            const lockRow = configData.find(r => r.key === 'predictions_locked_at');
+            const easeRow = configData.find(r => r.key === 'is_ease_mode_enabled');
 
             if (lockRow) {
                 const lockDate = new Date(lockRow.value);
@@ -86,6 +103,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         } else {
             setIsLocked(new Date() >= FAR_FUTURE_LOCK);
+        }
+
+        const { data: locks } = await supabase
+            .from('lock_config')
+            .select('*');
+
+        if (locks) {
+            const lockMap: Record<LockCategory, boolean> = {
+                GROUP_STAGE: false,
+                BRACKET: false,
+                AWARDS: false,
+                TOURNAMENT_XI: false,
+            };
+            (locks as LockConfig[]).forEach(l => {
+                if (l.locked_at) lockMap[l.key] = true;
+            });
+            setCategoryLocks(lockMap);
         }
     };
 
@@ -205,6 +239,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { error: error?.message || null };
     };
 
+    const setCategoryLock = async (category: LockCategory): Promise<{ error: string | null }> => {
+        const { error } = await supabase.rpc('set_lock', { category_key: category });
+        if (!error) {
+            setCategoryLocks(prev => ({ ...prev, [category]: true }));
+        }
+        return { error: error?.message || null };
+    };
+
+    const clearCategoryLock = async (category: LockCategory): Promise<{ error: string | null }> => {
+        const { error } = await supabase.rpc('clear_lock', { category_key: category });
+        if (!error) {
+            setCategoryLocks(prev => ({ ...prev, [category]: false }));
+        }
+        return { error: error?.message || null };
+    };
+
     const openAuthModal  = () => setIsAuthModalOpen(true);
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
@@ -215,6 +265,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             profile,
             loading,
             isLocked,
+            categoryLocks,
             isEaseModeEnabled,
             signIn,
             signUp,
@@ -229,6 +280,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isAuthModalOpen,
             updateLockDate,
             updateEaseMode,
+            setCategoryLock,
+            clearCategoryLock,
         }}>
             {children}
         </AuthContext.Provider>

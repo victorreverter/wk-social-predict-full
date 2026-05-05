@@ -11,6 +11,7 @@ import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
+import type { LockCategory } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
 import type { Match } from '../../types';
 
@@ -154,7 +155,7 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
-    const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode } = useAuth();
+    const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock } = useAuth();
     const { resetPredictions } = useApp();
     
     const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
@@ -316,11 +317,17 @@ export const AdminView: React.FC = () => {
 
     const toggleLock = async () => {
         setSaving('lock');
-        // If it's already locked, push lock to 2050. If open, set lock to past date (2000).
         const newDateStr = isLocked ? '2050-01-01T00:00:00Z' : '2000-01-01T00:00:00Z';
         const { error } = await updateLockDate(newDateStr);
         setSaving(null);
         showToast(error ? `❌ ${error}` : `✅ Predictions ${isLocked ? 'Unlocked' : 'Locked'}`);
+    };
+
+    const handleToggleCategoryLock = async (cat: LockCategory) => {
+        setSaving(`cat_${cat}`);
+        const result = categoryLocks[cat] ? await clearCategoryLock(cat) : await setCategoryLock(cat);
+        setSaving(null);
+        showToast(result.error ? `❌ ${result.error}` : `✅ ${cat.replace(/_/g, ' ')} ${categoryLocks[cat] ? 'unlocked' : 'locked'}`);
     };
 
     const setMatchField = (matchId: string, field: keyof OfficialMatch, value: string | boolean | number | null) => {
@@ -362,6 +369,25 @@ export const AdminView: React.FC = () => {
                         >
                             {isEaseModeEnabled ? '⚡ Ease ON' : '🎯 Ease OFF'}
                         </button>
+
+                        <div className="admin-category-locks">
+                            <span className="admin-category-locks-label">Locks:</span>
+                            {(['GROUP_STAGE', 'BRACKET', 'AWARDS', 'TOURNAMENT_XI'] as LockCategory[]).map(cat => {
+                                const isCatLocked = categoryLocks[cat];
+                                const catSaving = saving === `cat_${cat}`;
+                                return (
+                                    <button
+                                        key={cat}
+                                        className={`admin-cat-lock-btn ${isCatLocked ? 'locked' : 'unlocked'}`}
+                                        onClick={() => handleToggleCategoryLock(cat)}
+                                        disabled={catSaving}
+                                        title={isCatLocked ? `Unlock ${cat.replace(/_/g, ' ').toLowerCase()}` : `Lock ${cat.replace(/_/g, ' ').toLowerCase()}`}
+                                    >
+                                        {catSaving ? '…' : isCatLocked ? '🔒' : '🔓'} {cat === 'GROUP_STAGE' ? 'Group' : cat === 'BRACKET' ? 'Bracket' : cat === 'AWARDS' ? 'Awards' : 'XI'}
+                                    </button>
+                                );
+                            })}
+                        </div>
                         
                         {!confirmReset ? (
                             <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>

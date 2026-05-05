@@ -586,3 +586,74 @@
     border: none;
     transform: scale(0.98);
 }
+
+/* ── Category Locks (per-section lock toggles) ────── */
+
+.admin-category-locks {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border-subtle);
+}
+
+.admin-category-locks-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+}
+
+.admin-cat-lock-btn {
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+}
+
+.admin-cat-lock-btn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(236, 255, 0, 0.06);
+}
+
+.admin-cat-lock-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-cat-lock-btn.locked {
+    background: rgba(255, 100, 100, 0.12);
+    color: #ff6b6b;
+    border-color: rgba(255, 100, 100, 0.35);
+}
+
+.admin-cat-lock-btn.locked:hover:not(:disabled) {
+    background: rgba(255, 100, 100, 0.22);
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.admin-cat-lock-btn.unlocked {
+    background: transparent;
+    color: #00e676;
+    border-color: rgba(0, 230, 118, 0.35);
+}
+
+.admin-cat-lock-btn.unlocked:hover:not(:disabled) {
+    background: rgba(0, 230, 118, 0.1);
+    border-color: #00e676;
+    color: #00e676;
+    box-shadow: 0 0 8px rgba(0, 230, 118, 0.15);
+}
