@@ -60,10 +60,9 @@ const getFreshState = (): AppState => {
         },
         tournamentXI: {
             GK: '',
-            LB: '', LCB: '', RCB: '', RB: '',
-            LDM: '', RDM: '',
-            LAM: '', CAM: '', RAM: '',
-            ST: ''
+            FP1: '', FP2: '', FP3: '', FP4: '',
+            FP5: '', FP6: '', FP7: '', FP8: '',
+            FP9: '', FP10: ''
         }
     };
 };

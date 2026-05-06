@@ -23,6 +23,9 @@ export const useLoadUserPredictions = () => {
                 ]);
 
                 if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error) {
+                    const msg = [matchesRes.error?.message, koRes.error?.message, awardsRes.error?.message, xiRes.error?.message]
+                        .filter(Boolean).join('; ');
+                    if (import.meta.env.DEV) console.error('Load predictions failed:', msg);
                     return;
                 }
 
@@ -89,13 +92,15 @@ export const useLoadUserPredictions = () => {
                     selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds
                 });
                 
-            } catch (err) {}
+            } catch (err) {
+                if (import.meta.env.DEV) console.error('Load predictions error:', err);
+            }
         };
 
-        // Delay it highly slightly to ensure context binds completely
+        // Delay slightly to ensure context binds completely
+        hasLoaded.current = true;
         setTimeout(() => {
             loadPredictions();
-            hasLoaded.current = true;
         }, 500);
     }, [session?.user?.id]);
 };

@@ -3,7 +3,7 @@
 -- SECURITY DEFINER bypasses RLS.
 --   Masters  → wipe ALL users' predictions, results & points
 --   Regular  → wipe only caller's own predictions & points
--- Run this in Supabase SQL Editor once.
+-- Run this in Supabase SQL Editor once after every change.
 -- ============================================================
 
 create or replace function public.reset_tournament()
@@ -16,7 +16,7 @@ declare
     caller_id     uuid;
     caller_master boolean;
 begin
-    caller_id := (select (current_setting('request.jwt.claims', true)::jsonb)->>'sub');
+    caller_id := (select (current_setting('request.jwt.claims', true)::jsonb) ->> 'sub')::uuid;
     if caller_id is null then
         return jsonb_build_object('success', false, 'message', 'Not authenticated.');
     end if;
@@ -47,5 +47,8 @@ begin
 
         return jsonb_build_object('success', true, 'message', 'Your predictions have been cleared.');
     end if;
+exception
+    when others then
+        return jsonb_build_object('success', false, 'message', SQLERRM);
 end;
 $$;

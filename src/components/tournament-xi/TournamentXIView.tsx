@@ -15,37 +15,37 @@ const FORMATIONS: Record<string, FormationConfig> = {
     '4-2-3-1': {
         name: '4-2-3-1',
         rows: [
-            { rowClass: 'st', slots: [{ dataKey: 'ST', badge: 'ST' }] },
-            { rowClass: 'am', slots: [{ dataKey: 'LAM', badge: 'LAM' }, { dataKey: 'CAM', badge: 'CAM' }, { dataKey: 'RAM', badge: 'RAM' }] },
-            { rowClass: 'dm', slots: [{ dataKey: 'LDM', badge: 'LDM' }, { dataKey: 'RDM', badge: 'RDM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'LB', badge: 'LB' }, { dataKey: 'LCB', badge: 'LCB' }, { dataKey: 'RCB', badge: 'RCB' }, { dataKey: 'RB', badge: 'RB' }] },
+            { rowClass: 'st', slots: [{ dataKey: 'FP1', badge: 'ST' }] },
+            { rowClass: 'am', slots: [{ dataKey: 'FP2', badge: 'LAM' }, { dataKey: 'FP3', badge: 'CAM' }, { dataKey: 'FP4', badge: 'RAM' }] },
+            { rowClass: 'dm', slots: [{ dataKey: 'FP5', badge: 'LDM' }, { dataKey: 'FP6', badge: 'RDM' }] },
+            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
             { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
         ]
     },
     '4-3-3': {
         name: '4-3-3',
         rows: [
-            { rowClass: 'fwd', slots: [{ dataKey: 'LAM', badge: 'LW' }, { dataKey: 'ST', badge: 'ST' }, { dataKey: 'RAM', badge: 'RW' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'LDM', badge: 'LCM' }, { dataKey: 'CAM', badge: 'CM' }, { dataKey: 'RDM', badge: 'RCM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'LB', badge: 'LB' }, { dataKey: 'LCB', badge: 'LCB' }, { dataKey: 'RCB', badge: 'RCB' }, { dataKey: 'RB', badge: 'RB' }] },
+            { rowClass: 'fwd', slots: [{ dataKey: 'FP1', badge: 'LW' }, { dataKey: 'FP2', badge: 'ST' }, { dataKey: 'FP3', badge: 'RW' }] },
+            { rowClass: 'mid', slots: [{ dataKey: 'FP4', badge: 'LCM' }, { dataKey: 'FP5', badge: 'CM' }, { dataKey: 'FP6', badge: 'RCM' }] },
+            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
             { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
         ]
     },
     '4-4-2': {
         name: '4-4-2',
         rows: [
-            { rowClass: 'fwd-2', slots: [{ dataKey: 'CAM', badge: 'ST' }, { dataKey: 'ST', badge: 'ST' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'LAM', badge: 'LM' }, { dataKey: 'LDM', badge: 'CM' }, { dataKey: 'RDM', badge: 'CM' }, { dataKey: 'RAM', badge: 'RM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'LB', badge: 'LB' }, { dataKey: 'LCB', badge: 'LCB' }, { dataKey: 'RCB', badge: 'RCB' }, { dataKey: 'RB', badge: 'RB' }] },
+            { rowClass: 'fwd-2', slots: [{ dataKey: 'FP1', badge: 'ST' }, { dataKey: 'FP2', badge: 'ST' }] },
+            { rowClass: 'mid', slots: [{ dataKey: 'FP3', badge: 'LM' }, { dataKey: 'FP4', badge: 'CM' }, { dataKey: 'FP5', badge: 'CM' }, { dataKey: 'FP6', badge: 'RM' }] },
+            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
             { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
         ]
     },
     '3-5-2': {
         name: '3-5-2',
         rows: [
-            { rowClass: 'fwd-2', slots: [{ dataKey: 'ST1', badge: 'ST' }, { dataKey: 'ST2', badge: 'ST' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'LM', badge: 'LM' }, { dataKey: 'LCM', badge: 'LCM' }, { dataKey: 'CAM', badge: 'CAM' }, { dataKey: 'RCM', badge: 'RCM' }, { dataKey: 'RM', badge: 'RM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'LCB', badge: 'LCB' }, { dataKey: 'CB', badge: 'CB' }, { dataKey: 'RCB', badge: 'RCB' }] },
+            { rowClass: 'fwd-2', slots: [{ dataKey: 'FP1', badge: 'ST' }, { dataKey: 'FP2', badge: 'ST' }] },
+            { rowClass: 'mid', slots: [{ dataKey: 'FP3', badge: 'LM' }, { dataKey: 'FP4', badge: 'LCM' }, { dataKey: 'FP5', badge: 'CAM' }, { dataKey: 'FP6', badge: 'RCM' }, { dataKey: 'FP7', badge: 'RM' }] },
+            { rowClass: 'def', slots: [{ dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'CB' }, { dataKey: 'FP10', badge: 'RCB' }] },
             { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
         ]
     }
