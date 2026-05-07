@@ -239,3 +239,38 @@ html[data-theme='light'] .current-user.top-rank-3 {
     background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), transparent);
     border-left: 3px solid #a855f7;
 }
+
+/* ── Pagination ─────────────────────────────────────────── */
+.leaderboard-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0.5rem 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.pagination-btn {
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--bg-tertiary);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { rateLimiter } from '../lib/rateLimiter';
+import type { Match } from '../types';
 
 interface Profile {
     id: string;
@@ -44,6 +45,9 @@ interface AuthContextType {
     updateEaseMode: (enabled: boolean) => Promise<{ error: string | null }>;
     setCategoryLock: (category: LockCategory) => Promise<{ error: string | null }>;
     clearCategoryLock: (category: LockCategory) => Promise<{ error: string | null }>;
+    isMatchLocked: (match: Match) => boolean;
+    getTimeUntilLock: (match: Match) => number | null;
+    lockMinutes: number;
 }
 
 
@@ -255,6 +259,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { error: error?.message || null };
     };
 
+    // ── Per-match locking (1-hour window, configurable via env) ──
+    const lockMinutes = parseInt(import.meta.env.VITE_MATCH_LOCK_MINUTES || '60', 10);
+
+    const isMatchLocked = (match: Match): boolean => {
+        if (!match.date || match.date.includes('TBD')) return false;
+        const lockTime = new Date(match.date).getTime() - lockMinutes * 60 * 1000;
+        return Date.now() >= lockTime;
+    };
+
+    const getTimeUntilLock = (match: Match): number | null => {
+        if (!match.date || match.date.includes('TBD')) return null;
+        const lockTime = new Date(match.date).getTime() - lockMinutes * 60 * 1000;
+        const now = Date.now();
+        return lockTime > now ? lockTime - now : null;
+    };
+
     const openAuthModal  = () => setIsAuthModalOpen(true);
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
@@ -282,6 +302,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateEaseMode,
             setCategoryLock,
             clearCategoryLock,
+            isMatchLocked,
+            getTimeUntilLock,
+            lockMinutes,
         }}>
             {children}
         </AuthContext.Provider>

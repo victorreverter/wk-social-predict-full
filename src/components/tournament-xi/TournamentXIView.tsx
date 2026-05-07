@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import './TournamentXIView.css';
@@ -57,9 +57,29 @@ export const TournamentXIView: React.FC = () => {
     const { isLocked, user } = useAuth();
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     const activeFormation = FORMATIONS[selectedFormation];
 
+    const sanitizeName = useCallback((value: string): string => {
+        return value.replace(/[<>{}]/g, '').slice(0, 30);
+    }, []);
+
+    const handleBlur = useCallback((dataKey: string, value: string) => {
+        const sanitized = sanitizeName(value).trim();
+        if (sanitized !== value) {
+            updateTournamentXI(dataKey, sanitized);
+        }
+        if (sanitized && sanitized.length < 2) {
+            setFieldErrors(prev => ({ ...prev, [dataKey]: 'Name too short' }));
+        } else {
+            setFieldErrors(prev => {
+                const next = { ...prev };
+                delete next[dataKey];
+                return next;
+            });
+        }
+    }, [sanitizeName, updateTournamentXI]);
 
     return (
         <div className="tournament-xi-container fade-in">
@@ -119,13 +139,17 @@ export const TournamentXIView: React.FC = () => {
                                     </div>
                                     <input
                                         type="text"
-                                        className="player-input"
+                                        className={`player-input ${fieldErrors[dataKey] ? 'input-error' : ''}`}
                                         placeholder="Player Name"
                                         value={tournamentXI[dataKey] || ''}
                                         onChange={(e) => updateTournamentXI(dataKey, e.target.value)}
-                                        maxLength={20}
+                                        onBlur={(e) => handleBlur(dataKey, e.target.value)}
+                                        maxLength={30}
                                         disabled={isLocked}
                                     />
+                                    {fieldErrors[dataKey] && (
+                                        <span className="input-error-hint">{fieldErrors[dataKey]}</span>
+                                    )}
                                 </div>
                             ))}
                         </div>

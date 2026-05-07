@@ -20,6 +20,8 @@ export const LeaderboardView: React.FC = () => {
     const [leaderboard, setLeaderboard] = useState<ProfileData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [page, setPage] = useState(0);
+    const PAGE_SIZE = 15;
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
 
@@ -148,7 +150,9 @@ export const LeaderboardView: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {leaderboard.map((user, index) => {
+                        {leaderboard
+                            .slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+                            .map((user, index) => {
                             let rank = index + 1;
                             if (index > 0 && leaderboard[index - 1].total === user.total) {
                                 const firstTiedIndex = leaderboard.findIndex(u => u.total === user.total);
@@ -192,6 +196,29 @@ export const LeaderboardView: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+                {leaderboard.length > PAGE_SIZE && (
+                    <div className="leaderboard-pagination">
+                        <span className="pagination-info">
+                            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, leaderboard.length)} of {leaderboard.length}
+                        </span>
+                        <div className="pagination-buttons">
+                            <button
+                                className="pagination-btn"
+                                disabled={page === 0}
+                                onClick={() => setPage(p => p - 1)}
+                            >
+                                ← Prev
+                            </button>
+                            <button
+                                className="pagination-btn"
+                                disabled={(page + 1) * PAGE_SIZE >= leaderboard.length}
+                                onClick={() => setPage(p => p + 1)}
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

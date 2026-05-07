@@ -50,6 +50,27 @@
     font-weight: 600;
 }
 
+.lock-countdown {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+}
+
+.lock-countdown.warning {
+    background: rgba(255, 165, 0, 0.1);
+    color: #ffa500;
+    border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.lock-countdown.locked {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .match-teams {
     display: flex;
     justify-content: space-between;

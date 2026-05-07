@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Match, Team, ResultType } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { useAuth } from '../../context/AuthContext';
+import { useMatchLock } from '../../hooks/useMatchLock';
 import './BracketMatchNode.css';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 
 export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam }) => {
     const { state, updateKnockoutMatchEasyResult, updateKnockoutMatchScore } = useApp();
-    const { isLocked } = useAuth();
+    const { isLocked: isMatchTimeLocked, formatted: lockCountdown } = useMatchLock(match);
     const { mode } = state;
 
     const handleEasyResult = (result: ResultType) => {
@@ -56,7 +56,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                                 title="Penalties"
                                 value={isHome ? (match.score?.homePenalties ?? '') : (match.score?.awayPenalties ?? '')}
                                 onChange={(e) => handleHardScoreChange(isHome ? 'home-pen' : 'away-pen', e.target.value)}
-                                disabled={isLocked}
+                                disabled={isMatchTimeLocked}
                             />
                         )}
                         <input
@@ -66,7 +66,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             placeholder="-"
                             value={isHome ? (match.score?.homeGoals ?? '') : (match.score?.awayGoals ?? '')}
                             onChange={(e) => handleHardScoreChange(isHome ? 'home' : 'away', e.target.value)}
-                            disabled={isLocked}
+                            disabled={isMatchTimeLocked}
                         />
                     </div>
                 ) : (
@@ -75,7 +75,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             className={`btn-easy-bracket ${match.result === (isHome ? 'HOME_WIN' : 'AWAY_WIN') ? 'active' : ''}`}
                             onClick={() => handleEasyResult(isHome ? 'HOME_WIN' : 'AWAY_WIN')}
                             title="Select Winner"
-                            disabled={isLocked}
+                            disabled={isMatchTimeLocked}
                         >
                             W
                         </button>
@@ -101,8 +101,13 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                         <span className="user-time" title="Your Local Time">({formattedUserDate} your time)</span>
                         {match.localTime && match.localTime !== 'TBD' && (
                             <span className="venue-time" title="Venue Local Time"> • {match.localTime} match time</span>
-                        )}
-                    </div>
+                )}
+                {lockCountdown && (
+                    <span className={`lock-countdown ${isMatchTimeLocked ? 'locked' : 'warning'}`}>
+                        {lockCountdown}
+                    </span>
+                )}
+            </div>
                 )}
             </div>
 

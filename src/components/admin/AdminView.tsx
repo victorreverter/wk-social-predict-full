@@ -26,6 +26,8 @@ interface OfficialMatch {
     away_penalties: number | null;
     went_to_pens: boolean;
     status: 'NOT_PLAYED' | 'FINISHED';
+    date?: string | null;
+    locked_at?: string | null;
 }
 
 interface OfficialAward {
@@ -533,6 +535,75 @@ export const AdminView: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* ── DANGER ZONE: Manual Match Lock Override ── */}
+            <div className="admin-danger-zone glass-panel">
+                <h3>🚨 Manual Match Lock Override — DANGER ZONE</h3>
+                <p className="admin-ko-hint" style={{ color: 'var(--color-accent-red, #ef4444)' }}>
+                    ⚠️ <strong>SUPREME RULE</strong>: Once a match enters the 1-hour window before kickoff, the time-based lock <strong>CANNOT</strong> be manually overridden. Any manual unlock attempt within this window will fail server-side.
+                </p>
+
+                <div className="admin-danger-controls">
+                    <select
+                        className="admin-danger-select"
+                        value={saving?.startsWith('manual_') ? '' : ''}
+                        onChange={e => {
+                            (window as any).__adminSelectedMatch = e.target.value;
+                        }}
+                        disabled={saving?.startsWith('manual_')}
+                    >
+                        <option value="">Select a match to lock/unlock…</option>
+                        {Object.values(officialMatches).map(om => {
+                            const matchId = om.match_id;
+                            const matchDate = om.date ? new Date(om.date).toLocaleString() : 'TBD';
+                            const isLocked = om.locked_at !== null;
+                            return (
+                                <option key={matchId} value={matchId}>
+                                    {matchId.toUpperCase()}: {teamName(Object.values(allGroupMatches).find(m => m.homeTeamId)?.homeTeamId ?? '?')} vs {teamName(Object.values(allGroupMatches).find(m => m.awayTeamId)?.awayTeamId ?? '?')} — {matchDate} {isLocked ? '🔒' : '🔓'}
+                                </option>
+                            );
+                        })}
+                    </select>
+
+                    <button
+                        className="admin-save-btn"
+                        style={{ background: 'var(--color-accent-red, #ef4444)', color: 'white' }}
+                        onClick={async () => {
+                            const matchId = (window as any).__adminSelectedMatch;
+                            if (!matchId) { showToast('Select a match first'); return; }
+                            setSaving(`manual_lock_${matchId}`);
+                            const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: true });
+                            if (error) showToast(`❌ ${error.message}`);
+                            else if (data?.[0]) showToast(data[0].success ? data[0].message : `❌ ${data[0].message}`);
+                            setSaving(null);
+                        }}
+                        disabled={saving?.startsWith('manual_')}
+                    >
+                        {saving?.startsWith('manual_lock_') ? '…' : '🔒 Manual Lock'}
+                    </button>
+
+                    <button
+                        className="admin-save-btn"
+                        style={{ background: 'var(--color-accent-red, #dc2626)', color: 'white', opacity: 0.9 }}
+                        onClick={async () => {
+                            const matchId = (window as any).__adminSelectedMatch;
+                            if (!matchId) { showToast('Select a match first'); return; }
+                            setSaving(`manual_unlock_${matchId}`);
+                            const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: false });
+                            if (error) showToast(`❌ ${error.message}`);
+                            else if (data?.[0]) showToast(data[0].success ? data[0].message : `❌ ${data[0].message}`);
+                            setSaving(null);
+                        }}
+                        disabled={saving?.startsWith('manual_')}
+                    >
+                        {saving?.startsWith('manual_unlock_') ? '…' : '🔓 Manual Unlock'}
+                    </button>
+                </div>
+
+                <p className="admin-ko-hint" style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}>
+                    <strong>How it works:</strong> Admin can lock/unlock freely when match is &gt; 1 hour away. Once within 1 hour, manual unlock <strong>WILL FAIL</strong> — the time lock is absolute and supreme. All manual actions are logged to the <code>audit_log</code> table for security compliance.
+                </p>
+            </div>
         </div>
     );
 };

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/shared/Toast';
+import { logger } from '../lib/logger';
 
 import { scoreMatches } from '../lib/scoreMatches';
 import { scoreKnockout } from '../lib/scoreKnockout';
@@ -10,10 +11,11 @@ import { scoreAwards } from '../lib/scoreAwards';
 import { scoreXI } from '../lib/scoreXI';
 import { rateLimiter } from '../lib/rateLimiter';
 import { withRetry } from '../lib/retry';
+import type { Match } from '../types';
 
 export const useSaveAllPredictions = () => {
     const { state } = useApp();
-    const { session, categoryLocks } = useAuth();
+    const { session, categoryLocks, isMatchLocked } = useAuth();
     const { addToast } = useToast();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveMsg, setSaveMsg] = useState('');
@@ -81,6 +83,15 @@ export const useSaveAllPredictions = () => {
 
         setSaveStatus('saving');
         setSaveMsg('');
+
+        // Check per-match locks (each match locks 1 hour before kickoff)
+        const lockedMatches = allMatches.filter(m => isMatchLocked(m as Match));
+        if (lockedMatches.length > 0) {
+            const msg = `Cannot save: ${lockedMatches.length} match(es) are locked (1hr before kickoff).`;
+            setAlert('error', msg);
+            addToast(msg, 'error');
+            return;
+        }
 
         // Ensure profile exists for this user (auto-creates if missing)
         const { error: profileErr } = await supabase.rpc('ensure_profile');
@@ -194,7 +205,7 @@ export const useSaveAllPredictions = () => {
             const hasError = results.some(r => r.error);
             if (hasError) {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
-                if (import.meta.env.DEV) console.error('Detailed save errors:', errors);
+                logger.error('Save predictions failed', errors);
                 setAlert('error', 'Failed to save. Check console for details.');
                 addToast('Failed to save predictions. Please try again.', 'error');
             } else {
@@ -211,7 +222,7 @@ export const useSaveAllPredictions = () => {
             }
 
         } catch (err: any) {
-            if (import.meta.env.DEV) console.error('Save error:', err);
+            logger.error('Save error', err);
             setAlert('error', err.message || 'An unexpected error occurred.');
             addToast(err.message || 'An unexpected error occurred.', 'error');
         }
