@@ -2,16 +2,19 @@ import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/shared/Toast';
 
 import { scoreMatches } from '../lib/scoreMatches';
 import { scoreKnockout } from '../lib/scoreKnockout';
 import { scoreAwards } from '../lib/scoreAwards';
 import { scoreXI } from '../lib/scoreXI';
 import { rateLimiter } from '../lib/rateLimiter';
+import { withRetry } from '../lib/retry';
 
 export const useSaveAllPredictions = () => {
     const { state } = useApp();
     const { session, categoryLocks } = useAuth();
+    const { addToast } = useToast();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveMsg, setSaveMsg] = useState('');
 
@@ -32,13 +35,16 @@ export const useSaveAllPredictions = () => {
     const saveAll = async () => {
         if (!session) {
             setAlert('error', 'Please sign in to save.');
+            addToast('Please sign in to save.', 'error');
             return;
         }
 
         const rateLimit = rateLimiter.check('PREDICTION_SAVE');
         if (!rateLimit.allowed) {
             const waitSeconds = Math.ceil((rateLimit.resetAt! - Date.now()) / 1000);
-            setAlert('error', `Too many save attempts. Please wait ${waitSeconds} seconds.`);
+            const msg = `Too many save attempts. Please wait ${waitSeconds} seconds.`;
+            setAlert('error', msg);
+            addToast(msg, 'error');
             return;
         }
 
@@ -55,7 +61,9 @@ export const useSaveAllPredictions = () => {
         if (hasXI && categoryLocks.TOURNAMENT_XI) blockedCategories.push('Tournament XI');
 
         if (blockedCategories.length > 0) {
-            setAlert('error', `Cannot save: ${blockedCategories.join(', ')} predictions are locked by admin.`);
+            const msg = `Cannot save: ${blockedCategories.join(', ')} predictions are locked by admin.`;
+            setAlert('error', msg);
+            addToast(msg, 'error');
             return;
         }
 
@@ -188,21 +196,24 @@ export const useSaveAllPredictions = () => {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
                 if (import.meta.env.DEV) console.error('Detailed save errors:', errors);
                 setAlert('error', 'Failed to save. Check console for details.');
+                addToast('Failed to save predictions. Please try again.', 'error');
             } else {
-                await scoreMatches(session.user.id);
-                await scoreKnockout(session.user.id);
-                await scoreAwards(session.user.id);
-                await scoreXI(session.user.id);
+                await withRetry(() => scoreMatches(session.user.id));
+                await withRetry(() => scoreKnockout(session.user.id));
+                await withRetry(() => scoreAwards(session.user.id));
+                await withRetry(() => scoreXI(session.user.id));
 
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
                 const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length;
                 setAlert('saved', `✅ Saved ${savedCount} predictions!`);
+                addToast(`Saved ${savedCount} predictions!`, 'success');
             }
 
         } catch (err: any) {
             if (import.meta.env.DEV) console.error('Save error:', err);
             setAlert('error', err.message || 'An unexpected error occurred.');
+            addToast(err.message || 'An unexpected error occurred.', 'error');
         }
     };
 

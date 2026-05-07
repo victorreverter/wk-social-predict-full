@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePredictorCompletion } from '../../hooks/usePredictorCompletion';
 import { useSaveAllPredictions } from '../../hooks/useSaveAllPredictions';
+import { useToast } from '../shared/Toast';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import './Header.css';
 
@@ -14,12 +15,15 @@ export const Header: React.FC = () => {
     const { mode, activeTab, groupMatches } = state;
     const { isComplete } = usePredictorCompletion();
     const { saveAll, saveStatus, saveMsg } = useSaveAllPredictions();
+    const { addToast } = useToast();
 
     const handleReset = async () => {
         try {
             await resetPredictions();
-        } catch (error) {
+            addToast('Predictions cleared.', 'success');
+        } catch (error: any) {
             console.error('Reset failed:', error);
+            addToast(error?.message || 'Reset failed.', 'error');
         }
     };
 

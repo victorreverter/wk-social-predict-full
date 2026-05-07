@@ -13,6 +13,8 @@ import { AuthModal } from './components/auth/AuthModal';
 import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { ToastProvider } from './components/shared/Toast';
 import { useApp } from './context/AppContext';
 import { useLoadUserPredictions } from './hooks/useLoadUserPredictions';
 
@@ -50,9 +52,11 @@ const AppShell = () => {
   const { isAuthModalOpen } = useAuth();
   return (
     <AppProvider>
-      <AppContentWrapper />
-      <OnboardingModal />
-      {isAuthModalOpen && <AuthModal />}
+      <ErrorBoundary>
+        <AppContentWrapper />
+        <OnboardingModal />
+        {isAuthModalOpen && <AuthModal />}
+      </ErrorBoundary>
     </AppProvider>
   );
 };
@@ -60,7 +64,9 @@ const AppShell = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <AppShell />
+      <ToastProvider>
+        <AppShell />
+      </ToastProvider>
     </AuthProvider>
   );
 };
