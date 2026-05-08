@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { initialTeams, groups, generateInitialGroupMatches } from '../../utils/data-init';
+import { initialTeams, groups, generateInitialGroupMatches, GROUP_MATCH_SCHEDULE_DATA } from '../../utils/data-init';
 import {
     R32_FIXTURES, R16_FIXTURES, QF_FIXTURES, SF_FIXTURES,
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
@@ -537,71 +537,231 @@ export const AdminView: React.FC = () => {
             )}
 
             {/* ── DANGER ZONE: Manual Match Lock Override ── */}
-            <div className="admin-danger-zone glass-panel">
-                <h3>🚨 Manual Match Lock Override — DANGER ZONE</h3>
-                <p className="admin-ko-hint" style={{ color: 'var(--color-accent-red, #ef4444)' }}>
-                    ⚠️ <strong>SUPREME RULE</strong>: Once a match enters the 1-hour window before kickoff, the time-based lock <strong>CANNOT</strong> be manually overridden. Any manual unlock attempt within this window will fail server-side.
-                </p>
-
-                <div className="admin-danger-controls">
-                    <select
-                        className="admin-danger-select"
-                        value={saving?.startsWith('manual_') ? '' : ''}
-                        onChange={e => {
-                            (window as any).__adminSelectedMatch = e.target.value;
-                        }}
-                        disabled={saving?.startsWith('manual_')}
-                    >
-                        <option value="">Select a match to lock/unlock…</option>
-                        {Object.values(officialMatches).map(om => {
-                            const matchId = om.match_id;
-                            const matchDate = om.date ? new Date(om.date).toLocaleString() : 'TBD';
-                            const isLocked = om.locked_at !== null;
-                            return (
-                                <option key={matchId} value={matchId}>
-                                    {matchId.toUpperCase()}: {teamName(Object.values(allGroupMatches).find(m => m.homeTeamId)?.homeTeamId ?? '?')} vs {teamName(Object.values(allGroupMatches).find(m => m.awayTeamId)?.awayTeamId ?? '?')} — {matchDate} {isLocked ? '🔒' : '🔓'}
-                                </option>
-                            );
-                        })}
-                    </select>
-
-                    <button
-                        className="admin-save-btn"
-                        style={{ background: 'var(--color-accent-red, #ef4444)', color: 'white' }}
-                        onClick={async () => {
-                            const matchId = (window as any).__adminSelectedMatch;
-                            if (!matchId) { showToast('Select a match first'); return; }
-                            setSaving(`manual_lock_${matchId}`);
-                            const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: true });
-                            if (error) showToast(`❌ ${error.message}`);
-                            else if (data?.[0]) showToast(data[0].success ? data[0].message : `❌ ${data[0].message}`);
-                            setSaving(null);
-                        }}
-                        disabled={saving?.startsWith('manual_')}
-                    >
-                        {saving?.startsWith('manual_lock_') ? '…' : '🔒 Manual Lock'}
-                    </button>
-
-                    <button
-                        className="admin-save-btn"
-                        style={{ background: 'var(--color-accent-red, #dc2626)', color: 'white', opacity: 0.9 }}
-                        onClick={async () => {
-                            const matchId = (window as any).__adminSelectedMatch;
-                            if (!matchId) { showToast('Select a match first'); return; }
-                            setSaving(`manual_unlock_${matchId}`);
-                            const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: false });
-                            if (error) showToast(`❌ ${error.message}`);
-                            else if (data?.[0]) showToast(data[0].success ? data[0].message : `❌ ${data[0].message}`);
-                            setSaving(null);
-                        }}
-                        disabled={saving?.startsWith('manual_')}
-                    >
-                        {saving?.startsWith('manual_unlock_') ? '…' : '🔓 Manual Unlock'}
-                    </button>
+            <div className="danger-zone-wrapper">
+                <div className="danger-zone-header">
+                    <div className="danger-zone-icon">🚨</div>
+                    <div className="danger-zone-title">
+                        <h3>Manual Match Lock Override</h3>
+                        <span className="danger-zone-badge">DANGER ZONE</span>
+                    </div>
                 </div>
 
-                <p className="admin-ko-hint" style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}>
-                    <strong>How it works:</strong> Admin can lock/unlock freely when match is &gt; 1 hour away. Once within 1 hour, manual unlock <strong>WILL FAIL</strong> — the time lock is absolute and supreme. All manual actions are logged to the <code>audit_log</code> table for security compliance.
+                <div className="danger-zone-description">
+                    <span className="danger-rule-badge">SUPREME RULE</span>
+                    Once a match enters the <strong>1-hour window</strong> before kickoff, the time-based lock <strong>cannot</strong> be manually overridden.
+                </div>
+
+                <div className="danger-match-grid">
+                    {Object.keys(allGroupMatches).sort((a, b) => {
+                        const aNum = parseInt(a.replace('m', ''));
+                        const bNum = parseInt(b.replace('m', ''));
+                        const aDate = GROUP_MATCH_SCHEDULE_DATA[aNum]?.date ?? '9999';
+                        const bDate = GROUP_MATCH_SCHEDULE_DATA[bNum]?.date ?? '9999';
+                        return aDate.localeCompare(bDate);
+                    }).map(matchId => {
+                        const match = allGroupMatches[matchId];
+                        const om = officialMatches[matchId];
+                        const isLocked = om?.locked_at != null;
+                        const matchDate = om?.date 
+                            ? new Date(om.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                            : 'TBD';
+                        const matchTime = om?.date
+                            ? new Date(om.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                            : '';
+                        const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
+                        const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
+                        const isSaving = saving === `danger_lock_${matchId}` || saving === `danger_unlock_${matchId}`;
+
+                        return (
+                            <div
+                                key={matchId}
+                                className={`danger-match-card ${isLocked ? 'locked' : 'unlocked'}`}
+                            >
+                                <div className="danger-match-top">
+                                    <span className="danger-match-id">{matchId.toUpperCase()}</span>
+                                    <span className={`danger-match-status ${isLocked ? 'locked' : 'unlocked'}`}>
+                                        {isLocked ? '🔒 Locked' : '🔓 Unlocked'}
+                                    </span>
+                                </div>
+
+                                <div className="danger-match-teams">
+                                    <div className="danger-match-team">
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}flags/${homeTeam?.code ?? 'TBD'}.svg`}
+                                            className="danger-team-flag"
+                                            alt=""
+                                        />
+                                        <span className="danger-team-name">{homeTeam?.name ?? 'TBD'}</span>
+                                    </div>
+                                    <span className="danger-match-vs">vs</span>
+                                    <div className="danger-match-team">
+                                        <span className="danger-team-name">{awayTeam?.name ?? 'TBD'}</span>
+                                        <img
+                                            src={`${import.meta.env.BASE_URL}flags/${awayTeam?.code ?? 'TBD'}.svg`}
+                                            className="danger-team-flag"
+                                            alt=""
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="danger-match-meta">
+                                    <span className="danger-match-date">{matchDate}</span>
+                                    {matchTime && <span className="danger-match-time">{matchTime}</span>}
+                                </div>
+
+                                <div className="danger-match-actions">
+                                    {isLocked ? (
+                                        <button
+                                            className="danger-action-btn unlock"
+                                            onClick={async () => {
+                                                setSaving(`danger_unlock_${matchId}`);
+                                                const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: false });
+                                                if (error) showToast(`❌ ${error.message}`);
+                                                else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
+                                                setSaving(null);
+                                                loadData();
+                                            }}
+                                            disabled={!!isSaving}
+                                            title="Remove manual lock"
+                                        >
+                                            {saving === `danger_unlock_${matchId}` ? '…' : 'Unlock'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="danger-action-btn lock"
+                                            onClick={async () => {
+                                                setSaving(`danger_lock_${matchId}`);
+                                                const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: true });
+                                                if (error) showToast(`❌ ${error.message}`);
+                                                else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
+                                                setSaving(null);
+                                                loadData();
+                                            }}
+                                            disabled={!!isSaving}
+                                            title="Lock match immediately"
+                                        >
+                                            {saving === `danger_lock_${matchId}` ? '…' : 'Lock Now'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* ── Knockout Stage ── */}
+                <div className="danger-match-section">
+                    <div className="danger-section-header">🏆 Knockout Stage</div>
+                    <div className="danger-match-grid">
+                        {KO_ROUNDS.flatMap(round =>
+                            round.matches.map(m => ({
+                                matchId: m.id,
+                                label: m.label,
+                                date: officialMatches[m.id]?.date ?? null,
+                                homeSlot: m.homeSlot,
+                                awaySlot: m.awaySlot,
+                                homeTeamId: resolvedKo[m.id]?.homeTeamId,
+                                awayTeamId: resolvedKo[m.id]?.awayTeamId,
+                            }))
+                        ).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).map(k => {
+                            const om = officialMatches[k.matchId];
+                            const isLocked = om?.locked_at != null;
+                            const matchDate = k.date
+                                ? new Date(k.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                                : 'TBD';
+                            const matchTime = k.date
+                                ? new Date(k.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                                : '';
+                            const isSaving = saving === `danger_lock_${k.matchId}` || saving === `danger_unlock_${k.matchId}`;
+
+                            const resolvedHome = k.homeTeamId && k.homeTeamId !== 'TBD'
+                                ? (initialTeams.find(t => t.id === k.homeTeamId)?.name ?? teamName(k.homeTeamId))
+                                : k.homeSlot;
+                            const resolvedAway = k.awayTeamId && k.awayTeamId !== 'TBD'
+                                ? (initialTeams.find(t => t.id === k.awayTeamId)?.name ?? teamName(k.awayTeamId))
+                                : k.awaySlot;
+
+                            const homeCode = k.homeTeamId && k.homeTeamId !== 'TBD'
+                                ? initialTeams.find(t => t.id === k.homeTeamId)?.code : null;
+                            const awayCode = k.awayTeamId && k.awayTeamId !== 'TBD'
+                                ? initialTeams.find(t => t.id === k.awayTeamId)?.code : null;
+
+                            return (
+                                <div
+                                    key={k.matchId}
+                                    className={`danger-match-card ${isLocked ? 'locked' : 'unlocked'}`}
+                                >
+                                    <div className="danger-match-top">
+                                        <span className="danger-match-id">{k.matchId.toUpperCase()}</span>
+                                        <span className={`danger-match-status ${isLocked ? 'locked' : 'unlocked'}`}>
+                                            {isLocked ? '🔒 Locked' : '🔓 Unlocked'}
+                                        </span>
+                                    </div>
+
+                                    <div className="danger-match-teams">
+                                        <div className="danger-match-team">
+                                            {homeCode && (
+                                                <img src={`${import.meta.env.BASE_URL}flags/${homeCode}.svg`} className="danger-team-flag" alt="" />
+                                            )}
+                                            <span className="danger-team-name">{resolvedHome}</span>
+                                        </div>
+                                        <span className="danger-match-vs">vs</span>
+                                        <div className="danger-match-team">
+                                            <span className="danger-team-name">{resolvedAway}</span>
+                                            {awayCode && (
+                                                <img src={`${import.meta.env.BASE_URL}flags/${awayCode}.svg`} className="danger-team-flag" alt="" />
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="danger-match-meta">
+                                        <span className="danger-match-date">{matchDate}</span>
+                                        {matchTime && <span className="danger-match-time">{matchTime}</span>}
+                                    </div>
+
+                                    <div className="danger-match-actions">
+                                        {isLocked ? (
+                                            <button
+                                                className="danger-action-btn unlock"
+                                                onClick={async () => {
+                                                    setSaving(`danger_unlock_${k.matchId}`);
+                                                    const { data, error } = await supabase.rpc('set_match_lock', { match_id: k.matchId, lock_state: false });
+                                                    if (error) showToast(`❌ ${error.message}`);
+                                                    else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
+                                                    setSaving(null);
+                                                    loadData();
+                                                }}
+                                                disabled={!!isSaving}
+                                                title="Remove manual lock"
+                                            >
+                                                {saving === `danger_unlock_${k.matchId}` ? '…' : 'Unlock'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="danger-action-btn lock"
+                                                onClick={async () => {
+                                                    setSaving(`danger_lock_${k.matchId}`);
+                                                    const { data, error } = await supabase.rpc('set_match_lock', { match_id: k.matchId, lock_state: true });
+                                                    if (error) showToast(`❌ ${error.message}`);
+                                                    else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
+                                                    setSaving(null);
+                                                    loadData();
+                                                }}
+                                                disabled={!!isSaving}
+                                                title="Lock match immediately"
+                                            >
+                                                {saving === `danger_lock_${k.matchId}` ? '…' : 'Lock Now'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <p className="danger-zone-footer">
+                    All manual actions are logged to the <code>audit_log</code> table for security compliance.
                 </p>
             </div>
         </div>
