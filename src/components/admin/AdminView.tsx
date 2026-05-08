@@ -378,6 +378,11 @@ export const AdminView: React.FC = () => {
         }, { onConflict: 'match_id' });
 
         if (!error) {
+            if (row.home_goals === null && row.away_goals === null) {
+                await supabase.from('user_predictions_eredivisie')
+                    .update({ pts_earned: 0 })
+                    .eq('match_id', matchId);
+            }
             await scoreEredivisie();
             flashSaved(`eredivisie_${matchId}`);
             window.dispatchEvent(new Event('leaderboard-refresh'));
