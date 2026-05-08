@@ -11,7 +11,7 @@ import './Header.css';
 export const Header: React.FC = () => {
 
     const { state, setMode, setActiveTab, resetPredictions, autoFillGroups, setThirdsModalDismissed, setHelpModalOpen } = useApp();
-    const { profile, user, signOut, openAuthModal, isLocked, isEaseModeEnabled } = useAuth();
+    const { profile, user, signOut, openAuthModal, isLocked, isEaseModeEnabled, isTestModeEnabled } = useAuth();
     const { mode, activeTab, groupMatches } = state;
     const { isComplete } = usePredictorCompletion();
     const { saveAll, saveStatus, saveMsg } = useSaveAllPredictions();
@@ -51,7 +51,15 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="header-controls">
-                <div className="tab-switcher">
+                    <div className="tab-switcher">
+                    {isTestModeEnabled && (
+                        <button
+                            className={`tab-btn test-tab ${activeTab === 'EREDIVISIE_TEST' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('EREDIVISIE_TEST')}
+                        >
+                            🧪 Test
+                        </button>
+                    )}
                     <button
                         className={`tab-btn ${activeTab === 'GROUP' ? 'active' : ''}`}
                         onClick={() => setActiveTab('GROUP')}

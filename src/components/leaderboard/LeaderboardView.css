@@ -274,3 +274,35 @@ html[data-theme='light'] .current-user.top-rank-3 {
     opacity: 0.35;
     cursor: default;
 }
+
+/* ── Leaderboard sub-tabs (World Cup / Eredivisie) ──────── */
+
+.leaderboard-mode-tabs {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.mode-tab {
+    padding: 0.45rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-tab.active {
+    background: var(--color-primary);
+    color: #000;
+    border-color: var(--color-primary);
+}
+
+.mode-tab:not(.active):hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}

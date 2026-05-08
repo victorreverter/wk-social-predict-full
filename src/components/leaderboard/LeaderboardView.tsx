@@ -15,9 +15,23 @@ interface ProfileData {
     total: number;
 }
 
+interface EredivisieProfileData {
+    id: string;
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    total: number;
+    matches_filled: number;
+}
+
+type LeaderboardMode = 'worldcup' | 'eredivisie';
+
 export const LeaderboardView: React.FC = () => {
-    const { profile } = useAuth();
+    const { profile, isTestModeEnabled } = useAuth();
+
+    const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>('worldcup');
     const [leaderboard, setLeaderboard] = useState<ProfileData[]>([]);
+    const [eredivisieLeaderboard, setEredivisieLeaderboard] = useState<EredivisieProfileData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
@@ -25,7 +39,9 @@ export const LeaderboardView: React.FC = () => {
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
 
-    const fetchLeaderboard = useCallback(async () => {
+    const isWorldCup = leaderboardMode === 'worldcup';
+
+    const fetchWorldCupLeaderboard = useCallback(async () => {
         if (loadingRef.current) return;
         loadingRef.current = true;
         setError('');
@@ -43,10 +59,18 @@ export const LeaderboardView: React.FC = () => {
             if (error) throw error;
 
             const processed: ProfileData[] = (data || []).map((user: any) => {
-                const matches_pts = (user.user_predictions_matches || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                const ko_pts = (user.user_predictions_knockout || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                const awa_pts = (user.user_predictions_awards || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
-                const xi_pts = (user.user_predictions_xi || []).reduce((acc: number, curr: any) => acc + (curr.pts_earned || 0), 0);
+                const matches_pts = (user.user_predictions_matches || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
+                const ko_pts = (user.user_predictions_knockout || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
+                const awa_pts = (user.user_predictions_awards || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
+                const xi_pts = (user.user_predictions_xi || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
 
                 return {
                     id: user.id,
@@ -71,13 +95,65 @@ export const LeaderboardView: React.FC = () => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchLeaderboard();
+    const fetchEredivisieLeaderboard = useCallback(async () => {
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        setError('');
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select(`
+                    id, username, display_name, avatar_url,
+                    user_predictions_eredivisie (pts_earned)
+                `);
 
-        const handleRefresh = () => fetchLeaderboard();
+            if (error) throw error;
+
+            const processed: EredivisieProfileData[] = (data || []).map((user: any) => {
+                const predictions = user.user_predictions_eredivisie || [];
+                const total = predictions.reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
+                const matches_filled = predictions.length;
+
+                return {
+                    id: user.id,
+                    username: user.username,
+                    display_name: user.display_name,
+                    avatar_url: user.avatar_url,
+                    total,
+                    matches_filled,
+                };
+            });
+
+            processed.sort((a, b) => b.total - a.total);
+            setEredivisieLeaderboard(processed);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load leaderboard data.');
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    }, []);
+
+    useEffect(() => {
+        setPage(0);
+        setLoading(true);
+        if (isWorldCup) {
+            fetchWorldCupLeaderboard();
+        } else {
+            fetchEredivisieLeaderboard();
+        }
+    }, [leaderboardMode, fetchWorldCupLeaderboard, fetchEredivisieLeaderboard, isWorldCup]);
+
+    useEffect(() => {
+        const handleRefresh = () => {
+            fetchWorldCupLeaderboard();
+            fetchEredivisieLeaderboard();
+        };
         window.addEventListener('leaderboard-refresh', handleRefresh);
 
-        const tables: string[] = [
+        const wcTables: string[] = [
             'user_predictions_matches',
             'user_predictions_knockout',
             'user_predictions_awards',
@@ -86,15 +162,21 @@ export const LeaderboardView: React.FC = () => {
 
         let ch = supabase.channel('leaderboard-updates');
 
-        tables.forEach(table => {
+        wcTables.forEach(table => {
             ch = ch
-                .on('postgres_changes', { event: 'INSERT',  schema: 'public', table }, fetchLeaderboard)
-                .on('postgres_changes', { event: 'UPDATE',  schema: 'public', table }, fetchLeaderboard)
-                .on('postgres_changes', { event: 'DELETE',  schema: 'public', table }, fetchLeaderboard);
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table }, fetchWorldCupLeaderboard)
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table }, fetchWorldCupLeaderboard)
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table }, fetchWorldCupLeaderboard);
         });
 
         ch = ch
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, fetchLeaderboard)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
+                fetchWorldCupLeaderboard();
+                fetchEredivisieLeaderboard();
+            })
             .subscribe();
 
         channelRef.current = ch;
@@ -105,7 +187,10 @@ export const LeaderboardView: React.FC = () => {
                 supabase.removeChannel(channelRef.current);
             }
         };
-    }, [fetchLeaderboard]);
+    }, [fetchWorldCupLeaderboard, fetchEredivisieLeaderboard]);
+
+    const activeData = isWorldCup ? leaderboard : eredivisieLeaderboard;
+    const totalColSpan = isWorldCup ? 7 : 4;
 
     if (loading) {
         return (
@@ -132,9 +217,32 @@ export const LeaderboardView: React.FC = () => {
     return (
         <div className="leaderboard-container fade-in">
             <header className="leaderboard-header glass-panel">
-                <h2 className="text-gradient">🏅 Global Leaderboard</h2>
-                <p>The ultimate ranking across the entire prediction tournament.</p>
+                <h2 className="text-gradient">
+                    {isWorldCup ? '🏅 Global Leaderboard' : '🧪 Eredivisie Test'}
+                </h2>
+                <p>
+                    {isWorldCup
+                        ? 'The ultimate ranking across the entire prediction tournament.'
+                        : 'Eredivisie prediction rankings.'}
+                </p>
             </header>
+
+            {isTestModeEnabled && (
+                <div className="leaderboard-mode-tabs">
+                    <button
+                        className={`mode-tab ${isWorldCup ? 'active' : ''}`}
+                        onClick={() => setLeaderboardMode('worldcup')}
+                    >
+                        🏆 World Cup
+                    </button>
+                    <button
+                        className={`mode-tab ${!isWorldCup ? 'active' : ''}`}
+                        onClick={() => setLeaderboardMode('eredivisie')}
+                    >
+                        🧪 Eredivisie
+                    </button>
+                </div>
+            )}
 
             <div className="leaderboard-table-wrap glass-panel">
                 <table className="leaderboard-table">
@@ -142,64 +250,94 @@ export const LeaderboardView: React.FC = () => {
                         <tr>
                             <th className="th-rank">Rank</th>
                             <th className="th-user">Predictor</th>
-                            <th className="th-score" title="Points from exact scores & results">Groups & Matches</th>
-                            <th className="th-score" title="Points from Knockout progressions">Bracket</th>
-                            <th className="th-score" title="Points from Awards">Awards</th>
-                            <th className="th-score" title="Points from Tournament XI">Tourn. XI</th>
-                            <th className="th-total">Total Pts</th>
+                            {isWorldCup ? (
+                                <>
+                                    <th className="th-score" title="Points from exact scores &amp; results">Groups &amp; Matches</th>
+                                    <th className="th-score" title="Points from Knockout progressions">Bracket</th>
+                                    <th className="th-score" title="Points from Awards">Awards</th>
+                                    <th className="th-score" title="Points from Tournament XI">Tourn. XI</th>
+                                    <th className="th-total">Total Pts</th>
+                                </>
+                            ) : (
+                                <>
+                                    <th className="th-score" title="Points from Eredivisie predictions">Test Pts</th>
+                                    <th className="th-score" title="Number of matches predicted">Matches Filled</th>
+                                </>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
-                        {leaderboard
+                        {(activeData as any[])
                             .slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
                             .map((user, index) => {
-                            let rank = index + 1;
-                            if (index > 0 && leaderboard[index - 1].total === user.total) {
-                                const firstTiedIndex = leaderboard.findIndex(u => u.total === user.total);
-                                rank = firstTiedIndex + 1;
-                            }
+                                const sorted = activeData as any[];
+                                let rank = index + 1;
+                                if (index > 0 && sorted[index - 1].total === user.total) {
+                                    const firstTiedIndex = sorted.findIndex((u: any) => u.total === user.total);
+                                    rank = firstTiedIndex + 1;
+                                }
 
-                            const isTop3 = rank <= 3;
-                            const isCurrentUser = user.id === profile?.id;
-                            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+                                const isTop3 = rank <= 3;
+                                const isCurrentUser = user.id === profile?.id;
+                                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
 
-                            return (
-                                <tr key={user.id} className={`${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}>
-                                    <td className="td-rank">
-                                        {medal ? <span className="medal-icon">{medal}</span> : <span className="rank-num">{rank}</span>}
-                                    </td>
-                                    <td className="td-user">
-                                        <div className="lb-user-info">
-                                            {user.avatar_url && (
-                                                <img src={user.avatar_url} alt="Avatar" className="lb-avatar" />
+                                return (
+                                    <tr
+                                        key={user.id}
+                                        className={`${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}
+                                    >
+                                        <td className="td-rank">
+                                            {medal ? (
+                                                <span className="medal-icon">{medal}</span>
+                                            ) : (
+                                                <span className="rank-num">{rank}</span>
                                             )}
-                                            <div className="lb-names">
-                                                <span className="lb-display-name">
-                                                    {user.username.charAt(0).toUpperCase() + user.username.slice(1)}
-                                                    {isCurrentUser && <span className="you-suffix"> (you)</span>}
-                                                </span>
+                                        </td>
+                                        <td className="td-user">
+                                            <div className="lb-user-info">
+                                                {user.avatar_url && (
+                                                    <img
+                                                        src={user.avatar_url}
+                                                        alt="Avatar"
+                                                        className="lb-avatar"
+                                                    />
+                                                )}
+                                                <div className="lb-names">
+                                                    <span className="lb-display-name">
+                                                        {user.username.charAt(0).toUpperCase() + user.username.slice(1)}
+                                                        {isCurrentUser && <span className="you-suffix"> (you)</span>}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="td-score">{user.matches_pts}</td>
-                                    <td className="td-score">{user.ko_pts}</td>
-                                    <td className="td-score">{user.awa_pts}</td>
-                                    <td className="td-score">{user.xi_pts}</td>
-                                    <td className="td-total">{user.total}</td>
-                                </tr>
-                            );
-                        })}
-                        {leaderboard.length === 0 && (
+                                        </td>
+                                        {isWorldCup ? (
+                                            <>
+                                                <td className="td-score">{(user as ProfileData).matches_pts}</td>
+                                                <td className="td-score">{(user as ProfileData).ko_pts}</td>
+                                                <td className="td-score">{(user as ProfileData).awa_pts}</td>
+                                                <td className="td-score">{(user as ProfileData).xi_pts}</td>
+                                                <td className="td-total">{user.total}</td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td className="td-total">{user.total}</td>
+                                                <td className="td-score">{(user as EredivisieProfileData).matches_filled}</td>
+                                            </>
+                                        )}
+                                    </tr>
+                                );
+                            })}
+                        {activeData.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="td-empty">No predictors found.</td>
+                                <td colSpan={totalColSpan} className="td-empty">No predictors found.</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
-                {leaderboard.length > PAGE_SIZE && (
+                {activeData.length > PAGE_SIZE && (
                     <div className="leaderboard-pagination">
                         <span className="pagination-info">
-                            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, leaderboard.length)} of {leaderboard.length}
+                            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, activeData.length)} of {activeData.length}
                         </span>
                         <div className="pagination-buttons">
                             <button
@@ -211,7 +349,7 @@ export const LeaderboardView: React.FC = () => {
                             </button>
                             <button
                                 className="pagination-btn"
-                                disabled={(page + 1) * PAGE_SIZE >= leaderboard.length}
+                                disabled={(page + 1) * PAGE_SIZE >= activeData.length}
                                 onClick={() => setPage(p => p + 1)}
                             >
                                 Next →

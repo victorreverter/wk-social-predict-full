@@ -1,6 +1,5 @@
 import { AppProvider } from './context/AppContext';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { GroupView } from './components/group-stage/GroupView';
 import { BracketTree } from './components/knockout-stage/BracketTree';
@@ -13,6 +12,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
+import { EredivisieTestView } from './components/eredivisie/EredivisieTestView';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ToastProvider } from './components/shared/Toast';
 import { useApp } from './context/AppContext';
@@ -22,9 +22,10 @@ import './styles/global.css';
 
 const MainContent = () => {
   const { state } = useApp();
-  const { profile } = useAuth();
+  const { profile, isTestModeEnabled } = useAuth();
   return (
     <main className="main-content">
+      {isTestModeEnabled && state.activeTab === 'EREDIVISIE_TEST' && <EredivisieTestView />}
       {state.activeTab === 'GROUP'         && <GroupView />}
       {state.activeTab === 'BRACKET'       && <BracketTree />}
       {state.activeTab === 'AWARDS'        && <AwardsView />}

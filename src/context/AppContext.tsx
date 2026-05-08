@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState } from '../types';
-import { generateInitialGroupMatches } from '../utils/data-init';
+import { generateInitialGroupMatches, generateEredivisieMatches } from '../utils/data-init';
 import { generateInitialKnockoutMatches, updateKnockoutBracket } from '../utils/bracket-logic';
 import { supabase } from '../lib/supabase';
 
@@ -14,6 +14,8 @@ interface AppContextType {
     updateGroupMatchEasyResult: (matchId: string, result: ResultType) => void;
     updateKnockoutMatchScore: (matchId: string, score: MatchScore) => void;
     updateKnockoutMatchEasyResult: (matchId: string, result: ResultType) => void;
+    updateEredivisieMatchScore: (matchId: string, score: MatchScore) => void;
+    updateEredivisieMatchEasyResult: (matchId: string, result: ResultType) => void;
     updateAward: (category: keyof AwardsState, value: string) => void;
     updateTournamentXI: (positionId: string, playerName: string) => void;
     setSelectedThirds: (teamIds: string[]) => void;
@@ -42,6 +44,7 @@ const getFreshState = (): AppState => {
         activeTab: 'GROUP',
         groupMatches: generateInitialGroupMatches(),
         knockoutMatches: generateInitialKnockoutMatches(),
+        eredivisieMatches: generateEredivisieMatches(),
         selectedThirds: [],
         isThirdsModalDismissed: false,
         isHelpModalOpen: false,
@@ -197,6 +200,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const updateEredivisieMatchScore = (matchId: string, score: MatchScore) => {
+        setState(prev => {
+            const match = prev.eredivisieMatches[matchId];
+            if (!match) return prev;
+
+            const newMatches = {
+                ...prev.eredivisieMatches,
+                [matchId]: { ...match, score, status: ((score.homeGoals !== null && score.awayGoals !== null) ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus }
+            };
+
+            return { ...prev, eredivisieMatches: newMatches };
+        });
+    };
+
+    const updateEredivisieMatchEasyResult = (matchId: string, result: ResultType) => {
+        setState(prev => {
+            const match = prev.eredivisieMatches[matchId];
+            if (!match) return prev;
+
+            const newMatches = {
+                ...prev.eredivisieMatches,
+                [matchId]: { ...match, result, status: 'FINISHED' as MatchStatus }
+            };
+
+            return { ...prev, eredivisieMatches: newMatches };
+        });
+    };
+
     const updateAward = (category: keyof AwardsState, value: string) => {
         setState(prev => ({
             ...prev,
@@ -296,6 +327,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateGroupMatchEasyResult,
         updateKnockoutMatchScore,
         updateKnockoutMatchEasyResult,
+        updateEredivisieMatchScore,
+        updateEredivisieMatchEasyResult,
         updateAward,
         updateTournamentXI,
         setSelectedThirds,

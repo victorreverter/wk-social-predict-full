@@ -9,6 +9,7 @@ import { scoreMatches } from '../lib/scoreMatches';
 import { scoreKnockout } from '../lib/scoreKnockout';
 import { scoreAwards } from '../lib/scoreAwards';
 import { scoreXI } from '../lib/scoreXI';
+import { scoreEredivisie } from '../lib/scoreEredivisie';
 import { rateLimiter } from '../lib/rateLimiter';
 import { withRetry } from '../lib/retry';
 import type { Match } from '../types';
@@ -75,8 +76,9 @@ export const useSaveAllPredictions = () => {
             ...Object.values(state.knockoutMatches)
         ];
         const completedMatches = allMatches.filter(m => m.score || m.result).length;
+        const eredivisieCompleted = Object.values(state.eredivisieMatches).filter(m => m.score || m.result).length;
         
-        if (completedMatches === 0 && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
+        if (completedMatches === 0 && eredivisieCompleted === 0 && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
             setAlert('error', 'No predictions to save. Complete at least 1 match or selection first.');
             return;
         }
@@ -192,6 +194,28 @@ export const useSaveAllPredictions = () => {
                     pts_earned: 0,
                 }));
 
+            // 5. Eredivisie Test matches
+            const eredivisieRows = Object.values(state.eredivisieMatches)
+                .filter(m => m.status === 'FINISHED' || m.result)
+                .map(m => {
+                    let hg = m.score?.homeGoals ?? null;
+                    let ag = m.score?.awayGoals ?? null;
+
+                    if (hg === null || ag === null) {
+                        if (m.result === 'HOME_WIN') { hg = 1; ag = 0; }
+                        else if (m.result === 'AWAY_WIN') { hg = 0; ag = 1; }
+                        else if (m.result === 'DRAW') { hg = 0; ag = 0; }
+                    }
+
+                    return {
+                        user_id: session.user.id,
+                        match_id: m.id,
+                        pred_home_goals: hg,
+                        pred_away_goals: ag,
+                        pts_earned: 0,
+                    };
+                });
+
             // Make the requests
             const promises = [
                 supabase.from('user_predictions_matches').upsert(matchRows, { onConflict: 'user_id,match_id' }),
@@ -200,6 +224,7 @@ export const useSaveAllPredictions = () => {
 
             if (awardRows.length > 0) promises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
+            if (eredivisieRows.length > 0) promises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
             
             const results = await Promise.all(promises);
             const hasError = results.some(r => r.error);
@@ -213,10 +238,11 @@ export const useSaveAllPredictions = () => {
                 await withRetry(() => scoreKnockout(session.user.id));
                 await withRetry(() => scoreAwards(session.user.id));
                 await withRetry(() => scoreXI(session.user.id));
+                await withRetry(() => scoreEredivisie(session.user.id));
 
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
-                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length;
+                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + eredivisieRows.length;
                 setAlert('saved', `✅ Saved ${savedCount} predictions!`);
                 addToast(`Saved ${savedCount} predictions!`, 'success');
             }

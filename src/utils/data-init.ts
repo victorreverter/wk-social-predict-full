@@ -156,3 +156,51 @@ export const GROUP_MATCH_SCHEDULE_DATA: Record<number, { date: string; localTime
   71: { date: "2026-06-27T23:30:00.000Z", localTime: "7:30 p.m.", venue: "Hard Rock Stadium, Miami Gardens" },
   72: { date: "2026-06-27T23:30:00.000Z", localTime: "7:30 p.m.", venue: "Mercedes-Benz Stadium, Atlanta" },
 };
+
+// ── Eredivisie Test Matches (25-26 season, matchdays 33 & 34) ──
+// Sources: ESPN schedule for May 10 & May 17, 2026
+export const EREDIVISIE_TEAMS: Team[] = [
+    { id: 'EDV_AJA', name: 'Ajax',               code: 'AJA', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/ajax/AJAX-LOGO-2025-copy.png' },
+    { id: 'EDV_AZ',  name: 'AZ Alkmaar',          code: 'AZ',  group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/az/AZ-logo.png' },
+    { id: 'EDV_EXC', name: 'Excelsior',           code: 'EXC', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/Excelsior-Rotterdam-160.png' },
+    { id: 'EDV_FEY', name: 'Feyenoord',           code: 'FEY', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/feyenoord/Logo-Feyenoord-01-Full-Color-RGB.png' },
+    { id: 'EDV_FOR', name: 'Fortuna Sittard',     code: 'FOR', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/fortuna-sittard/Fortuna-Sittard-logo.png' },
+    { id: 'EDV_GAE', name: 'Go Ahead Eagles',     code: 'GAE', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/go-ahead-eagles/Go-Ahead-Eagles-logo.png' },
+    { id: 'EDV_GRO', name: 'FC Groningen',        code: 'GRO', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/FCG-LOGO-WITTE-RAND.png' },
+    { id: 'EDV_HEE', name: 'Heerenveen',          code: 'HEE', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/sc-heerenveen/scheerenveenlogo.png' },
+    { id: 'EDV_HER', name: 'Heracles Almelo',     code: 'HER', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/heracles-almelo/Heracles-Almelo-logo.png' },
+    { id: 'EDV_NAC', name: 'NAC Breda',           code: 'NAC', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/nac-breda/NAC-Breda-logo.png' },
+    { id: 'EDV_NEC', name: 'NEC Nijmegen',        code: 'NEC', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/nec-nijmegen/logo-nec.png' },
+    { id: 'EDV_PEC', name: 'PEC Zwolle',          code: 'PEC', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/pec-zwolle/PEC-Zwolle-logo.png' },
+    { id: 'EDV_PSV', name: 'PSV Eindhoven',       code: 'PSV', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/psv/PSV-logo.png' },
+    { id: 'EDV_SPA', name: 'Sparta Rotterdam',    code: 'SPA', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/sparta-rotterdam/Sparta-Rotterdam-logo.png' },
+    { id: 'EDV_TEL', name: 'Telstar',             code: 'TEL', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/SC-Telstar-160.png' },
+    { id: 'EDV_TWE', name: 'FC Twente',           code: 'TWE', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/fc-twente/FC-Twente-logo.png' },
+    { id: 'EDV_UTR', name: 'FC Utrecht',          code: 'UTR', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/clubs/fc-utrecht/FC-Utrecht-logo.png' },
+    { id: 'EDV_VOL', name: 'FC Volendam',         code: 'VOL', group: 'EREDIVISIE', flagUrl: 'https://eredivisie.b-cdn.net/production/FC-Volendam-160.png' },
+];
+
+// Matchday 33: May 10, 2026  4:45 PM CEST → 14:45 UTC
+// Matchday 34: May 17, 2026  2:30 PM CEST → 12:30 UTC
+export const generateEredivisieMatches = (): Record<string, Match> => ({
+    // ── Matchday 33 ─────────────────────────────────────
+    e01: { id: 'e01', homeTeamId: 'EDV_AJA', awayTeamId: 'EDV_UTR', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e02: { id: 'e02', homeTeamId: 'EDV_EXC', awayTeamId: 'EDV_VOL', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e03: { id: 'e03', homeTeamId: 'EDV_GRO', awayTeamId: 'EDV_NEC', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e04: { id: 'e04', homeTeamId: 'EDV_TWE', awayTeamId: 'EDV_SPA', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e05: { id: 'e05', homeTeamId: 'EDV_FEY', awayTeamId: 'EDV_AZ',  date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e06: { id: 'e06', homeTeamId: 'EDV_FOR', awayTeamId: 'EDV_PEC', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e07: { id: 'e07', homeTeamId: 'EDV_GAE', awayTeamId: 'EDV_PSV', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e08: { id: 'e08', homeTeamId: 'EDV_NAC', awayTeamId: 'EDV_HEE', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e09: { id: 'e09', homeTeamId: 'EDV_TEL', awayTeamId: 'EDV_HER', date: '2026-05-10T14:45:00Z', stage: 'EREDIVISIE_33', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    // ── Matchday 34 ─────────────────────────────────────
+    e10: { id: 'e10', homeTeamId: 'EDV_AZ',  awayTeamId: 'EDV_NAC', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e11: { id: 'e11', homeTeamId: 'EDV_UTR', awayTeamId: 'EDV_FOR', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e12: { id: 'e12', homeTeamId: 'EDV_VOL', awayTeamId: 'EDV_TEL', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e13: { id: 'e13', homeTeamId: 'EDV_HEE', awayTeamId: 'EDV_AJA', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e14: { id: 'e14', homeTeamId: 'EDV_HER', awayTeamId: 'EDV_GRO', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e15: { id: 'e15', homeTeamId: 'EDV_NEC', awayTeamId: 'EDV_GAE', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e16: { id: 'e16', homeTeamId: 'EDV_PEC', awayTeamId: 'EDV_FEY', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e17: { id: 'e17', homeTeamId: 'EDV_PSV', awayTeamId: 'EDV_TWE', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+    e18: { id: 'e18', homeTeamId: 'EDV_SPA', awayTeamId: 'EDV_EXC', date: '2026-05-17T12:30:00Z', stage: 'EREDIVISIE_34', score: { homeGoals: null, awayGoals: null }, status: 'NOT_PLAYED' },
+});
