@@ -15,22 +15,22 @@ export const useLoadUserPredictions = () => {
 
         const loadPredictions = async () => {
             try {
-                const [matchesRes, koRes, awardsRes, xiRes] = await Promise.all([
+                const [matchesRes, koRes, awardsRes, xiRes, eredivisieRes] = await Promise.all([
                     supabase.from('user_predictions_matches').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_awards').select('*').eq('user_id', session.user.id),
-                    supabase.from('user_predictions_xi').select('*').eq('user_id', session.user.id)
+                    supabase.from('user_predictions_xi').select('*').eq('user_id', session.user.id),
+                    supabase.from('user_predictions_eredivisie').select('*').eq('user_id', session.user.id)
                 ]);
 
-                if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error) {
-                    const msg = [matchesRes.error?.message, koRes.error?.message, awardsRes.error?.message, xiRes.error?.message]
+                if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || eredivisieRes.error) {
+                    const msg = [matchesRes.error?.message, koRes.error?.message, awardsRes.error?.message, xiRes.error?.message, eredivisieRes.error?.message]
                         .filter(Boolean).join('; ');
                     if (import.meta.env.DEV) console.error('Load predictions failed:', msg);
                     return;
                 }
 
-                // If user has zero predictions in DB, do nothing
-                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0) {
+                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && eredivisieRes.data.length === 0) {
                     return;
                 }
 
@@ -76,6 +76,14 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
+                const loadedEredivisie = { ...state.eredivisieMatches };
+                eredivisieRes.data.forEach((m: any) => {
+                    const id = m.match_id;
+                    if (loadedEredivisie[id]) {
+                        loadedEredivisie[id] = buildMatchObj(m, loadedEredivisie[id]);
+                    }
+                });
+
                 // Rehydrate dynamically chosen 3rd-place teams based on what made it to R32
                 const { allThirds } = determineQualifiedTeams(loadedGroups);
                 const thirdPlaceIds = allThirds.map(t => t.teamId);
@@ -87,6 +95,7 @@ export const useLoadUserPredictions = () => {
                 loadFullState({
                     groupMatches: loadedGroups,
                     knockoutMatches: loadedKo,
+                    eredivisieMatches: loadedEredivisie,
                     awards: loadedAwards,
                     tournamentXI: loadedXI,
                     selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds
