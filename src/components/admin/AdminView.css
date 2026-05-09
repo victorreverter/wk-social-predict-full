@@ -1096,3 +1096,50 @@
     flex: 1;
     min-width: 140px;
 }
+
+/* ── API Status Area ──────────────────────────────────── */
+.admin-api-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.admin-api-btn {
+    padding: 0.40rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    font-size: 0.80rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.admin-api-btn:hover {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+.admin-api-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.admin-api-status {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-api-time {
+    font-size: 0.70rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}

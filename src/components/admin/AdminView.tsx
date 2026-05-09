@@ -10,6 +10,7 @@ import { scoreXI } from '../../lib/scoreXI';
 import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
 import { scoreEredivisie } from '../../lib/scoreEredivisie';
+import { fetchResultsForDate } from '../../lib/footballDataApi';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
@@ -175,6 +176,9 @@ export const AdminView: React.FC = () => {
     const [toast, setToast]   = useState<string | null>(null);
     const [confirmReset, setConfirmReset] = useState(false);
     const [eredivisieOfficial, setEredivisieOfficial] = useState<Record<string, { home_goals: number | null; away_goals: number | null }>>({});
+    const [apiLoading, setApiLoading] = useState(false);
+    const [apiStatus, setApiStatus] = useState<string | null>(null);
+    const [apiLastCheck, setApiLastCheck] = useState<string | null>(null);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -392,6 +396,27 @@ export const AdminView: React.FC = () => {
         showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved & users scored!`);
     };
 
+    const fetchApiResults = async () => {
+        setApiLoading(true);
+        setApiStatus('Fetching…');
+        const today = new Date().toISOString().substring(0, 10);
+        try {
+            const result = await fetchResultsForDate(today, true);
+            setApiLastCheck(new Date().toLocaleTimeString());
+            if (result.success && result.updated > 0) {
+                setApiStatus(`Updated ${result.updated} match(es) from API`);
+                await loadData();
+            } else if (result.success && result.updated === 0) {
+                setApiStatus('No new finished matches today');
+            } else {
+                setApiStatus(result.message);
+            }
+        } catch {
+            setApiStatus('API call failed');
+        }
+        setApiLoading(false);
+    };
+
     const activeKoMatches = KO_ROUNDS.find(r => r.key === activeKoRound)?.matches ?? [];
 
     return (
@@ -443,7 +468,20 @@ export const AdminView: React.FC = () => {
                                 );
                             })}
                         </div>
-                        
+
+                        <div className="admin-api-area">
+                            <button
+                                className="admin-api-btn"
+                                onClick={fetchApiResults}
+                                disabled={apiLoading}
+                                title="Fetch World Cup results from football-data.org API"
+                            >
+                                {apiLoading ? '⏳' : '🔄'} Fetch Live Results
+                            </button>
+                            {apiStatus && <span className="admin-api-status">{apiStatus}</span>}
+                            {apiLastCheck && <span className="admin-api-time">Last check: {apiLastCheck}</span>}
+                        </div>
+
                         {!confirmReset ? (
                             <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
                                 🗑️ Reset Tournament
