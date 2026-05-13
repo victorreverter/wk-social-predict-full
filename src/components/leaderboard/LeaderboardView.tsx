@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { EredivisieScoringPopup, isEredivisieScoringDismissed } from '../eredivisie/EredivisieScoringPopup';
 import './LeaderboardView.css';
 
 interface ProfileData {
@@ -35,6 +36,7 @@ export const LeaderboardView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
+    const [showScoringPopup, setShowScoringPopup] = useState(false);
     const PAGE_SIZE = 15;
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
@@ -237,9 +239,25 @@ export const LeaderboardView: React.FC = () => {
                     </button>
                     <button
                         className={`mode-tab ${!isWorldCup ? 'active' : ''}`}
-                        onClick={() => setLeaderboardMode('eredivisie')}
+                        onClick={() => {
+                            setLeaderboardMode('eredivisie');
+                            if (!isEredivisieScoringDismissed()) {
+                                setShowScoringPopup(true);
+                            }
+                        }}
                     >
                         🧪 Eredivisie
+                    </button>
+                </div>
+            )}
+
+            {!isWorldCup && (
+                <div className="eredivisie-help-link">
+                    <button
+                        className="info-btn"
+                        onClick={() => setShowScoringPopup(true)}
+                    >
+                        ⓘ How points work
                     </button>
                 </div>
             )}
@@ -358,6 +376,10 @@ export const LeaderboardView: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {showScoringPopup && (
+                <EredivisieScoringPopup onClose={() => setShowScoringPopup(false)} />
+            )}
         </div>
     );
 };

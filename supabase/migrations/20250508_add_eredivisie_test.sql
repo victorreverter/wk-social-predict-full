@@ -22,6 +22,11 @@ ON user_predictions_eredivisie FOR ALL
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Public can read eredivisie points" ON user_predictions_eredivisie;
+CREATE POLICY "Public can read eredivisie points"
+ON user_predictions_eredivisie FOR SELECT
+USING (true);
+
 -- 2. Official Eredivisie results (admin fills manually for now)
 CREATE TABLE IF NOT EXISTS official_eredivisie (
     match_id TEXT PRIMARY KEY,
