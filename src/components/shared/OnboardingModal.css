@@ -11,24 +11,36 @@
     justify-content: center;
     align-items: center;
     z-index: 1200;
-    /* Stay on top of the sticky header (z-index 1100) */
     padding: 1rem;
     animation: fadeIn 0.4s ease-out;
 }
 
 .onboarding-modal {
-    max-width: 600px;
+    max-width: 520px;
     width: 100%;
-    padding: 1.75rem 2rem;
+    max-height: 82vh;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0;
     animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
 }
 
-/* Close (×) button */
+.onboarding-modal::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(213, 131, 255, 0.1) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ── Close button ──────────────────────────────── */
 .onboarding-close-btn {
     position: absolute;
     top: 0.75rem;
@@ -54,82 +66,150 @@
     background: rgba(0, 0, 0, 0.06);
 }
 
-/* Subtle glow effect behind the modal */
-.onboarding-modal::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at center, rgba(213, 131, 255, 0.1) 0%, transparent 60%);
-    z-index: -1;
-    pointer-events: none;
+/* ── Track wrapper & sliding panels ────────────── */
+.onboarding-track-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    padding: 1.25rem 0 0;
+}
+
+.onboarding-step-track {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+
+.onboarding-step {
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.onboarding-step-content {
+    padding: 0 2rem 0.5rem;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.onboarding-step-content--scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-muted) transparent;
+    padding-bottom: 0.75rem;
+}
+
+.onboarding-step-content--scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.onboarding-step-content--scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.onboarding-step-content--scroll::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 10px;
+}
+
+.onboarding-step--center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+/* ── Welcome step ──────────────────────────────── */
+.onboarding-welcome-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    animation: pulse 2s ease-in-out infinite;
 }
 
 .onboarding-title {
-    font-size: 1.8rem;
-    margin-bottom: 0.25rem;
-    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
 }
 
 .onboarding-intro {
-    font-size: 1.05rem;
-    color: var(--text-primary);
-    text-align: center;
-    margin-bottom: 1rem;
+    font-size: 0.93rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    max-width: 380px;
 }
 
+/* ── Section titles ────────────────────────────── */
+.onboarding-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: var(--font-family-display);
+    letter-spacing: 0.3px;
+}
+
+/* ── How It Works cards ────────────────────────── */
 .onboarding-steps {
     list-style: none;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.5rem;
 }
 
 .onboarding-steps li {
     display: flex;
     align-items: flex-start;
-    gap: 0.85rem;
+    gap: 0.75rem;
     background: var(--bg-surface);
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
     border: 1px solid var(--border-subtle);
-    cursor: pointer;
     transition: transform var(--transition-fast), background var(--transition-fast);
 }
 
 .onboarding-steps li:hover {
-    transform: translateX(4px);
+    transform: translateX(3px);
     background: var(--bg-surface-hover);
     border-color: var(--border-focus);
 }
 
 .step-icon {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 50%;
     flex-shrink: 0;
 }
 
 .step-text {
-    font-size: 0.95rem;
+    font-size: 0.84rem;
     color: var(--text-secondary);
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
 .step-text strong {
     color: var(--text-primary);
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.1rem;
     font-family: var(--font-family-display);
+    font-size: 0.86rem;
 }
 
 .step-text em {
@@ -138,34 +218,262 @@
     font-weight: 500;
 }
 
-.onboarding-button {
+/* ── Points cards ──────────────────────────────── */
+.onboarding-points-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.55rem;
+}
+
+.onboarding-points-card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+    font-family: var(--font-family-display);
+}
+
+.onboarding-points-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: -0.15rem 0 0.3rem;
+}
+
+.onboarding-points-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.onboarding-points-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.onboarding-points-row:last-child {
+    border-bottom: none;
+}
+
+.onboarding-points-row--muted {
+    opacity: 0.45;
+}
+
+.onboarding-points-row--highlight {
+    background: rgba(213, 131, 255, 0.06);
+    border-radius: 5px;
+    margin: 0 -0.3rem;
+    padding: 0.3rem 0.3rem;
+}
+
+.onboarding-points-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.onboarding-points-row--highlight .onboarding-points-label {
+    color: var(--text-primary);
+}
+
+.onboarding-points-value {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-quaternary);
+    min-width: 65px;
+    text-align: right;
+}
+
+.onboarding-points-row--muted .onboarding-points-value {
+    opacity: 0.7;
+}
+
+.onboarding-points-example {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.onboarding-points-example strong {
+    color: var(--color-quaternary);
+    font-weight: 700;
+}
+
+/* ── Leaderboard text ──────────────────────────── */
+.onboarding-leaderboard-text {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 420px;
+}
+
+/* ── Rules & Max Score ─────────────────────────── */
+.onboarding-rules-text {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.onboarding-max-score {
+    background: linear-gradient(135deg, rgba(213, 131, 255, 0.12), rgba(88, 86, 214, 0.08));
+    border: 1px solid rgba(213, 131, 255, 0.25);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    font-family: var(--font-family-display);
     margin-top: 1rem;
+}
+
+/* ── Bottom bar ────────────────────────────────── */
+.onboarding-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1.25rem 0.85rem;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    border-radius: 0 0 16px 16px;
+    gap: 0.75rem;
+    min-height: 58px;
+}
+
+.onboarding-nav-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0.9rem;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.onboarding-nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--border-focus);
+}
+
+.onboarding-nav-btn:disabled {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.onboarding-nav-btn--hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.onboarding-nav-btn--next {
+    background: rgba(213, 131, 255, 0.12);
+    border-color: rgba(213, 131, 255, 0.2);
+    color: var(--color-quaternary);
+}
+
+.onboarding-nav-btn--next:hover {
+    background: rgba(213, 131, 255, 0.2);
+}
+
+/* ── Dots ──────────────────────────────────────── */
+.onboarding-dots {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.onboarding-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: var(--text-muted);
+    opacity: 0.35;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.onboarding-dot--active {
+    opacity: 1;
+    background: var(--color-quaternary);
+    box-shadow: 0 0 6px rgba(213, 131, 255, 0.5);
+}
+
+.onboarding-dot:hover:not(.onboarding-dot--active) {
+    opacity: 0.7;
+}
+
+/* ── CTA button (Let's Predict) ────────────────── */
+.onboarding-cta-btn {
     background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
     color: white;
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    border-radius: 12px;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border-radius: 8px;
     border: none;
-    box-shadow: var(--shadow-md), 0 0 15px rgba(213, 131, 255, 0.4);
-    transition: all var(--transition-normal);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 3px 16px rgba(213, 131, 255, 0.4), 0 1px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     font-family: var(--font-family-display);
-    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
-.onboarding-button:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--shadow-lg), 0 0 25px rgba(213, 131, 255, 0.6);
-    filter: brightness(1.1);
+.onboarding-cta-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.12) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
 }
 
-.onboarding-button:active {
-    transform: translateY(1px);
+.onboarding-cta-btn:hover::after {
+    transform: translateX(100%);
 }
 
-/* Light Theme Adjustments */
+.onboarding-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(213, 131, 255, 0.55), 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.onboarding-cta-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 8px rgba(213, 131, 255, 0.3);
+}
+
+.onboarding-button-text {
+    letter-spacing: 0.3px;
+}
+
+.onboarding-button-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+}
+
+.onboarding-cta-btn:hover .onboarding-button-arrow {
+    transform: translateX(3px);
+}
+
+/* ── Light theme ───────────────────────────────── */
 :root.light .onboarding-overlay {
     background-color: rgba(255, 255, 255, 0.4);
 }
@@ -174,46 +482,81 @@
     background: rgba(255, 255, 255, 0.6);
 }
 
+:root.light .onboarding-points-card {
+    background: rgba(255, 255, 255, 0.5);
+}
+
 :root.light .step-icon {
     background: rgba(0, 0, 0, 0.05);
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-    }
+:root.light .onboarding-max-score {
+    background: linear-gradient(135deg, rgba(213, 131, 255, 0.08), rgba(88, 86, 214, 0.04));
+    border-color: rgba(213, 131, 255, 0.25);
+}
 
-    to {
-        opacity: 1;
-        backdrop-filter: blur(8px);
-    }
+:root.light .onboarding-points-row--highlight {
+    background: rgba(213, 131, 255, 0.05);
+}
+
+:root.light .onboarding-bottom-bar {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+:root.light .onboarding-nav-btn {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+:root.light .onboarding-nav-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+/* ── Animations ────────────────────────────────── */
+@keyframes fadeIn {
+    from { opacity: 0; backdrop-filter: blur(0px); }
+    to   { opacity: 1; backdrop-filter: blur(8px); }
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Responsive */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.08); opacity: 0.85; }
+}
+
+/* ── Responsive ────────────────────────────────── */
 @media (max-width: 600px) {
     .onboarding-modal {
-        padding: 1.5rem;
+        max-height: 90vh;
+    }
+
+    .onboarding-step-content {
+        padding: 0 1.25rem 0.5rem;
     }
 
     .onboarding-title {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
 
     .onboarding-steps li {
-        padding: 0.75rem;
+        padding: 0.5rem 0.7rem;
+    }
+
+    .onboarding-bottom-bar {
+        padding: 0.5rem 0.75rem 0.7rem;
+        min-height: 54px;
+    }
+
+    .onboarding-nav-btn {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.7rem;
+    }
+
+    .onboarding-cta-btn {
+        font-size: 0.82rem;
+        padding: 0.5rem 1.5rem;
     }
 }
