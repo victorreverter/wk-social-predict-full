@@ -125,6 +125,9 @@ export const OnboardingModal: React.FC = () => {
                                         <div className="step-text">
                                             <strong>Auto-Fill</strong>
                                             Short on time? Auto-Fill instantly simulates every group match for you.
+                                            <em className="onboarding-autofill-note">
+                                                Results are completely random — no football knowledge or bias involved.
+                                            </em>
                                         </div>
                                     </li>
                                     <li>

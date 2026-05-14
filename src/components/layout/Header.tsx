@@ -156,9 +156,22 @@ export const Header: React.FC = () => {
                     </button>
                 )}
                 {!isLocked && (
-                    <button className="auto-fill-btn" onClick={autoFillGroups}>
-                        Auto-Fill Groups
-                    </button>
+                    <div className="auto-fill-tooltip-wrapper">
+                        <button
+                            className="auto-fill-btn"
+                            onClick={autoFillGroups}
+                            aria-describedby="autofill-tooltip"
+                        >
+                            Auto-Fill Groups
+                        </button>
+                        <span
+                            className="auto-fill-tooltip"
+                            id="autofill-tooltip"
+                            role="tooltip"
+                        >
+                            Fills all groups with <strong>completely random</strong> scores — no football logic or knowledge involved!
+                        </span>
+                    </div>
                 )}
                 <button
                     className="help-icon-btn"
