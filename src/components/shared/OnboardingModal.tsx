@@ -85,7 +85,7 @@ export const OnboardingModal: React.FC = () => {
                 </button>
 
                 <div
-                    className="onboarding-track-wrapper"
+                    className={`onboarding-track-wrapper ${currentStep === 0 ? 'onboarding-track-wrapper--bg1' : currentStep === 4 ? 'onboarding-track-wrapper--bg5' : ''}`}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
                     ref={trackRef}
