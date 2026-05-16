@@ -468,3 +468,24 @@ html[data-theme='light'] .current-user.top-rank-3 {
 .eredivisie-scoring-checkbox input {
     accent-color: var(--color-primary);
 }
+
+.btn-primary {
+    background: #00e676;
+    color: #000;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.5);
+    transform: scale(1.05);
+}
+
+.btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
