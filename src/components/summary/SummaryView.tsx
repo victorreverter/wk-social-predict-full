@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { initialTeams } from '../../utils/data-init';
 import { calculateGroupStandings } from '../../utils/standings';
@@ -34,10 +34,9 @@ const getTeamsInStage = (stageCode: string, matches: Record<string, Match>) => {
 };
 
 const getMatchWinner = (match?: Match): string => {
-    if (!match || match.status !== 'FINISHED') return '';
+    if (!match) return '';
     if (match.result === 'HOME_WIN') return match.homeTeamId;
     if (match.result === 'AWAY_WIN') return match.awayTeamId;
-
     if (match.score.homeGoals !== null && match.score.awayGoals !== null) {
         if (match.score.homeGoals > match.score.awayGoals) return match.homeTeamId;
         if (match.score.homeGoals < match.score.awayGoals) return match.awayTeamId;
@@ -50,10 +49,9 @@ const getMatchWinner = (match?: Match): string => {
 };
 
 const getMatchLoser = (match?: Match): string => {
-    if (!match || match.status !== 'FINISHED') return '';
+    if (!match) return '';
     if (match.result === 'HOME_WIN') return match.awayTeamId;
     if (match.result === 'AWAY_WIN') return match.homeTeamId;
-
     if (match.score.homeGoals !== null && match.score.awayGoals !== null) {
         if (match.score.homeGoals > match.score.awayGoals) return match.awayTeamId;
         if (match.score.homeGoals < match.score.awayGoals) return match.homeTeamId;
@@ -63,6 +61,42 @@ const getMatchLoser = (match?: Match): string => {
         }
     }
     return '';
+};
+
+const getMatchScoreDisplay = (match: Match): string => {
+    if (match.score.homeGoals === null || match.score.awayGoals === null) return '—';
+    let d = `${match.score.homeGoals}-${match.score.awayGoals}`;
+    if (match.score.homeGoals === match.score.awayGoals && match.stage !== 'GROUP') {
+        const hp = match.score.homePenalties ?? null;
+        const ap = match.score.awayPenalties ?? null;
+        if (hp !== null && ap !== null) d += ` (${hp}-${ap} pens)`;
+    }
+    return d;
+};
+
+const getMatchWinnerLabel = (match: Match): 'home' | 'away' | null => {
+    if (match.result === 'HOME_WIN') return 'home';
+    if (match.result === 'AWAY_WIN') return 'away';
+    if (match.score.homeGoals !== null && match.score.awayGoals !== null) {
+        if (match.score.homeGoals > match.score.awayGoals) return 'home';
+        if (match.score.homeGoals < match.score.awayGoals) return 'away';
+        if (match.stage !== 'GROUP') {
+            const hp = match.score.homePenalties ?? null;
+            const ap = match.score.awayPenalties ?? null;
+            if (hp !== null && ap !== null) {
+                if (hp > ap) return 'home';
+                if (ap > hp) return 'away';
+            }
+        }
+    }
+    return null;
+};
+
+const KO_ORDER = ['R32', 'R16', 'QF', 'SF', '3RD', 'F'] as const;
+
+const KO_LABELS: Record<string, string> = {
+    R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarter-Finals',
+    SF: 'Semi-Finals', '3RD': '🥉 Third Place Match', F: '🏆 Final',
 };
 
 type FormationConfig = {
@@ -120,12 +154,28 @@ export const SummaryView: React.FC = () => {
     // Progression
     const classified32 = getTeamsInStage('R32', knockoutMatches);
     const roundOf16 = getTeamsInStage('R16', knockoutMatches);
-    const quarterFinals = getTeamsInStage('QF', knockoutMatches);
-    const semiFinals = getTeamsInStage('SF', knockoutMatches);
-    const finals = getTeamsInStage('F', knockoutMatches);
     const champion = getMatchWinner(knockoutMatches['m104']);
     const secondPlaceWinner = getMatchLoser(knockoutMatches['m104']);
     const thirdPlaceWinner = getMatchWinner(knockoutMatches['m103']);
+
+    const bracketByRound = useMemo(() => {
+        const result: Record<string, { matchId: string; homeTeamId: string; awayTeamId: string; scoreDisp: string; winner: string | null }[]> = {};
+        KO_ORDER.forEach(stage => { result[stage] = []; });
+        Object.values(knockoutMatches).forEach(m => {
+            if (!KO_ORDER.includes(m.stage as any)) return;
+            result[m.stage]!.push({
+                matchId: m.id,
+                homeTeamId: m.homeTeamId,
+                awayTeamId: m.awayTeamId,
+                scoreDisp: getMatchScoreDisplay(m),
+                winner: getMatchWinnerLabel(m),
+            });
+        });
+        KO_ORDER.forEach(stage => {
+            if (result[stage]) result[stage]!.sort((a, b) => a.matchId.localeCompare(b.matchId));
+        });
+        return result;
+    }, [knockoutMatches]);
 
     const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
     const activeFormation = FORMATIONS[selectedFormation];
@@ -161,7 +211,7 @@ export const SummaryView: React.FC = () => {
                     </div>
                 )}
 
-                {thirdPlaceWinner && (
+                {thirdPlaceWinner ? (
                     <div className="bronze-card">
                         <span className="bronze-icon">🥉</span>
                         <div className="bronze-team-wrap">
@@ -171,61 +221,48 @@ export const SummaryView: React.FC = () => {
                             <h3>{getTeamName(thirdPlaceWinner)}</h3>
                         </div>
                     </div>
+                ) : (
+                    <div className="bronze-card">
+                        <span className="bronze-icon">🥉</span>
+                        <div className="bronze-team-wrap">
+                            <h3>TBD</h3>
+                        </div>
+                    </div>
                 )}
             </div>
 
             <div className="summary-grid">
                 <div className="summary-col">
                     <div className="summary-section glass-panel">
-                        <h3>Knockout Progression</h3>
-
-                        <div className="progression-tier">
-                            <h4>Finalists</h4>
-                            <div className="team-list list-2">
-                                {finals.map(id => (
-                                    <div key={id} className="summary-team">
-                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
-                                        <span>{getTeamName(id)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="progression-tier">
-                            <h4>Semi-Finalists</h4>
-                            <div className="team-list list-4">
-                                {semiFinals.map(id => (
-                                    <div key={id} className="summary-team">
-                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
-                                        <span>{getTeamName(id)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="progression-tier">
-                            <h4>Quarter-Finalists</h4>
-                            <div className="team-list list-8">
-                                {quarterFinals.map(id => (
-                                    <div key={id} className="summary-team">
-                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
-                                        <span>{getTeamName(id)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="progression-tier">
-                            <h4>Round of 16</h4>
-                            <div className="team-list list-16">
-                                {roundOf16.map(id => (
-                                    <div key={id} className="summary-team">
-                                        {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
-                                        <span>{getTeamName(id)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        <h3>🏟️ Knockout Bracket — Match Results</h3>
+                        {KO_ORDER.map(stage => {
+                            const matches = bracketByRound[stage];
+                            if (!matches || matches.length === 0) return null;
+                            return (
+                                <div key={stage} className="bracket-round-section">
+                                    <div className="ko-round-label">{KO_LABELS[stage]}</div>
+                                    {matches.map(m => {
+                                        const homeTeam = getTeam(m.homeTeamId);
+                                        const awayTeam = getTeam(m.awayTeamId);
+                                        return (
+                                            <div key={m.matchId} className="bracket-match-row">
+                                                <span className={`bm-team bm-home ${m.winner === 'home' ? 'bm-winner' : ''}`}>
+                                                    {homeTeam && <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="bm-flag" alt="" />}
+                                                    <span>{homeTeam?.name || m.homeTeamId}</span>
+                                                    {m.winner === 'home' && <span className="bm-trophy">🏆</span>}
+                                                </span>
+                                                <span className="bm-score">{m.scoreDisp}</span>
+                                                <span className={`bm-team bm-away ${m.winner === 'away' ? 'bm-winner' : ''}`}>
+                                                    {m.winner === 'away' && <span className="bm-trophy">🏆</span>}
+                                                    <span>{awayTeam?.name || m.awayTeamId}</span>
+                                                    {awayTeam && <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="bm-flag" alt="" />}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <div className="summary-section glass-panel">

@@ -204,8 +204,11 @@ const setTeams = (
 ): Record<string, Match> => {
   const id = matchIdFromNum(matchNum);
   const m = ko[id];
-  if (!m || (m.homeTeamId === home && m.awayTeamId === away)) return ko;
-  return { ...ko, [id]: { ...m, homeTeamId: home, awayTeamId: away } };
+  if (!m) return ko;
+  const newHome = home !== 'TBD' ? home : m.homeTeamId;
+  const newAway = away !== 'TBD' ? away : m.awayTeamId;
+  if (m.homeTeamId === newHome && m.awayTeamId === newAway) return ko;
+  return { ...ko, [id]: { ...m, homeTeamId: newHome, awayTeamId: newAway } };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -136,7 +136,7 @@ export const useSaveAllPredictions = () => {
             // Extract progressing teams from knockout matches
             Object.values(state.knockoutMatches).forEach(m => {
                 const roundCode = m.stage; // 'R32', 'R16', 'QF', 'SF', '3RD', 'F'
-                if (roundCode && roundCode !== '3RD' && roundCode !== 'F') { 
+                if (roundCode && roundCode !== 'F') { 
                      if (m.homeTeamId && m.homeTeamId !== 'TBD') {
                          koRows.push({ user_id: session.user.id, round: roundCode, team_id: m.homeTeamId, pts_earned: 0 });
                      }
@@ -217,10 +217,11 @@ export const useSaveAllPredictions = () => {
                 });
 
             // Make the requests
+            await supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id);
             const promises = [
                 supabase.from('user_predictions_matches').upsert(matchRows, { onConflict: 'user_id,match_id' }),
-                supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' })
             ];
+            if (koRows.length > 0) promises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
 
             if (awardRows.length > 0) promises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));

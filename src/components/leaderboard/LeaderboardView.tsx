@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { EredivisieScoringPopup, isEredivisieScoringDismissed } from '../eredivisie/EredivisieScoringPopup';
+import { UserPredictionsModal } from './UserPredictionsModal';
 import './LeaderboardView.css';
 
 interface ProfileData {
@@ -37,6 +38,7 @@ export const LeaderboardView: React.FC = () => {
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
     const [showScoringPopup, setShowScoringPopup] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<{ id: string; username: string; avatar: string | null } | null>(null);
     const PAGE_SIZE = 15;
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
@@ -302,7 +304,12 @@ export const LeaderboardView: React.FC = () => {
                                 return (
                                     <tr
                                         key={user.id}
-                                        className={`${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}
+                                        className={`lb-clickable ${isWorldCup ? 'lb-hover' : ''} ${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}
+                                        onClick={() => {
+                                            if (isWorldCup) {
+                                                setSelectedUserId({ id: user.id, username: user.username, avatar: user.avatar_url });
+                                            }
+                                        }}
                                     >
                                         <td className="td-rank">
                                             {medal ? (
@@ -379,6 +386,15 @@ export const LeaderboardView: React.FC = () => {
 
             {showScoringPopup && (
                 <EredivisieScoringPopup onClose={() => setShowScoringPopup(false)} />
+            )}
+
+            {selectedUserId && (
+                <UserPredictionsModal
+                    userId={selectedUserId.id}
+                    username={selectedUserId.username}
+                    avatarUrl={selectedUserId.avatar}
+                    onClose={() => setSelectedUserId(null)}
+                />
             )}
         </div>
     );

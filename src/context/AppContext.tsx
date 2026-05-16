@@ -291,10 +291,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 };
             });
             const newKnockoutMatches = updateKnockoutBracket(prev.knockoutMatches, tempGroups, []);
+            Object.keys(newKnockoutMatches).forEach(matchId => {
+                const m = newKnockoutMatches[matchId];
+                if (m.status !== 'FINISHED' && m.homeTeamId !== 'TBD' && m.awayTeamId !== 'TBD') {
+                    const homeG = Math.floor(Math.random() * 4);
+                    const awayG = Math.floor(Math.random() * 4);
+                    newKnockoutMatches[matchId] = {
+                        ...m,
+                        score: { homeGoals: homeG, awayGoals: awayG, homePenalties: homeG === awayG ? Math.floor(Math.random() * 4) + 1 : null, awayPenalties: homeG === awayG ? Math.floor(Math.random() * 4) + 1 : null },
+                        result: homeG > awayG ? 'HOME_WIN' : (awayG > homeG ? 'AWAY_WIN' : 'DRAW'),
+                        status: 'FINISHED' as MatchStatus
+                    };
+                }
+            });
+            const finalBracket = updateKnockoutBracket(newKnockoutMatches, tempGroups, []);
             return {
                 ...prev,
                 groupMatches: tempGroups,
-                knockoutMatches: newKnockoutMatches,
+                knockoutMatches: finalBracket,
                 selectedThirds: []
             };
         });
@@ -310,7 +324,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 nextState.knockoutMatches = updateKnockoutBracket(
                     nextState.knockoutMatches, 
                     nextState.groupMatches, 
-                    nextState.selectedThirds
+                    nextState.selectedThirds,
+                    true
                 );
             }
             
