@@ -2,11 +2,22 @@ import type { MappedMatchResult } from '../types/footballData';
 
 const EDGE_FUNCTION_URL = 'https://xrgtoduqrrmfmyxduhab.supabase.co/functions/v1/fetch-wc-results';
 
+interface SkippedKnockout {
+  home: string;
+  away: string;
+  date: string;
+}
+
 interface FetchResult {
   success: boolean;
   updated: number;
   message: string;
-  matchDate?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  groupMatches?: number;
+  knockoutMatches?: number;
+  skippedKnockouts?: SkippedKnockout[];
+  matchIds?: string[];
   results?: MappedMatchResult[];
   errors?: string[];
 }
@@ -38,7 +49,7 @@ export async function fetchGroupResults(date: string): Promise<FetchResult> {
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, force: false }),
+      body: JSON.stringify({ dateFrom: date, dateTo: date }),
     });
 
     if (!response.ok) {
@@ -47,7 +58,6 @@ export async function fetchGroupResults(date: string): Promise<FetchResult> {
         success: false,
         updated: 0,
         message: `Edge function returned ${response.status}: ${errText}`,
-        matchDate: date,
         errors: [errText],
       };
     }
@@ -61,23 +71,20 @@ export async function fetchGroupResults(date: string): Promise<FetchResult> {
       success: false,
       updated: 0,
       message: msg,
-      matchDate: date,
       errors: [msg],
     };
   }
 }
 
-export async function fetchResultsForDate(date: string, force: boolean = false): Promise<FetchResult> {
-  if (!force) {
-    const cached = getCached(date);
-    if (cached) return cached;
-  }
+export async function fetchResultsForDate(date: string): Promise<FetchResult> {
+  const cached = getCached(date);
+  if (cached) return cached;
 
   try {
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, force }),
+      body: JSON.stringify({ dateFrom: date, dateTo: date }),
     });
 
     if (!response.ok) {
@@ -86,7 +93,6 @@ export async function fetchResultsForDate(date: string, force: boolean = false):
         success: false,
         updated: 0,
         message: `Edge function returned ${response.status}: ${errText}`,
-        matchDate: date,
         errors: [errText],
       };
     }
@@ -100,7 +106,37 @@ export async function fetchResultsForDate(date: string, force: boolean = false):
       success: false,
       updated: 0,
       message: msg,
-      matchDate: date,
+      errors: [msg],
+    };
+  }
+}
+
+export async function fetchTournamentResults(dateFrom: string, dateTo: string): Promise<FetchResult> {
+  try {
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dateFrom, dateTo }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return {
+        success: false,
+        updated: 0,
+        message: `Edge function returned ${response.status}: ${errText}`,
+        errors: [errText],
+      };
+    }
+
+    const data = await response.json() as FetchResult;
+    return data;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown network error';
+    return {
+      success: false,
+      updated: 0,
+      message: msg,
       errors: [msg],
     };
   }

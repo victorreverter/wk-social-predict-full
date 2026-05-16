@@ -10,7 +10,7 @@ import { scoreXI } from '../../lib/scoreXI';
 import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
 import { scoreEredivisie } from '../../lib/scoreEredivisie';
-import { fetchResultsForDate } from '../../lib/footballDataApi';
+import { fetchTournamentResults } from '../../lib/footballDataApi';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
@@ -399,15 +399,36 @@ export const AdminView: React.FC = () => {
     const fetchApiResults = async () => {
         setApiLoading(true);
         setApiStatus('Fetching…');
-        const today = new Date().toISOString().substring(0, 10);
         try {
-            const result = await fetchResultsForDate(today, true);
+            const result = await fetchTournamentResults(
+                '2026-06-11',
+                new Date().toISOString().substring(0, 10)
+            );
             setApiLastCheck(new Date().toLocaleTimeString());
+
             if (result.success && result.updated > 0) {
-                setApiStatus(`Updated ${result.updated} match(es) from API`);
                 await loadData();
+                await scoreMatches();
+                await scoreKnockout();
+                window.dispatchEvent(new Event('leaderboard-refresh'));
+
+                let statusMsg = `Updated ${result.updated} match(es)`;
+                if (result.groupMatches) statusMsg += ` (${result.groupMatches} group)`;
+                if (result.knockoutMatches) statusMsg += ` (${result.knockoutMatches} KO)`;
+
+                if (result.skippedKnockouts && result.skippedKnockouts.length > 0) {
+                    const skNames = result.skippedKnockouts
+                        .map(s => `${s.home} vs ${s.away}`)
+                        .join(', ');
+                    statusMsg += ` — Auto-mapping required for: ${skNames}`;
+                    showToast(`⚠️ Some knockout matches could not be auto-mapped. Check bracket manually.`);
+                } else {
+                    showToast(`✅ ${result.updated} matches updated & scored!`);
+                }
+
+                setApiStatus(statusMsg);
             } else if (result.success && result.updated === 0) {
-                setApiStatus('No new finished matches today');
+                setApiStatus('No new finished matches');
             } else {
                 setApiStatus(result.message);
             }
@@ -797,7 +818,7 @@ export const AdminView: React.FC = () => {
                                             className="danger-action-btn unlock"
                                             onClick={async () => {
                                                 setSaving(`danger_unlock_${matchId}`);
-                                                const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: false });
+                                                const { data, error } = await supabase.rpc('set_match_lock', { _match_id: matchId, lock_state: false });
                                                 if (error) showToast(`❌ ${error.message}`);
                                                 else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
                                                 setSaving(null);
@@ -813,7 +834,7 @@ export const AdminView: React.FC = () => {
                                             className="danger-action-btn lock"
                                             onClick={async () => {
                                                 setSaving(`danger_lock_${matchId}`);
-                                                const { data, error } = await supabase.rpc('set_match_lock', { match_id: matchId, lock_state: true });
+                                                const { data, error } = await supabase.rpc('set_match_lock', { _match_id: matchId, lock_state: true });
                                                 if (error) showToast(`❌ ${error.message}`);
                                                 else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
                                                 setSaving(null);
@@ -907,7 +928,7 @@ export const AdminView: React.FC = () => {
                                                 className="danger-action-btn unlock"
                                                 onClick={async () => {
                                                     setSaving(`danger_unlock_${k.matchId}`);
-                                                    const { data, error } = await supabase.rpc('set_match_lock', { match_id: k.matchId, lock_state: false });
+                                                    const { data, error } = await supabase.rpc('set_match_lock', { _match_id: k.matchId, lock_state: false });
                                                     if (error) showToast(`❌ ${error.message}`);
                                                     else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
                                                     setSaving(null);
@@ -923,7 +944,7 @@ export const AdminView: React.FC = () => {
                                                 className="danger-action-btn lock"
                                                 onClick={async () => {
                                                     setSaving(`danger_lock_${k.matchId}`);
-                                                    const { data, error } = await supabase.rpc('set_match_lock', { match_id: k.matchId, lock_state: true });
+                                                    const { data, error } = await supabase.rpc('set_match_lock', { _match_id: k.matchId, lock_state: true });
                                                     if (error) showToast(`❌ ${error.message}`);
                                                     else if (data?.[0]) showToast(data[0].success ? `✅ ${data[0].message}` : `❌ ${data[0].message}`);
                                                     setSaving(null);
