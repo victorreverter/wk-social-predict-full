@@ -39,6 +39,7 @@ export const LeaderboardView: React.FC = () => {
     const [page, setPage] = useState(0);
     const [showScoringPopup, setShowScoringPopup] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<{ id: string; username: string; avatar: string | null } | null>(null);
+    const [hintDismissed, setHintDismissed] = useState(false);
     const PAGE_SIZE = 15;
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
@@ -231,6 +232,19 @@ export const LeaderboardView: React.FC = () => {
                 </p>
             </header>
 
+            {isWorldCup && !hintDismissed && (
+                <div className="lb-click-hint">
+                    <span>👇 Click on any row to view the full prediction summary</span>
+                    <button
+                        className="lb-click-hint-dismiss"
+                        onClick={() => setHintDismissed(true)}
+                        aria-label="Dismiss hint"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
             {isTestModeEnabled && (
                 <div className="leaderboard-mode-tabs">
                     <button
@@ -333,6 +347,9 @@ export const LeaderboardView: React.FC = () => {
                                                         {isCurrentUser && <span className="you-suffix"> (you)</span>}
                                                     </span>
                                                 </div>
+                                                {isWorldCup && (
+                                                    <span className="lb-eye-icon" title="Click to view predictions">🔍</span>
+                                                )}
                                             </div>
                                         </td>
                                         {isWorldCup ? (
