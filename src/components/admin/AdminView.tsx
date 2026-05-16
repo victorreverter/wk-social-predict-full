@@ -179,6 +179,8 @@ export const AdminView: React.FC = () => {
     const [apiLoading, setApiLoading] = useState(false);
     const [apiStatus, setApiStatus] = useState<string | null>(null);
     const [apiLastCheck, setApiLastCheck] = useState<string | null>(null);
+    const [autoFetchEnabled, setAutoFetchEnabled] = useState(false);
+    const [nextFetchIn, setNextFetchIn] = useState<number | null>(null);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -438,6 +440,42 @@ export const AdminView: React.FC = () => {
         setApiLoading(false);
     };
 
+    // ── Auto-Fetch Poller (July 10 00:00 → July 20 23:59 UTC) ──
+    const AUTO_FETCH_MS = 10 * 60 * 1000;
+    const FETCH_WINDOW_START = new Date('2026-07-10T00:00:00Z').getTime();
+    const FETCH_WINDOW_END = new Date('2026-07-20T23:59:59Z').getTime();
+
+    const fetchRef = React.useRef(fetchApiResults);
+    useEffect(() => { fetchRef.current = fetchApiResults; });
+
+    useEffect(() => {
+        if (!autoFetchEnabled) {
+            setNextFetchIn(null);
+            return;
+        }
+        const now = Date.now();
+        if (now < FETCH_WINDOW_START || now > FETCH_WINDOW_END) {
+            setNextFetchIn(null);
+            return;
+        }
+        setNextFetchIn(AUTO_FETCH_MS / 1000);
+
+        const countdown = setInterval(() => {
+            setNextFetchIn(prev => prev !== null && prev > 0 ? prev - 1 : null);
+        }, 1000);
+
+        const poller = setInterval(async () => {
+            if (document.visibilityState !== 'visible') return;
+            await fetchRef.current();
+            setNextFetchIn(AUTO_FETCH_MS / 1000);
+        }, AUTO_FETCH_MS);
+
+        return () => {
+            clearInterval(countdown);
+            clearInterval(poller);
+        };
+    }, [autoFetchEnabled]);
+
     const activeKoMatches = KO_ROUNDS.find(r => r.key === activeKoRound)?.matches ?? [];
 
     return (
@@ -501,6 +539,25 @@ export const AdminView: React.FC = () => {
                             </button>
                             {apiStatus && <span className="admin-api-status">{apiStatus}</span>}
                             {apiLastCheck && <span className="admin-api-time">Last check: {apiLastCheck}</span>}
+                        </div>
+
+                        <div className="admin-auto-fetch">
+                            <label className="auto-fetch-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={autoFetchEnabled}
+                                    onChange={e => setAutoFetchEnabled(e.target.checked)}
+                                />
+                                <span className="toggle-slider" />
+                                <span className="auto-fetch-label">
+                                    {autoFetchEnabled ? '🟢 Auto-fetch active' : '⚪ Auto-fetch off'}
+                                </span>
+                            </label>
+                            {autoFetchEnabled && nextFetchIn !== null && (
+                                <span className="auto-fetch-countdown">
+                                    Next fetch: {Math.floor(nextFetchIn / 60)}m {nextFetchIn % 60}s
+                                </span>
+                            )}
                         </div>
 
                         {!confirmReset ? (
