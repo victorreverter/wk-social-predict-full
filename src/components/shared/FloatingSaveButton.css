@@ -1,0 +1,89 @@
+.fab-container {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 1300;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.fab-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-primary);
+    color: #000;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(213, 131, 255, 0.35);
+    transition: all var(--transition-fast);
+}
+
+.fab-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(213, 131, 255, 0.55);
+}
+
+.fab-btn.saving {
+    animation: fab-pulse 1s infinite;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.fab-btn:disabled {
+    cursor: not-allowed;
+}
+
+@keyframes fab-pulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(213, 131, 255, 0.35); }
+    50% { box-shadow: 0 4px 28px rgba(213, 131, 255, 0.7); }
+}
+
+.fab-msg {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(10, 10, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+    animation: fab-msg-in 0.25s ease;
+}
+
+.fab-msg.error {
+    color: #ff5252;
+}
+
+.fab-msg.saved {
+    color: #00e676;
+}
+
+:root.light .fab-msg {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a2e;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+@keyframes fab-msg-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+    .fab-container {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .fab-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.2rem;
+    }
+}

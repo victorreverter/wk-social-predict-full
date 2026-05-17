@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../shared/Toast';
 import { groups, initialTeams } from '../../utils/data-init';
 import { calculateGroupStandings } from '../../utils/standings';
 import { MatchCard } from '../shared/MatchCard';
@@ -7,11 +9,32 @@ import { GroupStandings } from './GroupStandings';
 import './GroupView.css';
 
 export const GroupView: React.FC = () => {
-    const { state } = useApp();
-    const { groupMatches } = state;
+    const { state, setMode, resetPredictions, autoFillGroups, setThirdsModalDismissed } = useApp();
+    const { isLocked, isEaseModeEnabled } = useAuth();
+    const { groupMatches, mode } = state;
+    const { addToast } = useToast();
     const [activeGroup, setActiveGroup] = React.useState<string>(groups[0]);
 
-    // Determine what to display based on the selected tab
+    const handleReset = useCallback(async () => {
+        try {
+            await resetPredictions();
+            addToast('Predictions cleared.', 'success');
+        } catch (error: any) {
+            console.error('Reset failed:', error);
+            addToast(error?.message || 'Reset failed.', 'error');
+        }
+    }, [resetPredictions, addToast]);
+
+    useEffect(() => {
+        if (!isEaseModeEnabled && mode === 'EASY') {
+            setMode('HARD');
+        }
+    }, [isEaseModeEnabled, mode, setMode]);
+
+    const totalGroupMatches = Object.keys(groupMatches).length;
+    const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
+    const isGroupsFinished = totalGroupMatches === 72 && completedGroupMatches === 72;
+
     const standings = calculateGroupStandings(activeGroup, initialTeams, groupMatches);
     const groupMatchList = Object.values(groupMatches).filter(m => m.group === activeGroup);
 
@@ -27,6 +50,59 @@ export const GroupView: React.FC = () => {
                         {group}
                     </button>
                 ))}
+            </div>
+
+            <div className="group-actions-toolbar glass-panel">
+                {isEaseModeEnabled && (
+                    <div className="mode-switcher">
+                        <button
+                            className={`mode-btn ${mode === 'EASY' ? 'active' : ''}`}
+                            onClick={() => setMode('EASY')}
+                        >
+                            Easy Mode
+                        </button>
+                        <button
+                            className={`mode-btn ${mode === 'HARD' ? 'active' : ''}`}
+                            onClick={() => setMode('HARD')}
+                        >
+                            Hard Mode
+                        </button>
+                    </div>
+                )}
+
+                {!isLocked && (
+                    <div className="auto-fill-tooltip-wrapper">
+                        <button
+                            className="auto-fill-btn"
+                            onClick={autoFillGroups}
+                            aria-describedby="autofill-tooltip"
+                        >
+                            Auto-Fill Groups
+                        </button>
+                        <span
+                            className="auto-fill-tooltip"
+                            id="autofill-tooltip"
+                            role="tooltip"
+                        >
+                            Fills all groups with <strong>completely random</strong> scores — no football logic or knowledge involved!
+                        </span>
+                    </div>
+                )}
+
+                {!isLocked && (
+                    <button className="reset-btn" onClick={handleReset}>
+                        Reset
+                    </button>
+                )}
+
+                {isGroupsFinished && !isLocked && (
+                    <button
+                        className="select-thirds-btn"
+                        onClick={() => setThirdsModalDismissed(false)}
+                    >
+                        Select 3rds
+                    </button>
+                )}
             </div>
 
             <div key={activeGroup} className="group-section">

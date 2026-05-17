@@ -13,6 +13,7 @@ import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
 import { EredivisieTestView } from './components/eredivisie/EredivisieTestView';
+import { FloatingSaveButton } from './components/shared/FloatingSaveButton';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ToastProvider } from './components/shared/Toast';
 import { useApp } from './context/AppContext';
@@ -45,6 +46,7 @@ const AppContentWrapper = () => {
       <Header />
       <CountdownWidget />
       <MainContent />
+      <FloatingSaveButton />
     </div>
   );
 };
