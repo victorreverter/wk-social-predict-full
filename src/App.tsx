@@ -1,6 +1,7 @@
 import { AppProvider } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { GroupView } from './components/group-stage/GroupView';
 import { BracketTree } from './components/knockout-stage/BracketTree';
 import { ThirdPlaceSelection } from './components/shared/ThirdPlaceSelection';
@@ -47,6 +48,7 @@ const AppContentWrapper = () => {
       <CountdownWidget />
       <MainContent />
       <FloatingSaveButton />
+      <MobileBottomNav />
     </div>
   );
 };
