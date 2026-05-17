@@ -81,6 +81,7 @@ export const FloatingSaveButton: React.FC = () => {
             >
                 {saveStatus === 'saving' ? '⏳' : justSaved ? '✓' : '💾'}
             </button>
+            <span className="fab-hover-label">Save Predictions</span>
         </div>
     );
 };
