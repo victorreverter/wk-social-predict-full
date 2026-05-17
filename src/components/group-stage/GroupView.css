@@ -49,8 +49,8 @@
     border-radius: 12px;
     flex-wrap: wrap;
     position: sticky;
-    top: var(--header-height);
-    z-index: 100;
+    top: calc(var(--header-height) + 2rem);
+    z-index: 1050;
 }
 
 .group-actions-toolbar .mode-switcher {
@@ -208,7 +208,7 @@
 
 @media (max-width: 1024px) {
     .group-actions-toolbar {
-        top: 0;
+        top: calc(var(--header-height) + 1rem);
     }
 
     .group-actions-toolbar .mode-switcher {
