@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import './OnboardingModal.css';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 7;
 
 export const OnboardingModal: React.FC = () => {
     const { state, setHelpModalOpen } = useApp();
@@ -85,7 +85,7 @@ export const OnboardingModal: React.FC = () => {
                 </button>
 
                 <div
-                    className={`onboarding-track-wrapper ${currentStep === 0 ? 'onboarding-track-wrapper--bg1' : currentStep === 4 ? 'onboarding-track-wrapper--bg5' : ''}`}
+                    className={`onboarding-track-wrapper ${currentStep === 0 ? 'onboarding-track-wrapper--bg1' : currentStep === TOTAL_STEPS - 1 ? 'onboarding-track-wrapper--bg5' : ''}`}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
                     ref={trackRef}
@@ -108,7 +108,52 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 2: How It Works ─────────────── */}
+                        {/* ── Step 2: Your Dashboard ──────────── */}
+                        <div className="onboarding-step">
+                            <div className="onboarding-step-content onboarding-step--center">
+                                <h3 className="onboarding-section-title">Your Dashboard</h3>
+
+                                <div className="onboarding-layout-preview">
+                                    <h4 className="onboarding-layout-title">Desktop</h4>
+                                    <div className="onboarding-mock-header">
+                                        <div className="mock-tabs">
+                                            <span className="mock-tab active">Groups</span>
+                                            <span className="mock-tab">Bracket</span>
+                                            <span className="mock-tab">Awards</span>
+                                            <span className="mock-tab">XI</span>
+                                            <span className="mock-tab">Summary</span>
+                                            <span className="mock-tab">Leader</span>
+                                        </div>
+                                        <div className="mock-progress">
+                                            <div className="mock-ring-fill" />
+                                            <span className="mock-ring-pct">45%</span>
+                                        </div>
+                                    </div>
+                                    <p className="onboarding-mock-caption">
+                                        The <strong>progress ring</strong> tracks your prediction completion across Groups, Bracket, Awards, and XI so you always know how far you are.
+                                    </p>
+                                    <p className="onboarding-layout-text" style={{marginTop: '0.5rem'}}>
+                                        <span className="mock-fab-icon mock-fab-green">💾</span>
+                                        <strong>Save anytime</strong> — the floating save button lives on every page.
+                                    </p>
+                                </div>
+
+                                <div className="onboarding-layout-preview" style={{marginTop: '0.75rem'}}>
+                                    <h4 className="onboarding-layout-title">Mobile</h4>
+                                    <div className="onboarding-mock-bottom-nav">
+                                        <span className="mock-nav-icon">⚽</span>
+                                        <span className="mock-nav-icon">⚔</span>
+                                        <span className="mock-nav-icon">🏅</span>
+                                        <span className="mock-nav-icon">⭐</span>
+                                        <span className="mock-nav-icon">📝</span>
+                                        <span className="mock-nav-icon">🏆</span>
+                                    </div>
+                                    <span className="onboarding-mobile-label">📱 Bottom nav bar for thumb‑reachable tabs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Step 3: How It Works ─────────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
                                 <h3 className="onboarding-section-title">How It Works</h3>
@@ -117,14 +162,14 @@ export const OnboardingModal: React.FC = () => {
                                         <span className="step-icon">🏆</span>
                                         <div className="step-text">
                                             <strong>Group Stage</strong>
-                                            Predict all 72 group matches. Use <em>Easy Mode</em> for quick winner picks, or <em>Hard Mode</em> for exact scores.
+                                            Predict all 72 group matches — you can pick exact scores or quick winner results.
                                         </div>
                                     </li>
                                     <li>
                                         <span className="step-icon">⚡</span>
                                         <div className="step-text">
                                             <strong>Auto-Fill</strong>
-                                            Short on time? Auto-Fill instantly simulates every group match for you.
+                                            Short on time? Auto-Fill instantly simulates every group match — <em>find it in the Groups toolbar</em>.
                                             <em className="onboarding-autofill-note">
                                                 Results are completely random — no football knowledge or bias involved.
                                             </em>
@@ -155,7 +200,7 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 3: Points — Matches ─────────── */}
+                        {/* ── Step 4: Points — Matches ─────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
                                 <h3 className="onboarding-section-title">Points — Matches &amp; Bracket</h3>
@@ -210,7 +255,7 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 4: Points — Awards & XI ───────── */}
+                        {/* ── Step 5: Points — Awards & XI ───────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
                                 <h3 className="onboarding-section-title">Points — Awards &amp; Best XI</h3>
@@ -253,7 +298,59 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 5: Rules & Ready ────────────── */}
+                        {/* ── Step 6: Saving Your Predictions ──── */}
+                        <div className="onboarding-step">
+                            <div className="onboarding-step-content onboarding-step-content--scroll">
+                                <h3 className="onboarding-section-title">Saving Your Predictions</h3>
+                                <p className="onboarding-points-hint">The save button lives in the bottom‑right corner of every page</p>
+
+                                <div className="onboarding-points-card">
+                                    <h4 className="onboarding-points-card-title">💾 Save Button States</h4>
+                                    <div className="onboarding-fab-states">
+                                        <div className="fab-state-row">
+                                            <span className="fab-state-icon fab-state-green">💾</span>
+                                            <span className="fab-state-label">Green glow = all saved — you're good!</span>
+                                        </div>
+                                        <div className="fab-state-row">
+                                            <span className="fab-state-icon fab-state-purple">💾</span>
+                                            <span className="fab-state-label">Purple pulse + rings = unsaved changes — tap to save</span>
+                                        </div>
+                                        <div className="fab-state-row">
+                                            <span className="fab-state-icon fab-state-saving">⏳</span>
+                                            <span className="fab-state-label">Pulsing = saving in progress…</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="onboarding-points-card">
+                                    <h4 className="onboarding-points-card-title">🔧 Groups Toolbar</h4>
+                                    <div className="onboarding-fab-states">
+                                        <div className="fab-state-row">
+                                            <span className="step-icon">⚡</span>
+                                            <span className="fab-state-label">Auto‑Fill Groups — quick random results</span>
+                                        </div>
+                                        <div className="fab-state-row">
+                                            <span className="step-icon">🗑️</span>
+                                            <span className="fab-state-label">Reset — clear all predictions</span>
+                                        </div>
+                                        <div className="fab-state-row">
+                                            <span className="step-icon">🥉</span>
+                                            <span className="fab-state-label">Select Thirds — pick best 3rd‑place teams (when groups are done)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="onboarding-points-example">
+                                    Hover the save button on desktop to see <strong>"Save Predictions"</strong>. Tap anytime — your work is safe.
+                                </p>
+
+                                <div className="onboarding-max-score" style={{marginTop: '0.75rem'}}>
+                                    💡 Summary tab is always visible — dimmed until you finish all predictions.
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Step 7: Rules & Ready ────────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content onboarding-step--center">
                                 <h3 className="onboarding-section-title">Rules</h3>

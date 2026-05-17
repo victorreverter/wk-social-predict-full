@@ -565,7 +565,217 @@
     50%      { transform: scale(1.08); opacity: 0.85; }
 }
 
-/* ── Responsive ────────────────────────────────── */
+/* ── Layout preview mockup (Step 1) ─────────────── */
+.onboarding-layout-preview {
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 0.75rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.onboarding-layout-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.onboarding-mock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mock-tabs {
+    display: flex;
+    gap: 0.2rem;
+}
+
+.mock-tab {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.55rem;
+    font-weight: 600;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
+.mock-tab.active {
+    background: var(--color-primary);
+    color: #000;
+}
+
+.mock-progress {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.mock-ring-fill {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--color-primary);
+    opacity: 0.7;
+}
+
+.mock-ring-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.45rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.onboarding-mock-caption {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin: 0.4rem 0 0;
+    line-height: 1.5;
+}
+
+.onboarding-layout-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.onboarding-layout-text {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.mock-fab-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.mock-fab-green {
+    background: #00e676;
+    color: #000;
+    box-shadow: 0 0 6px rgba(0, 230, 118, 0.4);
+    animation: mock-fab-glow 2s ease-in-out infinite;
+}
+
+@keyframes mock-fab-glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(0, 230, 118, 0.3); }
+    50% { box-shadow: 0 0 10px rgba(0, 230, 118, 0.5); }
+}
+
+.onboarding-mock-bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.25rem 0.4rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.mock-nav-icon {
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
+.onboarding-mobile-label {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+:root.light .onboarding-layout-preview {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+:root.light .onboarding-mock-header,
+:root.light .onboarding-mock-bottom-nav {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ── FAB state guide (Step 3) ───────────────────── */
+.onboarding-fab-states {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0.3rem 0;
+}
+
+.fab-state-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.fab-state-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.fab-state-green {
+    background: #00e676;
+    color: #000;
+    box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+}
+
+.fab-state-purple {
+    background: var(--color-primary);
+    color: #000;
+    animation: fab-state-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fab-state-pulse {
+    0%, 100% { box-shadow: 0 0 6px 2px rgba(213, 131, 255, 0.4); }
+    50% { box-shadow: 0 0 16px 6px rgba(213, 131, 255, 0.65); }
+}
+
+.fab-state-saving {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary);
+    animation: fab-state-saving 0.8s ease-in-out infinite;
+}
+
+@keyframes fab-state-saving {
+    0%, 100% { transform: scale(1); opacity: 0.75; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+.fab-state-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
 @media (max-width: 600px) {
     .onboarding-modal {
         max-height: 90vh;
