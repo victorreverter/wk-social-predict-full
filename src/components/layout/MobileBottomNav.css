@@ -22,7 +22,7 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 4px 6px;
+    padding: 10px 6px;
     border: none;
     background: transparent;
     color: var(--text-muted);
