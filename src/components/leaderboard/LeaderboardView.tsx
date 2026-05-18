@@ -232,19 +232,6 @@ export const LeaderboardView: React.FC = () => {
                 </p>
             </header>
 
-            {isWorldCup && !hintDismissed && (
-                <div className="lb-click-hint">
-                    <span>👇 Click on any row to view the full prediction summary</span>
-                    <button
-                        className="lb-click-hint-dismiss"
-                        onClick={() => setHintDismissed(true)}
-                        aria-label="Dismiss hint"
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-
             {isTestModeEnabled && (
                 <div className="leaderboard-mode-tabs">
                     <button
@@ -263,6 +250,19 @@ export const LeaderboardView: React.FC = () => {
                         }}
                     >
                         🧪 Eredivisie
+                    </button>
+                </div>
+            )}
+
+            {isWorldCup && !hintDismissed && (
+                <div className="lb-click-hint">
+                    <span>👇 Click on any row to view the full prediction summary</span>
+                    <button
+                        className="lb-click-hint-dismiss"
+                        onClick={() => setHintDismissed(true)}
+                        aria-label="Dismiss hint"
+                    >
+                        ×
                     </button>
                 </div>
             )}
