@@ -50,5 +50,18 @@ WITH CHECK ((SELECT is_master FROM profiles WHERE id = auth.uid()));
 INSERT INTO config (key, value) VALUES ('eredivisie_test_enabled', 'true')
 ON CONFLICT (key) DO NOTHING;
 
+-- 4. Master can score (update pts_earned) all eredivisie predictions
+DROP POLICY IF EXISTS "Master can score eredivisie predictions" ON user_predictions_eredivisie;
+CREATE POLICY "Master can score eredivisie predictions"
+ON user_predictions_eredivisie FOR UPDATE
+USING ((SELECT is_master FROM profiles WHERE id = auth.uid()))
+WITH CHECK ((SELECT is_master FROM profiles WHERE id = auth.uid()));
+
+-- 5. Public read profiles for leaderboard (needs to JOIN predictions)
+DROP POLICY IF EXISTS "Public can read profiles" ON public.profiles;
+CREATE POLICY "Public can read profiles"
+ON public.profiles FOR SELECT
+USING (true);
+
 COMMENT ON TABLE user_predictions_eredivisie IS 'User predictions for Eredivisie test matches (matchdays 33-34)';
 COMMENT ON TABLE official_eredivisie IS 'Admin-entered official results for Eredivisie test matches';

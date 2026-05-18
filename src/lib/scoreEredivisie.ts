@@ -67,7 +67,12 @@ export async function scoreEredivisie(userId?: string): Promise<{ usersScored: n
         .eq('user_id', pred.user_id)
         .eq('match_id', pred.match_id);
 
-      if (!updateErr && pts > 0) scoredUsers.add(pred.user_id);
+      if (updateErr) {
+        logger.error(`Failed to update pts_earned for ${pred.user_id} / ${pred.match_id}`, updateErr);
+        continue;
+      }
+
+      if (pts > 0) scoredUsers.add(pred.user_id);
     }
 
     return { usersScored: scoredUsers.size, error: null };

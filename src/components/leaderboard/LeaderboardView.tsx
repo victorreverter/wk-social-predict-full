@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { scoreEredivisie } from '../../lib/scoreEredivisie';
 import { EredivisieScoringPopup, isEredivisieScoringDismissed } from '../eredivisie/EredivisieScoringPopup';
 import { UserPredictionsModal } from './UserPredictionsModal';
 import './LeaderboardView.css';
@@ -105,6 +106,8 @@ export const LeaderboardView: React.FC = () => {
         loadingRef.current = true;
         setError('');
         try {
+            await scoreEredivisie();
+
             const { data, error } = await supabase
                 .from('profiles')
                 .select(`
