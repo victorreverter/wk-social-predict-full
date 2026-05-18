@@ -936,6 +936,104 @@ html[data-theme='light'] .current-user.top-rank-3 {
 .pts-correct { color: #64dcff; }
 .pts-wrong { color: var(--text-muted); }
 
+/* ── Mobile Responsive ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .leaderboard-container {
+        padding: 0.5rem;
+    }
+
+    .leaderboard-header {
+        padding: 1rem 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+
+    .leaderboard-header h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .leaderboard-header p {
+        font-size: 0.85rem;
+    }
+
+    .leaderboard-table-wrap {
+        padding: 0.5rem;
+        border-radius: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 0.5rem 0.4rem;
+    }
+
+    .leaderboard-table th {
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+    }
+
+    .th-score,
+    .td-score {
+        display: none;
+    }
+
+    .lb-avatar,
+    .lb-avatar-fallback {
+        width: 34px;
+        height: 34px;
+    }
+
+    .lb-display-name {
+        font-size: 0.9rem;
+    }
+
+    .lb-username {
+        font-size: 0.75rem;
+    }
+
+    .lb-user-info {
+        gap: 0.5rem;
+    }
+
+    .td-rank {
+        font-size: 1rem;
+    }
+
+    .medal-icon {
+        font-size: 1.3rem;
+    }
+
+    .td-total {
+        font-size: 1.1rem;
+    }
+
+    .lb-click-hint {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .lb-click-hint-dismiss {
+        margin-left: 0;
+    }
+
+    .lb-eye-icon {
+        display: none;
+    }
+
+    .leaderboard-pagination {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+        font-size: 0.78rem;
+    }
+}
+
 .awards-list {
     display: flex;
     flex-direction: column;

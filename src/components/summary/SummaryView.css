@@ -394,41 +394,50 @@
     .team-list.list-4 {
         grid-template-columns: 1fr 1fr;
     }
+
+    .awards-summary-list li {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.82rem;
+    }
+
+    .awards-summary-list li strong {
+        font-size: 0.88rem;
+    }
 }
 
 @media (max-width: 500px) {
     .champion-card {
-        padding: 1.5rem;
-        gap: 1rem;
+        padding: 1rem;
+        gap: 0.75rem;
     }
 
     .champion-team-wrap h2 {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     .champion-flag {
-        width: 48px;
+        width: 36px;
     }
 
     .champion-card .champion-icon {
-        font-size: 2.5rem;
+        font-size: 1.8rem;
     }
 
     .silver-card {
-        padding: 1.25rem;
-        gap: 0.85rem;
+        padding: 1rem;
+        gap: 0.75rem;
     }
 
     .silver-team-wrap h3 {
-        font-size: 1.75rem;
+        font-size: 1.5rem;
     }
 
     .silver-flag {
-        width: 42px;
+        width: 36px;
     }
 
     .silver-card .silver-icon {
-        font-size: 2.1rem;
+        font-size: 1.8rem;
     }
 
     .bronze-card {
@@ -458,6 +467,37 @@
     .summary-team {
         justify-content: flex-start;
         padding: 0.5rem 1rem;
+    }
+}
+
+/* ── Mobile team name abbreviation ─────────────────────── */
+@media (max-width: 500px) {
+    .summary-full-name {
+        display: none;
+    }
+
+    .summary-abbr-name {
+        display: inline;
+        font-weight: 700;
+    }
+
+    .classified-team .team-name {
+        display: none;
+    }
+
+    .classified-team .team-name-abbr {
+        display: inline;
+        font-weight: 600;
+    }
+}
+
+@media (min-width: 501px) {
+    .summary-abbr-name {
+        display: none;
+    }
+
+    .classified-team .team-name-abbr {
+        display: none;
     }
 }
 

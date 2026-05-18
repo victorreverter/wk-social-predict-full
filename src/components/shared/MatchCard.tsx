@@ -54,6 +54,7 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
             <div className="match-teams">
                 <div className="team home">
                     <span className="team-name">{homeTeam.name}</span>
+                    <span className="team-name-abbr">{homeTeam.code}</span>
                     <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="team-flag" alt="" />
                     {mode === 'HARD' && (
                         <input
@@ -84,6 +85,7 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                     )}
                     <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="team-flag" alt="" />
                     <span className="team-name">{awayTeam.name}</span>
+                    <span className="team-name-abbr">{awayTeam.code}</span>
                 </div>
             </div>
 

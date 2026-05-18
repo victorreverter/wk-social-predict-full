@@ -72,8 +72,6 @@
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-
-
 .team-name {
     font-size: 0.75rem;
     white-space: nowrap;
@@ -151,7 +149,6 @@
     border-color: var(--color-primary);
 }
 
-/* Hide spinners */
 .bracket-score-input::-webkit-outer-spin-button,
 .bracket-score-input::-webkit-inner-spin-button,
 .pen-input::-webkit-outer-spin-button,
@@ -186,10 +183,22 @@
 
 .btn-easy-bracket.active {
     background: #00e676;
-    /* Vivid Green matching MatchCard */
     color: #000;
     border-color: #00e676;
     box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+}
+
+/* Force full team names in mobile bracket list */
+@media (max-width: 768px) {
+    .bracket-mobile-matches .team-name.full,
+    .bracket-mobile-list .team-name.full {
+        display: inline;
+    }
+
+    .bracket-mobile-matches .team-name.abbr,
+    .bracket-mobile-list .team-name.abbr {
+        display: none;
+    }
 }
 
 @media (max-width: 480px) {

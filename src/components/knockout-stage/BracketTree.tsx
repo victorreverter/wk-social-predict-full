@@ -7,23 +7,9 @@ import { initialTeams } from '../../utils/data-init';
 import { exportBracketToImage } from '../../utils/export-image';
 import './BracketTree.css';
 
-// Define the column structure for a Split Bracket
 const LEFT_STAGES = ['R32', 'R16', 'QF', 'SF'];
-const RIGHT_STAGES = ['SF', 'QF', 'R16', 'R32']; // Mirrored order for right side
+const RIGHT_STAGES = ['SF', 'QF', 'R16', 'R32'];
 
-/**
- * Explicit visual ordering of matches per stage per side.
- * Derived from the official 2026 FIFA bracket tree:
- *   LEFT side feeds → SF M101 (via QF M97 + QF M98)
- *   RIGHT side feeds → SF M102 (via QF M99 + QF M100)
- *
- * Left R32 chains:
- *   Chain A (→ QF M97): M74,M77 → R16 M89; M73,M75 → R16 M90
- *   Chain B (→ QF M98): M83,M84 → R16 M93; M81,M82 → R16 M94
- * Right R32 chains:
- *   Chain C (→ QF M99): M76,M78 → R16 M91; M79,M80 → R16 M92
- *   Chain D (→ QF M100): M86,M88 → R16 M95; M85,M87 → R16 M96
- */
 const BRACKET_VISUAL_ORDER: { left: Record<string, number[]>; right: Record<string, number[]> } = {
     left: {
         R32: [74, 77, 73, 75, 83, 84, 81, 82],
@@ -38,6 +24,15 @@ const BRACKET_VISUAL_ORDER: { left: Record<string, number[]>; right: Record<stri
         R32: [76, 78, 79, 80, 86, 88, 85, 87],
     },
 };
+
+const MOBILE_STAGES: { key: string; label: string }[] = [
+    { key: 'R32', label: 'Round of 32' },
+    { key: 'R16', label: 'Round of 16' },
+    { key: 'QF', label: 'Quarter-Final' },
+    { key: 'SF', label: 'Semi-Final' },
+    { key: '3RD', label: '3rd Place' },
+    { key: 'F', label: 'FINAL' },
+];
 
 export const BracketTree: React.FC = () => {
     const { state } = useApp();
@@ -59,8 +54,6 @@ export const BracketTree: React.FC = () => {
         exportBracketToImage(matchesList, 'my-wc2026-bracket.jpg');
     };
 
-    // Returns matches in the correct visual order for the given stage side,
-    // mapped explicitly from the official 2026 FIFA bracket tree progression.
     const getVisualMatches = (stageName: string, side: 'left' | 'right') => {
         const orderNums = BRACKET_VISUAL_ORDER[side][stageName] ?? [];
         return orderNums
@@ -68,7 +61,6 @@ export const BracketTree: React.FC = () => {
             .filter((m): m is Match => m !== undefined);
     };
 
-    // Render a generic column of matches in official bracket order
     const renderStageColumn = (stageName: string, side: 'left' | 'right') => {
         const matches = getVisualMatches(stageName, side);
         const stageLabelMap: Record<string, string> = {
@@ -81,7 +73,6 @@ export const BracketTree: React.FC = () => {
                     {matches.map((match) => {
                         const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
                         const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
-
                         return (
                             <div key={match.id} className={`match-connector-wrapper ${side}-connector`}>
                                 <BracketMatchNode match={match} homeTeam={homeTeam} awayTeam={awayTeam} />
@@ -93,7 +84,6 @@ export const BracketTree: React.FC = () => {
         );
     };
 
-    // Extract exactly the Final match
     const finalMatch = matchesList.find(m => m.stage === 'F');
     const thirdMatch = matchesList.find(m => m.stage === '3RD');
 
@@ -139,13 +129,9 @@ export const BracketTree: React.FC = () => {
                 </div>
 
                 <div className="bracket-scroll-container">
-
                     <div className="bracket-columns">
-
-                        {/* LEFT WING */}
                         {LEFT_STAGES.map(stage => renderStageColumn(stage, 'left'))}
 
-                        {/* CENTER - FINAL & 3RD PLACE & CHAMPION */}
                         {(finalMatch || thirdMatch) && (
                             <div className="bracket-column stage-f center-final">
                                 <h3 className="stage-title">FINAL</h3>
@@ -201,12 +187,55 @@ export const BracketTree: React.FC = () => {
                             </div>
                         )}
 
-                        {/* RIGHT WING (Reversed Stages) */}
                         {RIGHT_STAGES.map(stage => renderStageColumn(stage, 'right'))}
-
                     </div>
-
                 </div>
+            </div>
+
+            <div className="bracket-mobile-list">
+                {MOBILE_STAGES.map(stage => {
+                    const leftMatches = BRACKET_VISUAL_ORDER.left[stage.key]
+                        ? getVisualMatches(stage.key, 'left')
+                        : [];
+                    const rightMatches = BRACKET_VISUAL_ORDER.right[stage.key]
+                        ? getVisualMatches(stage.key, 'right')
+                        : [];
+                    const stageMatches = stage.key === '3RD'
+                        ? matchesList.filter(m => m.stage === '3RD')
+                        : stage.key === 'F'
+                            ? matchesList.filter(m => m.stage === 'F')
+                            : [...leftMatches, ...rightMatches];
+
+                    if (stageMatches.length === 0) return null;
+
+                    return (
+                        <div key={stage.key} className="bracket-mobile-stage">
+                            <h3 className="bracket-mobile-stage-title">{stage.label}</h3>
+                            <div className="bracket-mobile-matches">
+                                {stageMatches.map((match) => {
+                                    const homeTeam = initialTeams.find(t => t.id === match.homeTeamId);
+                                    const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
+                                    return (
+                                        <BracketMatchNode
+                                            key={match.id}
+                                            match={match}
+                                            homeTeam={homeTeam}
+                                            awayTeam={awayTeam}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {championTeam && (
+                    <div className="bracket-mobile-champion">
+                        <img src={`${import.meta.env.BASE_URL}world_cup_trophy.png`} className="champion-trophy" alt="Trophy" />
+                        <h3 className="champion-title">CHAMPION</h3>
+                        <span className="champion-name">{championTeam.name}</span>
+                    </div>
+                )}
             </div>
         </div>
     );

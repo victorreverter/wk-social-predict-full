@@ -286,11 +286,11 @@ export const LeaderboardView: React.FC = () => {
                             <th className="th-user">Predictor</th>
                             {isWorldCup ? (
                                 <>
-                                    <th className="th-score" title="Points from exact scores &amp; results">Groups &amp; Matches</th>
+                                    <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
                                     <th className="th-score" title="Points from Knockout progressions">Bracket</th>
                                     <th className="th-score" title="Points from Awards">Awards</th>
-                                    <th className="th-score" title="Points from Tournament XI">Tourn. XI</th>
-                                    <th className="th-total">Total Pts</th>
+                                    <th className="th-score" title="Points from Tournament XI">XI</th>
+                                    <th className="th-total">Total</th>
                                 </>
                             ) : (
                                 <>

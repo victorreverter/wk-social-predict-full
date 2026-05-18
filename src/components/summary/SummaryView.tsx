@@ -195,7 +195,8 @@ export const SummaryView: React.FC = () => {
                         {getTeam(champion) && (
                             <img src={`${import.meta.env.BASE_URL}flags/${getTeam(champion)?.code}.svg`} className="champion-flag" alt="" />
                         )}
-                        <h2>{getTeamName(champion)}</h2>
+                        <h2 className="summary-full-name">{getTeamName(champion)}</h2>
+                        <h2 className="summary-abbr-name">{getTeam(champion)?.code || champion}</h2>
                     </div>
                 </div>
 
@@ -206,7 +207,8 @@ export const SummaryView: React.FC = () => {
                             {getTeam(secondPlaceWinner) && (
                                 <img src={`${import.meta.env.BASE_URL}flags/${getTeam(secondPlaceWinner)?.code}.svg`} className="silver-flag" alt="" />
                             )}
-                            <h3>{getTeamName(secondPlaceWinner)}</h3>
+                            <h3 className="summary-full-name">{getTeamName(secondPlaceWinner)}</h3>
+                            <h3 className="summary-abbr-name">{getTeam(secondPlaceWinner)?.code || secondPlaceWinner}</h3>
                         </div>
                     </div>
                 )}
@@ -218,7 +220,8 @@ export const SummaryView: React.FC = () => {
                             {getTeam(thirdPlaceWinner) && (
                                 <img src={`${import.meta.env.BASE_URL}flags/${getTeam(thirdPlaceWinner)?.code}.svg`} className="bronze-flag" alt="" />
                             )}
-                            <h3>{getTeamName(thirdPlaceWinner)}</h3>
+                            <h3 className="summary-full-name">{getTeamName(thirdPlaceWinner)}</h3>
+                            <h3 className="summary-abbr-name">{getTeam(thirdPlaceWinner)?.code || thirdPlaceWinner}</h3>
                         </div>
                     </div>
                 ) : (
@@ -294,6 +297,7 @@ export const SummaryView: React.FC = () => {
                                     <div className="classified-team-info">
                                         {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
                                         <span className="team-name">{getTeamName(id)}</span>
+                                        <span className="team-name-abbr">{getTeam(id)?.code || id}</span>
                                     </div>
                                 </li>
                             ))}
