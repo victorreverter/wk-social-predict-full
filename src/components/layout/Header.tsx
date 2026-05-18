@@ -17,9 +17,9 @@ export const Header: React.FC = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const { overallPct, sections } = useMemo(() => {
-        const gm = Object.values(groupMatches).filter(m => m.score || m.result).length;
+        const gm = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
         const gmTotal = Object.keys(groupMatches).length;
-        const km = Object.values(knockoutMatches).filter(m => m.score || m.result).length;
+        const km = Object.values(knockoutMatches).filter(m => m.status === 'FINISHED').length;
         const kmTotal = Object.keys(knockoutMatches).length;
         const aw = Object.values(awards).filter(v => v.trim()).length;
         const awTotal = Object.keys(awards).length;
