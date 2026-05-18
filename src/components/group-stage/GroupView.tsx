@@ -18,7 +18,7 @@ export const GroupView: React.FC = () => {
     const handleReset = useCallback(async () => {
         try {
             await resetPredictions();
-            addToast('Predictions cleared.', 'success');
+            addToast('✅ All your predictions, points, and progress have been reset. Start fresh!', 'success');
         } catch (error: any) {
             console.error('Reset failed:', error);
             addToast(error?.message || 'Reset failed.', 'error');

@@ -56,6 +56,15 @@ export const FloatingSaveButton: React.FC = () => {
         }
     }, [saveStatus, state]);
 
+    useEffect(() => {
+        const onReset = () => {
+            setLastSnap(toSnap(stateRef.current));
+            didInitSnapRef.current = true;
+        };
+        window.addEventListener('predictions-reset', onReset);
+        return () => window.removeEventListener('predictions-reset', onReset);
+    }, []);
+
     const hasUnsavedChanges = useMemo(() => {
         if (!lastSnap) return false;
         return JSON.stringify(lastSnap) !== JSON.stringify(toSnap(state));

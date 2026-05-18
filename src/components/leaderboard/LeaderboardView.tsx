@@ -47,8 +47,8 @@ export const LeaderboardView: React.FC = () => {
 
     const isWorldCup = leaderboardMode === 'worldcup';
 
-    const fetchWorldCupLeaderboard = useCallback(async () => {
-        if (loadingRef.current) return;
+    const fetchWorldCupLeaderboard = useCallback(async (force = false) => {
+        if (!force && loadingRef.current) return;
         loadingRef.current = true;
         setError('');
         try {
@@ -101,8 +101,8 @@ export const LeaderboardView: React.FC = () => {
         }
     }, []);
 
-    const fetchEredivisieLeaderboard = useCallback(async () => {
-        if (loadingRef.current) return;
+    const fetchEredivisieLeaderboard = useCallback(async (force = false) => {
+        if (!force && loadingRef.current) return;
         loadingRef.current = true;
         setError('');
         try {
@@ -156,8 +156,8 @@ export const LeaderboardView: React.FC = () => {
 
     useEffect(() => {
         const handleRefresh = () => {
-            fetchWorldCupLeaderboard();
-            fetchEredivisieLeaderboard();
+            fetchWorldCupLeaderboard(true);
+            fetchEredivisieLeaderboard(true);
         };
         window.addEventListener('leaderboard-refresh', handleRefresh);
 
@@ -171,16 +171,18 @@ export const LeaderboardView: React.FC = () => {
         let ch = supabase.channel('leaderboard-updates');
 
         wcTables.forEach(table => {
+            const doWcRefresh = () => fetchWorldCupLeaderboard();
             ch = ch
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table }, fetchWorldCupLeaderboard)
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table }, fetchWorldCupLeaderboard)
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table }, fetchWorldCupLeaderboard);
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table }, doWcRefresh)
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table }, doWcRefresh)
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table }, doWcRefresh);
         });
 
+        const doEredivisieRefresh = () => fetchEredivisieLeaderboard();
         ch = ch
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'user_predictions_eredivisie' }, fetchEredivisieLeaderboard)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
                 fetchWorldCupLeaderboard();
                 fetchEredivisieLeaderboard();

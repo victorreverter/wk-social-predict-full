@@ -7,11 +7,11 @@ import { determineQualifiedTeams } from '../utils/bracket-logic';
 export const useLoadUserPredictions = () => {
     const { session } = useAuth();
     const { state, loadFullState } = useApp();
-    const hasLoaded = useRef(false);
+    const lastLoadedUserId = useRef<string | null>(null);
 
     useEffect(() => {
         if (!session?.user) return;
-        if (hasLoaded.current) return;
+        if (lastLoadedUserId.current === session.user.id) return;
 
         const loadPredictions = async () => {
             try {
@@ -106,10 +106,16 @@ export const useLoadUserPredictions = () => {
             }
         };
 
-        // Delay slightly to ensure context binds completely
-        hasLoaded.current = true;
-        setTimeout(() => {
+        const loadAndMark = () => {
             loadPredictions();
-        }, 500);
+            lastLoadedUserId.current = session.user.id;
+        };
+        setTimeout(loadAndMark, 500);
+
+        const onReset = () => { lastLoadedUserId.current = null; };
+        window.addEventListener('predictions-reset', onReset);
+        return () => {
+            window.removeEventListener('predictions-reset', onReset);
+        };
     }, [session?.user?.id]);
 };

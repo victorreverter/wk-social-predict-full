@@ -255,7 +255,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (!(data as any)?.success) throw new Error((data as any)?.message || 'Unknown error');
 
         setState(getFreshState());
+        const { data: { user } } = await supabase.auth.getUser();
         window.dispatchEvent(new Event('leaderboard-refresh'));
+        window.dispatchEvent(new CustomEvent('predictions-reset', { detail: { userId: user?.id } }));
     };
 
     const setSelectedThirds = (teamIds: string[]) => {
