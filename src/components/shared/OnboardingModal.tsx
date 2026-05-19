@@ -210,7 +210,7 @@ export const OnboardingModal: React.FC = () => {
                                     <div className="onboarding-points-rows">
                                         <div className="onboarding-points-row">
                                             <span className="onboarding-points-label">Exact score</span>
-                                            <span className="onboarding-points-value">3 pts</span>
+                                            <span className="onboarding-points-value">2 pts</span>
                                         </div>
                                         <div className="onboarding-points-row">
                                             <span className="onboarding-points-label">Correct result only</span>

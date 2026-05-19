@@ -60,7 +60,7 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
     const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
     const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
     
-    const ptsExact = getPts('match_exact_score', 3);
+    const ptsExact = getPts('match_exact_score', 2);
     const ptsOutcome = getPts('match_correct_outcome', 1);
     const ptsWentPens = getPts('match_went_to_pens', 2);
     const ptsPensWinner = getPts('match_pens_winner', 3);

@@ -242,8 +242,8 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     const xiPts = pd.xi.reduce((s, x) => s + (x.pts_earned || 0), 0);
 
     const groupMatchPts = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP').reduce((s, m) => s + (m.pts_earned || 0), 0);
-    const groupExact = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned >= 3).length;
-    const groupCorrect = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned >= 1 && m.pts_earned < 3).length;
+    const groupExact = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned >= 2).length;
+    const groupCorrect = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned === 1).length;
 
     const koR16 = pd.ko.filter(k => k.round === 'R16' && k.pts_earned > 0).length;
     const koQF = pd.ko.filter(k => k.round === 'QF' && k.pts_earned > 0).length;
