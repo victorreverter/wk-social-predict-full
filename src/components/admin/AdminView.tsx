@@ -310,8 +310,9 @@ export const AdminView: React.FC = () => {
             setOfficialMatches({});
             setOfficialAwards({});
             setOfficialXI({});
+            setEredivisieOfficial({});
             setConfirmReset(false);
-            showToast('🗑️ Tournament reset complete! All predictions and scores cleared.');
+            showToast('🗑️ Tournament reset complete! Official results cleared and scores reset.');
         } catch (err: any) {
             showToast(`❌ Reset failed: ${err?.message || 'Unknown error'}`);
         } finally {
@@ -427,9 +428,9 @@ export const AdminView: React.FC = () => {
         setApiLoading(false);
     };
 
-    // ── Auto-Fetch Poller (July 10 00:00 → July 20 23:59 UTC) ──
+    // ── Auto-Fetch Poller (June 10 00:00 → July 20 23:59 UTC) ──
     const AUTO_FETCH_MS = 10 * 60 * 1000;
-    const FETCH_WINDOW_START = new Date('2026-07-10T00:00:00Z').getTime();
+    const FETCH_WINDOW_START = new Date('2026-06-10T00:00:00Z').getTime();
     const FETCH_WINDOW_END = new Date('2026-07-20T23:59:59Z').getTime();
 
     const fetchRef = React.useRef(fetchApiResults);
@@ -548,7 +549,12 @@ export const AdminView: React.FC = () => {
                         </div>
 
                         {!confirmReset ? (
-                            <button className="admin-reset-btn" onClick={() => setConfirmReset(true)} disabled={saving === 'reset'}>
+                            <button
+                                className="admin-reset-btn"
+                                onClick={() => setConfirmReset(true)}
+                                disabled={saving === 'reset' || isLocked}
+                                title={isLocked ? 'Tournament is locked — reset is disabled' : 'Reset all predictions and scores'}
+                            >
                                 🗑️ Reset Tournament
                             </button>
                         ) : (
