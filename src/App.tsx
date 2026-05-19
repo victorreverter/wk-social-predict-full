@@ -19,6 +19,7 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ToastProvider } from './components/shared/Toast';
 import { useApp } from './context/AppContext';
 import { useLoadUserPredictions } from './hooks/useLoadUserPredictions';
+import { useLoadOfficialMatches } from './hooks/useLoadOfficialMatches';
 
 import './styles/global.css';
 
@@ -42,6 +43,7 @@ const MainContent = () => {
 
 const AppContentWrapper = () => {
   useLoadUserPredictions();
+  useLoadOfficialMatches();
   return (
     <div className="app-container">
       <Header />

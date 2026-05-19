@@ -63,6 +63,18 @@ export interface AwardsState {
 
 export type TournamentXIState = Record<string, string>;
 
+export interface OfficialMatch {
+  match_id: string;
+  home_goals: number | null;
+  away_goals: number | null;
+  home_penalties: number | null;
+  away_penalties: number | null;
+  went_to_pens: boolean;
+  status: 'NOT_PLAYED' | 'FINISHED';
+  date?: string | null;
+  locked_at?: string | null;
+}
+
 export interface AppState {
   mode: PredictionMode;
   theme: Theme;
@@ -75,5 +87,6 @@ export interface AppState {
   isHelpModalOpen: boolean;
   awards: AwardsState;
   tournamentXI: TournamentXIState;
+  officialMatches: Record<string, OfficialMatch>;
 }
 

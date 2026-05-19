@@ -199,6 +199,11 @@
     .bracket-mobile-list .team-name.abbr {
         display: none;
     }
+
+    .bracket-mobile-matches .bracket-official-result,
+    .bracket-mobile-list .bracket-official-result {
+        font-size: 0.75rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -222,6 +227,10 @@
         height: 20px;
         font-size: 0.6rem;
     }
+
+    .bracket-official-result {
+        font-size: 0.72rem;
+    }
 }
 
 .lock-countdown {
@@ -243,4 +252,78 @@
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ── Official Result Bar ────────────────────────────────── */
+
+.bracket-official-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+}
+
+.bracket-official-result .result-label {
+    opacity: 0.5;
+    font-weight: 500;
+}
+
+.bracket-official-result .result-score {
+    font-weight: 700;
+    font-family: var(--font-family-display);
+}
+
+.bracket-official-result.pending {
+    background: rgba(255, 255, 255, 0.015);
+    border-color: var(--border-subtle);
+    color: var(--text-muted);
+}
+
+:root.light .bracket-official-result.pending {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.bracket-official-result.exact {
+    background: rgba(0, 230, 118, 0.07);
+    border-color: rgba(0, 230, 118, 0.2);
+    color: #00e676;
+    box-shadow: 0 0 6px rgba(0, 230, 118, 0.06);
+}
+
+:root.light .bracket-official-result.exact {
+    background: rgba(0, 200, 100, 0.06);
+    border-color: rgba(0, 200, 100, 0.25);
+    color: #00a854;
+}
+
+.bracket-official-result.correct {
+    background: rgba(100, 220, 255, 0.06);
+    border-color: rgba(100, 220, 255, 0.15);
+    color: #64dcff;
+    box-shadow: 0 0 6px rgba(100, 220, 255, 0.06);
+}
+
+:root.light .bracket-official-result.correct {
+    background: rgba(50, 160, 200, 0.05);
+    border-color: rgba(50, 160, 200, 0.2);
+    color: #3090b8;
+}
+
+.bracket-official-result.wrong {
+    background: rgba(255, 100, 100, 0.04);
+    border-color: rgba(255, 80, 80, 0.1);
+    color: rgba(255, 107, 107, 0.55);
+}
+
+:root.light .bracket-official-result.wrong {
+    background: rgba(200, 60, 60, 0.04);
+    border-color: rgba(200, 60, 60, 0.12);
+    color: rgba(180, 60, 60, 0.55);
 }

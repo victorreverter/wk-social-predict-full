@@ -15,22 +15,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
-import type { Match } from '../../types';
+import type { Match, OfficialMatch } from '../../types';
 
 import './AdminView.css';
-
-// ── Types ──────────────────────────────────────────────────
-interface OfficialMatch {
-    match_id: string;
-    home_goals: number | null;
-    away_goals: number | null;
-    home_penalties: number | null;
-    away_penalties: number | null;
-    went_to_pens: boolean;
-    status: 'NOT_PLAYED' | 'FINISHED';
-    date?: string | null;
-    locked_at?: string | null;
-}
 
 interface OfficialAward {
     category: string;

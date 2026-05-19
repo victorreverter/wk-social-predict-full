@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState } from '../types';
+import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState, OfficialMatch } from '../types';
 import { generateInitialGroupMatches, generateEredivisieMatches } from '../utils/data-init';
 import { generateInitialKnockoutMatches, updateKnockoutBracket } from '../utils/bracket-logic';
 import { supabase } from '../lib/supabase';
@@ -24,6 +24,7 @@ interface AppContextType {
     resetPredictions: () => Promise<void>;
     autoFillGroups: () => void;
     loadFullState: (newState: Partial<AppState>) => void;
+    loadOfficialMatches: (matches: Record<string, OfficialMatch>) => void;
 }
 
 const getFreshState = (): AppState => {
@@ -66,7 +67,8 @@ const getFreshState = (): AppState => {
             FP1: '', FP2: '', FP3: '', FP4: '',
             FP5: '', FP6: '', FP7: '', FP8: '',
             FP9: '', FP10: ''
-        }
+        },
+        officialMatches: {}
     };
 };
 
@@ -335,6 +337,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const loadOfficialMatches = (officialMatches: Record<string, OfficialMatch>) => {
+        setState(prev => ({ ...prev, officialMatches }));
+    };
+
     const contextValue = React.useMemo(() => ({
         state,
         setMode,
@@ -353,7 +359,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setHelpModalOpen,
         resetPredictions,
         autoFillGroups,
-        loadFullState
+        loadFullState,
+        loadOfficialMatches
     }), [state]); // Only re-create context object if state actually changes
 
     return (

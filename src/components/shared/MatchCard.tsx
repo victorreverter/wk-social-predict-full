@@ -13,7 +13,7 @@ interface Props {
 export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
     const { state, updateGroupMatchScore, updateGroupMatchEasyResult } = useApp();
     const { isLocked: isMatchTimeLocked, formatted: lockCountdown } = useMatchLock(match);
-    const { mode } = state;
+    const { mode, officialMatches } = state;
 
     const handleEasyResult = (result: ResultType) => {
         updateGroupMatchEasyResult(match.id, result);
@@ -28,6 +28,58 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
         } else {
             updateGroupMatchScore(match.id, { ...match.score, awayGoals: num });
         }
+    };
+
+    const official = officialMatches[match.id];
+
+    const renderOfficialResult = () => {
+        if (!official) {
+            return (
+                <div className="match-official-result pending">
+                    <span className="result-label">Official:</span>
+                    <span className="result-score">Pending</span>
+                </div>
+            );
+        }
+
+        if (official.status !== 'FINISHED' || official.home_goals === null || official.away_goals === null) {
+            return (
+                <div className="match-official-result pending">
+                    <span className="result-label">Official:</span>
+                    <span className="result-score">Pending</span>
+                </div>
+            );
+        }
+
+        const isExact =
+            match.score.homeGoals === official.home_goals &&
+            match.score.awayGoals === official.away_goals;
+
+        const userOutcome =
+            match.score.homeGoals !== null && match.score.awayGoals !== null
+                ? (match.score.homeGoals > match.score.awayGoals ? 'home' : match.score.homeGoals < match.score.awayGoals ? 'away' : 'draw')
+                : null;
+
+        const offOutcome =
+            official.home_goals > official.away_goals ? 'home' : official.home_goals < official.away_goals ? 'away' : 'draw';
+
+        const isCorrectOutcome = userOutcome !== null && userOutcome === offOutcome;
+
+        let statusClass = 'wrong';
+        if (isExact) statusClass = 'exact';
+        else if (isCorrectOutcome) statusClass = 'correct';
+
+        let scoreText = `${official.home_goals} - ${official.away_goals}`;
+        if (official.went_to_pens && official.home_penalties !== null && official.away_penalties !== null) {
+            scoreText += ` (${official.home_penalties} - ${official.away_penalties} pens)`;
+        }
+
+        return (
+            <div className={`match-official-result ${statusClass}`}>
+                <span className="result-label">Official:</span>
+                <span className="result-score">{scoreText}</span>
+            </div>
+        );
     };
 
     return (
@@ -88,6 +140,8 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                     <span className="team-name-abbr">{awayTeam.code}</span>
                 </div>
             </div>
+
+            {renderOfficialResult()}
 
             {mode === 'EASY' && (
                 <div className="easy-controls">
