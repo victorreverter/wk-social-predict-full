@@ -148,7 +148,7 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
     const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock, isTestModeEnabled, toggleTestMode } = useAuth();
-    const { resetPredictions } = useApp();
+    const { resetTournament } = useApp();
     
     const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
@@ -306,7 +306,7 @@ export const AdminView: React.FC = () => {
         setSaving('reset');
 
         try {
-            await resetPredictions();
+            await resetTournament();
             setOfficialMatches({});
             setOfficialAwards({});
             setOfficialXI({});

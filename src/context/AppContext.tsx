@@ -21,7 +21,8 @@ interface AppContextType {
     setSelectedThirds: (teamIds: string[]) => void;
     setThirdsModalDismissed: (dismissed: boolean) => void;
     setHelpModalOpen: (isOpen: boolean) => void;
-    resetPredictions: () => Promise<void>;
+    resetUserPredictions: () => Promise<void>;
+    resetTournament: () => Promise<void>;
     autoFillGroups: () => void;
     loadFullState: (newState: Partial<AppState>) => void;
     loadOfficialMatches: (matches: Record<string, OfficialMatch>) => void;
@@ -250,16 +251,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }));
     };
 
-    const resetPredictions = async () => {
+    const resetUserPredictions = async () => {
+        const { data, error } = await supabase.rpc('reset_user_predictions');
+
+        if (error) throw error;
+        if (!(data as any)?.success) throw new Error((data as any)?.message || 'Unknown error');
+
+        setState(getFreshState());
+        const { data: { user } } = await supabase.auth.getUser();
+        window.dispatchEvent(new Event('leaderboard-refresh'));
+        window.dispatchEvent(new CustomEvent('predictions-reset', { detail: { userId: user?.id } }));
+    };
+
+    const resetTournament = async () => {
         const { data, error } = await supabase.rpc('reset_tournament');
 
         if (error) throw error;
         if (!(data as any)?.success) throw new Error((data as any)?.message || 'Unknown error');
 
-        setState(prev => ({ ...prev, officialMatches: {} }));
-        const { data: { user } } = await supabase.auth.getUser();
         window.dispatchEvent(new Event('leaderboard-refresh'));
-        window.dispatchEvent(new CustomEvent('predictions-reset', { detail: { userId: user?.id } }));
     };
 
     const setSelectedThirds = (teamIds: string[]) => {
@@ -357,7 +367,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSelectedThirds,
         setThirdsModalDismissed,
         setHelpModalOpen,
-        resetPredictions,
+        resetUserPredictions,
+        resetTournament,
         autoFillGroups,
         loadFullState,
         loadOfficialMatches

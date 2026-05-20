@@ -9,7 +9,7 @@ import { GroupStandings } from './GroupStandings';
 import './GroupView.css';
 
 export const GroupView: React.FC = () => {
-    const { state, setMode, resetPredictions, autoFillGroups, setThirdsModalDismissed } = useApp();
+    const { state, setMode, resetUserPredictions, autoFillGroups, setThirdsModalDismissed } = useApp();
     const { isLocked, isEaseModeEnabled } = useAuth();
     const { groupMatches, mode } = state;
     const { addToast } = useToast();
@@ -17,13 +17,13 @@ export const GroupView: React.FC = () => {
 
     const handleReset = useCallback(async () => {
         try {
-            await resetPredictions();
+            await resetUserPredictions();
             addToast('✅ All your predictions, points, and progress have been reset. Start fresh!', 'success');
         } catch (error: any) {
             console.error('Reset failed:', error);
             addToast(error?.message || 'Reset failed.', 'error');
         }
-    }, [resetPredictions, addToast]);
+    }, [resetUserPredictions, addToast]);
 
     useEffect(() => {
         if (!isEaseModeEnabled && mode === 'EASY') {

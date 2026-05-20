@@ -55,3 +55,39 @@ exception
         return jsonb_build_object('success', false, 'message', SQLERRM);
 end;
 $$;
+
+-- ============================================================
+-- User Predictions Reset Function
+-- SECURITY DEFINER bypasses RLS.
+--   Deletes ALL the calling user's predictions from every table.
+--   Admins should use reset_tournament() above instead.
+-- ============================================================
+
+create or replace function public.reset_user_predictions()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+    caller_id uuid;
+begin
+    caller_id := (select (current_setting('request.jwt.claims', true)::jsonb) ->> 'sub')::uuid;
+    if caller_id is null then
+        return jsonb_build_object('success', false, 'message', 'Not authenticated.');
+    end if;
+
+    delete from public.user_predictions_matches    where user_id = caller_id;
+    delete from public.user_predictions_knockout     where user_id = caller_id;
+    delete from public.user_predictions_awards       where user_id = caller_id;
+    delete from public.user_predictions_xi           where user_id = caller_id;
+    delete from public.user_predictions_eredivisie   where user_id = caller_id;
+
+    update public.profiles set total_points = 0 where id = caller_id;
+
+    return jsonb_build_object('success', true, 'message', 'Your predictions have been cleared.');
+exception
+    when others then
+        return jsonb_build_object('success', false, 'message', SQLERRM);
+end;
+$$;
