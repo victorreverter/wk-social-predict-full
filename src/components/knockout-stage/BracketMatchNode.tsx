@@ -12,7 +12,7 @@ interface Props {
 
 export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam }) => {
     const { state, updateKnockoutMatchEasyResult, updateKnockoutMatchScore } = useApp();
-    const { isLocked: isMatchTimeLocked, formatted: lockCountdown } = useMatchLock(match);
+    const { isLocked: isMatchTimeLocked, formatted: lockCountdown, urgency } = useMatchLock(match);
     const { mode, officialMatches } = state;
 
     const handleEasyResult = (result: ResultType) => {
@@ -155,7 +155,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             <span className="venue-time" title="Venue Local Time"> • {match.localTime} match time</span>
                 )}
                 {lockCountdown && (
-                    <span className={`lock-countdown ${isMatchTimeLocked ? 'locked' : 'warning'}`}>
+                    <span className={`lock-countdown ${urgency}`}>
                         {lockCountdown}
                     </span>
                 )}

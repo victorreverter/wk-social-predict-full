@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { Match } from '../types';
 
@@ -13,6 +13,8 @@ const formatCountdown = (ms: number): string | null => {
 
 export { formatCountdown };
 
+export type LockUrgency = 'info' | 'warning' | 'critical' | 'locked' | null;
+
 export const useMatchLock = (match: Match) => {
   const { isMatchLocked, getTimeUntilLock } = useAuth();
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -26,7 +28,7 @@ export const useMatchLock = (match: Match) => {
       if (remaining !== null) {
         setFormatted(formatCountdown(remaining));
       } else if (isMatchLocked(match)) {
-        setFormatted('🔒 Locked');
+        setFormatted('Locked');
       } else {
         setFormatted(null);
       }
@@ -37,9 +39,19 @@ export const useMatchLock = (match: Match) => {
     return () => clearInterval(interval);
   }, [match, isMatchLocked, getTimeUntilLock]);
 
+  const urgency: LockUrgency = useMemo(() => {
+    if (isMatchLocked(match)) return 'locked';
+    if (timeRemaining === null) return null;
+    if (timeRemaining < 60 * 60 * 1000) return 'critical';
+    if (timeRemaining < 6 * 60 * 60 * 1000) return 'warning';
+    if (timeRemaining < 24 * 60 * 60 * 1000) return 'info';
+    return null;
+  }, [timeRemaining, isMatchLocked, match]);
+
   return {
     isLocked: isMatchLocked(match),
     timeRemaining,
     formatted,
+    urgency,
   };
 };

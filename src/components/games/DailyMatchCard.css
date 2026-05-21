@@ -1,33 +1,38 @@
-.match-card {
-    padding: 0.6rem 1rem;
-    margin-bottom: 0.4rem;
+.daily-match-card {
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
     transition: all var(--transition-normal);
     border: 1px solid var(--border-subtle);
-    cursor: pointer;
 }
 
-.match-card:hover {
+.daily-match-card:hover {
     transform: translateY(-2px);
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: var(--shadow-lg);
 }
 
-.match-card.finished {
-    border-left: 3px solid var(--color-primary);
-    background: rgba(236, 255, 0, 0.03);
+.daily-match-card.finished {
+    border-left: 3px solid #fffb00;
+    background: rgba(255, 251, 0, 0.03);
 }
 
-.match-card-header {
+.daily-match-card-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
+    flex-direction: column;
+    gap: 0.35rem;
     border-bottom: 1px solid var(--border-subtle);
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.6rem;
+    padding-bottom: 0.45rem;
+    margin-bottom: 0.65rem;
 }
 
-.match-card-id {
+.daily-match-card-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.daily-match-card-id {
     background: #a900ff;
     color: white;
     font-size: 0.65rem;
@@ -36,94 +41,128 @@
     border-radius: 4px;
 }
 
-.match-card-date {
+.daily-match-card-stage {
+    font-size: 0.65rem;
+    color: var(--color-quaternary);
+    font-weight: 600;
+    background: rgba(0, 229, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 229, 255, 0.15);
+}
+
+.daily-match-card-group {
+    font-size: 0.65rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    background: rgba(213, 131, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(213, 131, 255, 0.15);
+}
+
+.daily-match-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.daily-match-card-date {
     font-size: 0.7rem;
     color: var(--text-secondary);
 }
 
-.match-card-date .user-time {
+.daily-match-card-date .user-time {
     color: var(--color-primary);
     font-weight: 600;
 }
 
-.match-card-date .venue-time {
+.daily-match-card-date .venue-time {
     color: #4dd0e1;
     font-weight: 600;
 }
 
-.lock-countdown {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-left: 0.5rem;
-    white-space: nowrap;
+.daily-match-card-venue {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
-.lock-countdown.info {
+.daily-lock-countdown {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    align-self: flex-start;
+}
+
+.daily-lock-countdown.info {
     background: rgba(255, 200, 0, 0.1);
     color: #ffc800;
     border: 1px solid rgba(255, 200, 0, 0.25);
 }
 
-.lock-countdown.warning {
+.daily-lock-countdown.warning {
     background: rgba(255, 165, 0, 0.1);
     color: #ffa500;
     border: 1px solid rgba(255, 165, 0, 0.3);
 }
 
-.lock-countdown.critical {
+.daily-lock-countdown.critical {
     background: rgba(255, 80, 80, 0.12);
     color: #ff5050;
     border: 1px solid rgba(255, 80, 80, 0.3);
-    animation: pulsate-lock 1.5s ease-in-out infinite;
+    animation: pulsate 1.5s ease-in-out infinite;
 }
 
-.lock-countdown.locked {
+.daily-lock-countdown.locked {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
-@keyframes pulsate-lock {
+@keyframes pulsate {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.65; }
+    50% { opacity: 0.7; }
 }
 
-.match-teams {
+.daily-match-teams {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
 }
 
-.team {
+.daily-team {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     flex: 1;
 }
 
-.team.home {
+.daily-team.home {
     justify-content: flex-end;
 }
 
-.team.away {
+.daily-team.away {
     justify-content: flex-start;
 }
 
-.team-name {
+.daily-team-name {
     font-weight: 600;
     font-size: 0.95rem;
 }
 
-.team-name-abbr {
+.daily-team-name-abbr {
     display: none;
     font-weight: 700;
     font-size: 0.95rem;
 }
 
-.match-divider {
+.daily-match-divider {
     font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 700;
@@ -131,7 +170,13 @@
     text-align: center;
 }
 
-.score-input {
+.daily-score-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.daily-score-input {
     width: 40px;
     height: 40px;
     background: rgba(0, 0, 0, 0.5);
@@ -145,77 +190,78 @@
     transition: all var(--transition-fast);
 }
 
-:root.light .score-input {
+:root.light .daily-score-input {
     background: rgba(255, 255, 255, 0.8);
     color: #000;
 }
 
-.score-input:focus {
+.daily-score-input:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 10px rgba(236, 255, 0, 0.2);
 }
 
-/* Hide number spinner */
-.score-input::-webkit-outer-spin-button,
-.score-input::-webkit-inner-spin-button {
+.daily-score-input::-webkit-outer-spin-button,
+.daily-score-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-.score-input[type=number] {
+.daily-score-input[type=number] {
     -moz-appearance: textfield;
     appearance: textfield;
 }
 
-.easy-controls {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-    gap: 0.5rem;
-    padding: 0 0.5rem;
-}
-
-.btn-easy {
-    flex: 1;
-    padding: 0.3rem;
-    border-radius: 8px;
+.daily-pen-input {
+    width: 32px;
+    height: 32px;
     background: rgba(255, 255, 255, 0.05);
-    color: var(--text-secondary);
-    font-weight: 700;
     border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-family-display);
     transition: all var(--transition-fast);
 }
 
-.btn-easy:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+:root.light .daily-pen-input {
+    background: rgba(0, 0, 0, 0.04);
+    color: #333;
 }
 
-.btn-easy.draw-btn.active {
-    background: var(--color-primary);
-    color: #000;
-    border-color: var(--color-primary);
-    box-shadow: var(--glow-primary);
+.daily-pen-input:focus {
+    outline: none;
+    border-color: #ff0055;
+    box-shadow: 0 0 8px rgba(255, 0, 85, 0.2);
 }
 
-.btn-easy.win-btn.active {
-    background: #00e676;
-    /* Vivid Green */
-    color: #000;
-    border-color: #00e676;
-    box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);
+.daily-pen-input::-webkit-outer-spin-button,
+.daily-pen-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.daily-pen-input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.daily-pen-input::placeholder {
+    color: var(--text-muted);
+    font-size: 0.6rem;
 }
 
 /* ── Official Result Bar ────────────────────────────────── */
 
-.match-official-result {
+.daily-official-result {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
     padding: 0.25rem 0.6rem;
-    margin-top: 0.4rem;
+    margin-top: 0.45rem;
     border-radius: 6px;
     font-size: 0.65rem;
     font-weight: 600;
@@ -224,108 +270,100 @@
     transition: all var(--transition-fast);
 }
 
-.match-official-result .result-label {
+.daily-official-result .result-label {
     opacity: 0.5;
     font-weight: 500;
 }
 
-.match-official-result .result-score {
+.daily-official-result .result-score {
     font-weight: 700;
     font-family: var(--font-family-display);
 }
 
-/* Pending state — muted, transparent */
-.match-official-result.pending {
+.daily-official-result.pending {
     background: rgba(255, 255, 255, 0.015);
     border-color: var(--border-subtle);
     color: var(--text-muted);
 }
 
-:root.light .match-official-result.pending {
+:root.light .daily-official-result.pending {
     background: rgba(0, 0, 0, 0.02);
 }
 
-/* Exact score — green glow */
-.match-official-result.exact {
+.daily-official-result.exact {
     background: rgba(0, 230, 118, 0.07);
     border-color: rgba(0, 230, 118, 0.2);
     color: #00e676;
     box-shadow: 0 0 10px rgba(0, 230, 118, 0.08);
 }
 
-:root.light .match-official-result.exact {
+:root.light .daily-official-result.exact {
     background: rgba(0, 200, 100, 0.06);
     border-color: rgba(0, 200, 100, 0.25);
     color: #00a854;
 }
 
-/* Correct outcome — cyan/purple subtle */
-.match-official-result.correct {
+.daily-official-result.correct {
     background: rgba(100, 220, 255, 0.06);
     border-color: rgba(100, 220, 255, 0.15);
     color: #64dcff;
     box-shadow: 0 0 8px rgba(100, 220, 255, 0.06);
 }
 
-:root.light .match-official-result.correct {
+:root.light .daily-official-result.correct {
     background: rgba(50, 160, 200, 0.05);
     border-color: rgba(50, 160, 200, 0.2);
     color: #3090b8;
 }
 
-/* Wrong outcome — faint red */
-.match-official-result.wrong {
+.daily-official-result.wrong {
     background: rgba(255, 100, 100, 0.04);
     border-color: rgba(255, 80, 80, 0.1);
     color: rgba(255, 107, 107, 0.55);
 }
 
-:root.light .match-official-result.wrong {
+:root.light .daily-official-result.wrong {
     background: rgba(200, 60, 60, 0.04);
     border-color: rgba(200, 60, 60, 0.12);
     color: rgba(180, 60, 60, 0.55);
 }
 
 @media (max-width: 768px) {
-    .team-name {
+    .daily-team-name {
         display: none;
     }
 
-    .team-name-abbr {
+    .daily-team-name-abbr {
         display: inline;
     }
 }
 
 @media (max-width: 480px) {
-    .match-card {
+    .daily-match-card {
         padding: 0.5rem;
     }
 
-    .match-teams {
+    .daily-match-teams {
         gap: 0.5rem;
     }
 
-    .team-name {
+    .daily-team-name {
         font-size: 0.8rem;
     }
 
-    .score-input {
+    .daily-score-input {
         width: 32px;
         height: 32px;
         font-size: 1rem;
     }
 
-    .team-flag {
-        width: 20px;
-        height: 14px;
+    .daily-pen-input {
+        width: 24px;
+        height: 24px;
+        font-size: 0.65rem;
     }
 
-    .btn-easy {
-        font-size: 0.7rem;
-        padding: 0.2rem;
-    }
-
-    .match-official-result {
+    .daily-official-result {
         font-size: 0.78rem;
     }
 }

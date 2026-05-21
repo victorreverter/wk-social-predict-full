@@ -1,0 +1,290 @@
+.games-view {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem 0.5rem;
+}
+
+.games-empty {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.games-scroller-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 1rem;
+    border-radius: 14px;
+}
+
+.games-today-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.35rem 0.6rem;
+    border-radius: 10px;
+    background: var(--color-primary);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--font-family-display);
+    border: 1px solid var(--color-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.games-today-btn:hover {
+    background: #c36fff;
+    border-color: #c36fff;
+    transform: scale(1.04);
+}
+
+.games-today-btn:active {
+    transform: scale(0.98);
+}
+
+.today-btn-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.games-scroller {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    flex: 1;
+    padding: 0.25rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.games-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.games-scroller-arrow {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.games-scroller-arrow:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--color-primary);
+}
+
+.games-scroller-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.games-date-pill {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0.35rem 0.55rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-family: var(--font-family-display);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-width: 52px;
+}
+
+.games-date-pill-label {
+    line-height: 1;
+}
+
+.games-date-pill-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    opacity: 0.7;
+}
+
+.games-date-pill:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.games-date-pill.active {
+    background: var(--color-primary);
+    color: #000;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 12px rgba(213, 131, 255, 0.4);
+    font-weight: 700;
+}
+
+.games-date-pill.active .games-date-pill-dot {
+    background: #000;
+}
+
+.games-date-pill.today {
+    border-color: var(--color-quaternary);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+}
+
+.games-date-pill.today.active {
+    box-shadow: 0 0 12px rgba(213, 131, 255, 0.4);
+}
+
+.games-date-pill.empty {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.015);
+    border-color: transparent;
+    font-weight: 500;
+}
+
+.games-date-pill.empty:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+}
+
+.games-day-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.games-day-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.25rem;
+    font-family: var(--font-family-display);
+}
+
+.games-day-month {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.games-day-separator {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.games-day-count {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.games-matches-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.games-empty-day {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid var(--border-subtle);
+    transition: all var(--transition-normal);
+}
+
+.games-empty-day:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-lg);
+}
+
+.empty-day-icon {
+    font-size: 2rem;
+    opacity: 0.4;
+}
+
+.empty-day-title {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: var(--font-family-display);
+    font-weight: 600;
+}
+
+.empty-day-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .games-view {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .games-scroller-wrapper {
+        padding: 0.75rem;
+        border-radius: 14px;
+        gap: 0.35rem;
+    }
+
+    .games-today-btn {
+        padding: 0.45rem 0.65rem;
+        font-size: 0.75rem;
+        border-radius: 10px;
+    }
+
+    .today-btn-label {
+        display: none;
+    }
+
+    .games-date-pill {
+        padding: 0.5rem 0.65rem;
+        font-size: 0.78rem;
+        min-width: 56px;
+        border-radius: 10px;
+    }
+
+    .games-scroller-arrow {
+        width: 34px;
+        height: 34px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .games-date-pill {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.65rem;
+    }
+
+    .games-empty-day {
+        padding: 2rem 1rem;
+    }
+
+    .empty-day-icon {
+        font-size: 1.6rem;
+    }
+
+    .empty-day-title {
+        font-size: 0.8rem;
+    }
+}

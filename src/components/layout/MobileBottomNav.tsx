@@ -11,6 +11,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+    { tab: 'GAMES', label: 'Games', icon: '📅' },
     { tab: 'GROUP', label: 'Groups', icon: '⚽' },
     { tab: 'BRACKET', label: 'Bracket', icon: '⚔' },
     { tab: 'AWARDS', label: 'Awards', icon: '🏅' },

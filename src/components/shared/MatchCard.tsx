@@ -12,7 +12,7 @@ interface Props {
 
 export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
     const { state, updateGroupMatchScore, updateGroupMatchEasyResult } = useApp();
-    const { isLocked: isMatchTimeLocked, formatted: lockCountdown } = useMatchLock(match);
+    const { isLocked: isMatchTimeLocked, formatted: lockCountdown, urgency } = useMatchLock(match);
     const { mode, officialMatches } = state;
 
     const handleEasyResult = (result: ResultType) => {
@@ -98,7 +98,7 @@ export const MatchCard: React.FC<Props> = ({ match, homeTeam, awayTeam }) => {
                         : ''}
                 </span>
                 {lockCountdown && (
-                    <span className={`lock-countdown ${isMatchTimeLocked ? 'locked' : 'warning'}`}>
+                    <span className={`lock-countdown ${urgency}`}>
                         {lockCountdown}
                     </span>
                 )}
