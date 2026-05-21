@@ -102,7 +102,8 @@ export const OnboardingModal: React.FC = () => {
                                     Predict the 2026 FIFA World Cup
                                 </h2>
                                 <p className="onboarding-intro">
-                                    Group matches, knockout bracket, awards, and the Best XI.
+                                    Browse the daily match schedule, predict group &amp; knockout games,
+                                    pick awards, and build your Best XI.
                                     Every prediction earns points — compete on the global leaderboard.
                                 </p>
                             </div>
@@ -117,7 +118,8 @@ export const OnboardingModal: React.FC = () => {
                                     <h4 className="onboarding-layout-title">Desktop</h4>
                                     <div className="onboarding-mock-header">
                                         <div className="mock-tabs">
-                                            <span className="mock-tab active">Groups</span>
+                                            <span className="mock-tab active">Games</span>
+                                            <span className="mock-tab">Groups</span>
                                             <span className="mock-tab">Bracket</span>
                                             <span className="mock-tab">Awards</span>
                                             <span className="mock-tab">XI</span>
@@ -141,6 +143,7 @@ export const OnboardingModal: React.FC = () => {
                                 <div className="onboarding-layout-preview" style={{marginTop: '0.75rem'}}>
                                     <h4 className="onboarding-layout-title">Mobile</h4>
                                     <div className="onboarding-mock-bottom-nav">
+                                        <span className="mock-nav-icon">📅</span>
                                         <span className="mock-nav-icon">⚽</span>
                                         <span className="mock-nav-icon">⚔</span>
                                         <span className="mock-nav-icon">🏅</span>
@@ -159,10 +162,17 @@ export const OnboardingModal: React.FC = () => {
                                 <h3 className="onboarding-section-title">How It Works</h3>
                                 <ul className="onboarding-steps">
                                     <li>
+                                        <span className="step-icon">📅</span>
+                                        <div className="step-text">
+                                            <strong>Games</strong>
+                                             Browse the full tournament calendar day by day — all 72 group matches and knockout rounds in one chronological feed.
+                                        </div>
+                                    </li>
+                                    <li>
                                         <span className="step-icon">🏆</span>
                                         <div className="step-text">
                                             <strong>Group Stage</strong>
-                                            Predict all 72 group matches — you can pick exact scores or quick winner results.
+                                            Predict all 72 group matches — pick exact scores for every fixture.
                                         </div>
                                     </li>
                                     <li>
@@ -360,6 +370,7 @@ export const OnboardingModal: React.FC = () => {
                                 <h3 className="onboarding-section-title">Rules</h3>
                                 <p className="onboarding-rules-text" style={{ marginTop: '0.25rem' }}>
                                     ⚠️ Matches lock 1 hour before kickoff. Once locked, predictions cannot be changed.
+                                    Keep an eye on the countdown badges across <strong>Games</strong>, Groups, and Bracket.
                                 </p>
                                 <div className="onboarding-max-score">
                                     🏅 Maximum possible score: ~618 points

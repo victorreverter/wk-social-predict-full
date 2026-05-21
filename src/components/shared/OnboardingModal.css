@@ -151,7 +151,7 @@
 .onboarding-step--center {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
     gap: 0.5rem;
@@ -601,12 +601,13 @@
 
 .mock-tabs {
     display: flex;
-    gap: 0.2rem;
+    gap: 0.15rem;
+    flex-wrap: wrap;
 }
 
 .mock-tab {
-    padding: 0.15rem 0.35rem;
-    font-size: 0.55rem;
+    padding: 0.08rem 0.28rem;
+    font-size: 0.48rem;
     font-weight: 600;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.05);
@@ -779,6 +780,10 @@
 @media (max-width: 600px) {
     .onboarding-modal {
         max-height: 90vh;
+    }
+
+    .onboarding-step--center {
+        justify-content: center;
     }
 
     .onboarding-step-content {
