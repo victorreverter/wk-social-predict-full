@@ -228,20 +228,24 @@ export const OnboardingModal: React.FC = () => {
                                     <p className="onboarding-points-hint">Per team reaching each round</p>
                                     <div className="onboarding-points-rows">
                                         <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Round of 16</span>
+                                            <span className="onboarding-points-label">Round of 32</span>
                                             <span className="onboarding-points-value">2 pts</span>
                                         </div>
                                         <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Quarter-Finals</span>
+                                            <span className="onboarding-points-label">Round of 16</span>
                                             <span className="onboarding-points-value">5 pts</span>
                                         </div>
                                         <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Semi-Finals</span>
+                                            <span className="onboarding-points-label">Quarter-Finals</span>
                                             <span className="onboarding-points-value">10 pts</span>
                                         </div>
                                         <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Final</span>
+                                            <span className="onboarding-points-label">Semi-Finals</span>
                                             <span className="onboarding-points-value">15 pts</span>
+                                        </div>
+                                        <div className="onboarding-points-row">
+                                            <span className="onboarding-points-label">Final</span>
+                                            <span className="onboarding-points-value">20 pts</span>
                                         </div>
                                         <div className="onboarding-points-row onboarding-points-row--highlight">
                                             <span className="onboarding-points-label">Champion 🏆</span>
@@ -249,7 +253,7 @@ export const OnboardingModal: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="onboarding-points-example">
-                                        A champion pick alone earns 2 + 5 + 10 + 15 + 25 = <strong>57 points</strong>
+                                        A champion pick alone earns 2 + 5 + 10 + 15 + 20 + 25 = <strong>77 points</strong>
                                     </p>
                                 </div>
                             </div>
@@ -358,7 +362,7 @@ export const OnboardingModal: React.FC = () => {
                                     ⚠️ Matches lock 1 hour before kickoff. Once locked, predictions cannot be changed.
                                 </p>
                                 <div className="onboarding-max-score">
-                                    🏅 Maximum possible score: ~508 points
+                                    🏅 Maximum possible score: ~618 points
                                 </div>
                             </div>
                         </div>

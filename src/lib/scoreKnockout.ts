@@ -85,10 +85,11 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
     const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
     const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
     
-    const ptsR16 = getPts('ko_reach_r16', 2);
-    const ptsQF = getPts('ko_reach_qf', 5);
-    const ptsSF = getPts('ko_reach_sf', 10);
-    const ptsF = getPts('ko_reach_final', 15);
+    const ptsR32 = getPts('ko_reach_r32', 2);
+    const ptsR16 = getPts('ko_reach_r16', 5);
+    const ptsQF = getPts('ko_reach_qf', 10);
+    const ptsSF = getPts('ko_reach_sf', 15);
+    const ptsF = getPts('ko_reach_final', 20);
     const ptsChamp = getPts('ko_champion', 25);
 
     // 5. Load User Knockout Predictions
@@ -104,6 +105,7 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         
         // Wait, 'user_predictions_knockout' uses round mapping. 
         // e.g. 'R16', 'QF', 'SF', 'F', 'CHAMPION'
+        if (p.round === 'R32' && officialStages['R32'].has(p.team_id)) pts = ptsR32;
         if (p.round === 'R16' && officialStages['R16'].has(p.team_id)) pts = ptsR16;
         if (p.round === 'QF' && officialStages['QF'].has(p.team_id)) pts = ptsQF;
         if (p.round === 'SF' && officialStages['SF'].has(p.team_id)) pts = ptsSF;
