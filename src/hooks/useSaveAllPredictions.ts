@@ -9,6 +9,7 @@ import { scoreMatches } from '../lib/scoreMatches';
 import { scoreKnockout } from '../lib/scoreKnockout';
 import { scoreAwards } from '../lib/scoreAwards';
 import { scoreXI } from '../lib/scoreXI';
+import { scoreGroupPositions } from '../lib/scoreGroupPositions';
 import { scoreEredivisie } from '../lib/scoreEredivisie';
 import { rateLimiter } from '../lib/rateLimiter';
 import { withRetry } from '../lib/retry';
@@ -248,11 +249,12 @@ export const useSaveAllPredictions = () => {
                 await withRetry(() => scoreKnockout(session.user.id));
                 await withRetry(() => scoreAwards(session.user.id));
                 await withRetry(() => scoreXI(session.user.id));
+                await withRetry(() => scoreGroupPositions(session.user.id));
                 await withRetry(() => scoreEredivisie(session.user.id));
 
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
-                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + eredivisieRows.length;
+                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + eredivisieRows.length + groupPositionsRows.length;
                 setAlert('saved', `✅ Saved ${savedCount} predictions!`);
                 addToast(`Saved ${savedCount} predictions!`, 'success');
             }

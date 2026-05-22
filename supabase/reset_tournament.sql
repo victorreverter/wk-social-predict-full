@@ -42,6 +42,7 @@ begin
         delete from public.official_tournament_xi where true;
         delete from public.official_eredivisie where true;
 
+        update public.user_group_positions set pts_earned = 0 where true;
         update public.profiles set total_points = 0 where true;
 
         return jsonb_build_object('success', true, 'message', 'Tournament fully reset.');
@@ -82,6 +83,7 @@ begin
     delete from public.user_predictions_awards       where user_id = caller_id;
     delete from public.user_predictions_xi           where user_id = caller_id;
     delete from public.user_predictions_eredivisie   where user_id = caller_id;
+    delete from public.user_group_positions          where user_id = caller_id;
 
     update public.profiles set total_points = 0 where id = caller_id;
 
