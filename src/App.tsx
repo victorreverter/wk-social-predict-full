@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { GroupView } from './components/group-stage/GroupView';
+import { GroupPositionsView } from './components/group-positions/GroupPositionsView';
 import { BracketTree } from './components/knockout-stage/BracketTree';
 import { ThirdPlaceSelection } from './components/shared/ThirdPlaceSelection';
 import { OnboardingModal } from './components/shared/OnboardingModal';
@@ -31,7 +32,8 @@ const MainContent = () => {
     <main className="main-content">
       {isTestModeEnabled && state.activeTab === 'EREDIVISIE_TEST' && <EredivisieTestView />}
       {state.activeTab === 'GAMES'         && <GamesView />}
-      {state.activeTab === 'GROUP'         && <GroupView />}
+      {state.activeTab === 'GROUP_DEP'        && <GroupView />}
+      {state.activeTab === 'GROUP_POSITIONS'  && <GroupPositionsView />}
       {state.activeTab === 'BRACKET'       && <BracketTree />}
       {state.activeTab === 'AWARDS'        && <AwardsView />}
       {state.activeTab === 'TOURNAMENT_XI' && <TournamentXIView />}

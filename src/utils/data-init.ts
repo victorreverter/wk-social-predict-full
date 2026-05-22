@@ -54,6 +54,16 @@ export const initialTeams: Team[] = [
     { id: 'L4', name: 'Panama', code: 'PAN', group: 'L' }
 ];
 
+export const getDefaultGroupPositions = (): Record<string, string[]> => {
+    const result: Record<string, string[]> = {};
+    groups.forEach(group => {
+        result[group] = initialTeams
+            .filter(t => t.group === group)
+            .map(t => t.id);
+    });
+    return result;
+};
+
 // Generates the 72 group matches chronologically
 export const generateInitialGroupMatches = (): Record<string, Match> => {
     const matches: Record<string, Match> = {};

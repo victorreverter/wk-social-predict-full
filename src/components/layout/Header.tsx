@@ -12,13 +12,13 @@ export const Header: React.FC = () => {
 
     const { state, setActiveTab, setHelpModalOpen } = useApp();
     const { profile, user, signOut, openAuthModal, isLocked, isTestModeEnabled } = useAuth();
-    const { activeTab, groupMatches, knockoutMatches, awards, tournamentXI } = state;
+    const { activeTab, groupMatches, knockoutMatches, awards, tournamentXI, customGroupPositions } = state;
     const { isComplete } = usePredictorCompletion();
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const { overallPct, sections } = useMemo(() => {
-        const gm = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
-        const gmTotal = Object.keys(groupMatches).length;
+        const gp = Object.keys(customGroupPositions).length;
+        const gpTotal = 12;
         const km = Object.values(knockoutMatches).filter(m => m.status === 'FINISHED').length;
         const kmTotal = Object.keys(knockoutMatches).length;
         const aw = Object.values(awards).filter(v => v.trim()).length;
@@ -27,18 +27,18 @@ export const Header: React.FC = () => {
         const xiTotal = Object.keys(tournamentXI).length;
 
         const sections: SectionStat[] = [
-            { label: 'Groups', done: gm, total: gmTotal },
+            { label: 'Positions', done: gp, total: gpTotal },
             { label: 'Bracket', done: km, total: kmTotal },
             { label: 'Awards', done: aw, total: awTotal },
             { label: 'XI', done: xi, total: xiTotal },
         ];
 
-        const totalDone = gm + km + aw + xi;
-        const totalAll = gmTotal + kmTotal + awTotal + xiTotal;
+        const totalDone = gp + km + aw + xi;
+        const totalAll = gpTotal + kmTotal + awTotal + xiTotal;
         const overallPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
 
         return { overallPct, sections };
-    }, [groupMatches, knockoutMatches, awards, tournamentXI]);
+    }, [groupMatches, knockoutMatches, awards, tournamentXI, customGroupPositions]);
 
     const handleTabClick = (tab: ViewTab) => {
         setActiveTab(tab);
@@ -79,10 +79,10 @@ export const Header: React.FC = () => {
                             Games
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'GROUP' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('GROUP')}
+                            className={`tab-btn ${activeTab === 'GROUP_POSITIONS' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('GROUP_POSITIONS')}
                         >
-                            Groups
+                            Positions
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'BRACKET' ? 'active' : ''}`}
@@ -241,11 +241,11 @@ export const Header: React.FC = () => {
                         <span className="mobile-drawer-nav-label">Games</span>
                     </button>
                     <button
-                        className={`mobile-drawer-nav-item ${activeTab === 'GROUP' ? 'active' : ''}`}
-                        onClick={() => handleTabClick('GROUP')}
+                        className={`mobile-drawer-nav-item ${activeTab === 'GROUP_POSITIONS' ? 'active' : ''}`}
+                        onClick={() => handleTabClick('GROUP_POSITIONS')}
                     >
                         <span className="mobile-drawer-nav-icon">⚽</span>
-                        <span className="mobile-drawer-nav-label">Groups</span>
+                        <span className="mobile-drawer-nav-label">Positions</span>
                     </button>
                     <button
                         className={`mobile-drawer-nav-item ${activeTab === 'BRACKET' ? 'active' : ''}`}

@@ -1,7 +1,9 @@
 // types/index.ts
 
 export type PredictionMode = 'EASY' | 'HARD';
-export type ViewTab = 'EREDIVISIE_TEST' | 'GAMES' | 'GROUP' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
+export type ViewTab = 'EREDIVISIE_TEST' | 'GAMES' | 'GROUP_DEP' | 'GROUP' | 'GROUP_POSITIONS' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
+
+export type CustomGroupPositions = Record<string, string[]>;
 export type MatchStatus = 'NOT_PLAYED' | 'FINISHED';
 export type ResultType = 'HOME_WIN' | 'AWAY_WIN' | 'DRAW';
 export type Theme = 'light' | 'dark';
@@ -88,5 +90,6 @@ export interface AppState {
   awards: AwardsState;
   tournamentXI: TournamentXIState;
   officialMatches: Record<string, OfficialMatch>;
+  customGroupPositions: CustomGroupPositions;
 }
 

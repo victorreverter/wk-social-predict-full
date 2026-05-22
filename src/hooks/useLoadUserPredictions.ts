@@ -15,22 +15,23 @@ export const useLoadUserPredictions = () => {
 
         const loadPredictions = async () => {
             try {
-                const [matchesRes, koRes, awardsRes, xiRes, eredivisieRes] = await Promise.all([
+                const [matchesRes, koRes, awardsRes, xiRes, eredivisieRes, groupPosRes] = await Promise.all([
                     supabase.from('user_predictions_matches').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_awards').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_xi').select('*').eq('user_id', session.user.id),
-                    supabase.from('user_predictions_eredivisie').select('*').eq('user_id', session.user.id)
+                    supabase.from('user_predictions_eredivisie').select('*').eq('user_id', session.user.id),
+                    supabase.from('user_group_positions').select('*').eq('user_id', session.user.id)
                 ]);
 
-                if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || eredivisieRes.error) {
-                    const msg = [matchesRes.error?.message, koRes.error?.message, awardsRes.error?.message, xiRes.error?.message, eredivisieRes.error?.message]
+                if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || eredivisieRes.error || groupPosRes.error) {
+                    const msg = [matchesRes.error?.message, koRes.error?.message, awardsRes.error?.message, xiRes.error?.message, eredivisieRes.error?.message, groupPosRes.error?.message]
                         .filter(Boolean).join('; ');
                     if (import.meta.env.DEV) console.error('Load predictions failed:', msg);
                     return;
                 }
 
-                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && eredivisieRes.data.length === 0) {
+                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && eredivisieRes.data.length === 0 && groupPosRes.data?.length === 0) {
                     return;
                 }
 
@@ -84,6 +85,13 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
+                const loadedPositions = { ...state.customGroupPositions };
+                groupPosRes.data?.forEach((p: any) => {
+                    if (p.group_letter && Array.isArray(p.order) && p.order.length === 4) {
+                        loadedPositions[p.group_letter] = p.order;
+                    }
+                });
+
                 // Rehydrate dynamically chosen 3rd-place teams based on what made it to R32
                 const { allThirds } = determineQualifiedTeams(loadedGroups);
                 const thirdPlaceIds = allThirds.map(t => t.teamId);
@@ -98,7 +106,8 @@ export const useLoadUserPredictions = () => {
                     eredivisieMatches: loadedEredivisie,
                     awards: loadedAwards,
                     tournamentXI: loadedXI,
-                    selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds
+                    selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds,
+                    customGroupPositions: loadedPositions
                 });
                 
             } catch (err) {

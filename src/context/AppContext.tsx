@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState, OfficialMatch } from '../types';
-import { generateInitialGroupMatches, generateEredivisieMatches } from '../utils/data-init';
+import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState, OfficialMatch, CustomGroupPositions } from '../types';
+import { generateInitialGroupMatches, generateEredivisieMatches, getDefaultGroupPositions } from '../utils/data-init';
 import { generateInitialKnockoutMatches, updateKnockoutBracket } from '../utils/bracket-logic';
 import { supabase } from '../lib/supabase';
 
@@ -26,6 +26,9 @@ interface AppContextType {
     autoFillGroups: () => void;
     loadFullState: (newState: Partial<AppState>) => void;
     loadOfficialMatches: (matches: Record<string, OfficialMatch>) => void;
+    updateGroupPosition: (group: string, order: string[]) => void;
+    setGroupPositions: (positions: CustomGroupPositions) => void;
+    autoFillGroupPositions: () => void;
 }
 
 const getFreshState = (): AppState => {
@@ -43,7 +46,7 @@ const getFreshState = (): AppState => {
     return {
         mode: 'EASY',
         theme: initialTheme,
-        activeTab: 'GROUP',
+        activeTab: 'GROUP_POSITIONS',
         groupMatches: generateInitialGroupMatches(),
         knockoutMatches: generateInitialKnockoutMatches(),
         eredivisieMatches: generateEredivisieMatches(),
@@ -69,7 +72,8 @@ const getFreshState = (): AppState => {
             FP5: '', FP6: '', FP7: '', FP8: '',
             FP9: '', FP10: ''
         },
-        officialMatches: {}
+        officialMatches: {},
+        customGroupPositions: getDefaultGroupPositions()
     };
 };
 
@@ -328,6 +332,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const updateGroupPosition = (group: string, order: string[]) => {
+        setState(prev => {
+            // Only allow position reordering, not creating new entries
+            const existing = prev.customGroupPositions[group];
+            if (!existing) return prev;
+            const valid = existing.filter(id => order.includes(id));
+            if (valid.length !== existing.length) return prev;
+            return {
+                ...prev,
+                customGroupPositions: {
+                    ...prev.customGroupPositions,
+                    [group]: order
+                }
+            };
+        });
+    };
+
+    const setGroupPositions = (positions: CustomGroupPositions) => {
+        setState(prev => ({
+            ...prev,
+            customGroupPositions: positions
+        }));
+    };
+
+    const autoFillGroupPositions = () => {
+        setState(prev => {
+            const newPositions: CustomGroupPositions = {};
+            for (const group of Object.keys(prev.customGroupPositions)) {
+                const teamIds = [...prev.customGroupPositions[group]];
+                for (let i = teamIds.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
+                }
+                newPositions[group] = teamIds;
+            }
+            return {
+                ...prev,
+                customGroupPositions: newPositions
+            };
+        });
+    };
+
     const loadFullState = (newState: Partial<AppState>) => {
         setState(prev => {
             const nextState = { ...prev, ...newState };
@@ -371,7 +417,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         resetTournament,
         autoFillGroups,
         loadFullState,
-        loadOfficialMatches
+        loadOfficialMatches,
+        updateGroupPosition,
+        setGroupPositions,
+        autoFillGroupPositions
     }), [state]); // Only re-create context object if state actually changes
 
     return (

@@ -53,12 +53,13 @@ export const useSaveAllPredictions = () => {
 
         // Check per-category locks
         const hasGroupMatches = Object.values(state.groupMatches).some(m => m.score || m.result);
+        const hasGroupPositions = Object.values(state.customGroupPositions).some(arr => arr.length === 4);
         const hasKnockout = Object.values(state.knockoutMatches).some(m => m.score || m.result);
         const hasXI = Object.values(state.tournamentXI).some(v => v.trim());
         const hasAwards = Object.values(state.awards).some(v => v.trim());
 
         const blockedCategories: string[] = [];
-        if (hasGroupMatches && categoryLocks.GROUP_STAGE) blockedCategories.push('Group Stage');
+        if ((hasGroupMatches || hasGroupPositions) && categoryLocks.GROUP_STAGE) blockedCategories.push('Group Stage');
         if (hasKnockout && categoryLocks.BRACKET) blockedCategories.push('Bracket');
         if (hasAwards && categoryLocks.AWARDS) blockedCategories.push('Awards');
         if (hasXI && categoryLocks.TOURNAMENT_XI) blockedCategories.push('Tournament XI');
@@ -78,7 +79,7 @@ export const useSaveAllPredictions = () => {
         const completedMatches = allMatches.filter(m => m.score || m.result).length;
         const eredivisieCompleted = Object.values(state.eredivisieMatches).filter(m => m.score || m.result).length;
         
-        if (completedMatches === 0 && eredivisieCompleted === 0 && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
+        if (completedMatches === 0 && eredivisieCompleted === 0 && !hasGroupPositions && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
             setAlert('error', 'No predictions to save. Complete at least 1 match or selection first.');
             return;
         }
@@ -86,7 +87,7 @@ export const useSaveAllPredictions = () => {
         setSaveStatus('saving');
         setSaveMsg('');
 
-        // Check per-match locks (each match locks 1 hour before kickoff)
+        // Check per-match locks (each match locks 1 hour before kickoff) - group positions don't need this check
         const lockedMatches = allMatches.filter(m => isMatchLocked(m as Match));
         if (lockedMatches.length > 0) {
             const msg = `Cannot save: ${lockedMatches.length} match(es) are locked (1hr before kickoff).`;
@@ -216,6 +217,13 @@ export const useSaveAllPredictions = () => {
                     };
                 });
 
+            // 6. Group Positions (ordered team IDs per group)
+            const groupPositionsRows = Object.entries(state.customGroupPositions).map(([group, order]) => ({
+                user_id: session.user.id,
+                group_letter: group,
+                order: order,
+            }));
+
             // Make the requests
             await supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id);
             const promises = [
@@ -226,6 +234,7 @@ export const useSaveAllPredictions = () => {
             if (awardRows.length > 0) promises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
             if (eredivisieRows.length > 0) promises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
+            if (groupPositionsRows.length > 0) promises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
             
             const results = await Promise.all(promises);
             const hasError = results.some(r => r.error);

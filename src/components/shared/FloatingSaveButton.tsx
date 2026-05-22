@@ -11,6 +11,7 @@ type Snap = {
     km: Record<string, MatchSnap>;
     aw: Record<string, string>;
     xi: Record<string, string>;
+    gp: Record<string, string>;
 };
 
 function toSnap(state: AppState): Snap {
@@ -22,7 +23,11 @@ function toSnap(state: AppState): Snap {
     for (const [id, m] of Object.entries(state.knockoutMatches)) {
         km[id] = { s: m.score ? JSON.stringify(m.score) : null, r: m.result ?? null };
     }
-    return { gm, km, aw: { ...state.awards }, xi: { ...state.tournamentXI } };
+    const gp: Record<string, string> = {};
+    for (const [group, order] of Object.entries(state.customGroupPositions)) {
+        gp[group] = JSON.stringify(order);
+    }
+    return { gm, km, aw: { ...state.awards }, xi: { ...state.tournamentXI }, gp };
 }
 
 export const FloatingSaveButton: React.FC = () => {
