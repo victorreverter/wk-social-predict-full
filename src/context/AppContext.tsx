@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState, OfficialMatch, CustomGroupPositions } from '../types';
 import { generateInitialGroupMatches, generateEredivisieMatches, getDefaultGroupPositions } from '../utils/data-init';
-import { generateInitialKnockoutMatches, updateKnockoutBracket } from '../utils/bracket-logic';
+import { generateInitialKnockoutMatches, updateKnockoutBracket, seedBracketFromPositions, propagateKnockoutWinners } from '../utils/bracket-logic';
 import { supabase } from '../lib/supabase';
 
 interface AppContextType {
@@ -176,10 +176,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 status: ((score.homeGoals !== null && score.awayGoals !== null) ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus
             };
 
-            const newKnockoutMatches = updateKnockoutBracket(
-                { ...prev.knockoutMatches, [matchId]: updatedMatch },
-                prev.groupMatches,
-                prev.selectedThirds
+            const newKnockoutMatches = propagateKnockoutWinners(
+                { ...prev.knockoutMatches, [matchId]: updatedMatch }
             );
 
             return { ...prev, knockoutMatches: newKnockoutMatches };
@@ -197,10 +195,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 status: 'FINISHED' as MatchStatus
             };
 
-            const newKnockoutMatches = updateKnockoutBracket(
-                { ...prev.knockoutMatches, [matchId]: updatedMatch },
-                prev.groupMatches,
-                prev.selectedThirds
+            const newKnockoutMatches = propagateKnockoutWinners(
+                { ...prev.knockoutMatches, [matchId]: updatedMatch }
             );
 
             return { ...prev, knockoutMatches: newKnockoutMatches };
@@ -278,7 +274,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const setSelectedThirds = (teamIds: string[]) => {
         setState(prev => {
-            const newKnockoutMatches = updateKnockoutBracket(prev.knockoutMatches, prev.groupMatches, teamIds);
+            const newKnockoutMatches = seedBracketFromPositions(prev.knockoutMatches, prev.customGroupPositions, teamIds);
             return {
                 ...prev,
                 selectedThirds: teamIds,
@@ -334,17 +330,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateGroupPosition = (group: string, order: string[]) => {
         setState(prev => {
-            // Only allow position reordering, not creating new entries
             const existing = prev.customGroupPositions[group];
             if (!existing) return prev;
             const valid = existing.filter(id => order.includes(id));
             if (valid.length !== existing.length) return prev;
+            const newPositions = {
+                ...prev.customGroupPositions,
+                [group]: order
+            };
+            const newKnockoutMatches = seedBracketFromPositions(prev.knockoutMatches, newPositions, prev.selectedThirds);
             return {
                 ...prev,
-                customGroupPositions: {
-                    ...prev.customGroupPositions,
-                    [group]: order
-                }
+                customGroupPositions: newPositions,
+                knockoutMatches: newKnockoutMatches,
             };
         });
     };

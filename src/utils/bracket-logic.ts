@@ -3,7 +3,7 @@ import { groups, initialTeams } from './data-init';
 import { calculateGroupStandings } from './standings';
 import { THIRD_PLACE_COMBOS } from './fifa-combos';
 
-type ThirdPlaceTeam = GroupStanding & { group: string };  // GroupStanding + which group it belongs to
+type ThirdPlaceTeam = GroupStanding & { group: string };
 
 const T3_MATCH_ORDER: readonly number[] = [79, 85, 81, 74, 82, 77, 87, 80];
 
@@ -128,6 +128,91 @@ export const determineQualifiedTeams = (
     best8Thirds: sortedThirds.slice(0, 8),
     allThirds: sortedThirds,
   };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Determine qualifying teams from custom group positions (manual drag-and-drop)
+// ─────────────────────────────────────────────────────────────────────────────
+export const determineQualifiedTeamsFromPositions = (
+  customGroupPositions: Record<string, string[]>
+) => {
+  const groupWinners: Record<string, string> = {};
+  const groupRunnersUp: Record<string, string> = {};
+  const allThirds: Record<string, string> = {};
+
+  groups.forEach((group) => {
+    const order = customGroupPositions[group];
+    if (order && order.length >= 3) {
+      groupWinners[group] = order[0];
+      groupRunnersUp[group] = order[1];
+      allThirds[group] = order[2];
+    }
+  });
+
+  return { groupWinners, groupRunnersUp, allThirds };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Seed R32 bracket from custom group positions + selected thirds (new system)
+// This is used for pre-tournament bracket population — NOT match-dependent
+// ─────────────────────────────────────────────────────────────────────────────
+export const seedBracketFromPositions = (
+  currentKnockout: Record<string, Match>,
+  customGroupPositions: Record<string, string[]>,
+  selectedThirds: string[]
+): Record<string, Match> => {
+  let ko = Object.keys(currentKnockout).length === 0
+    ? generateInitialKnockoutMatches()
+    : { ...currentKnockout };
+
+  const { groupWinners, groupRunnersUp, allThirds } = determineQualifiedTeamsFromPositions(customGroupPositions);
+  const numGroupsReady = Object.keys(groupWinners).length;
+
+  if (numGroupsReady !== 12 || selectedThirds.length !== 8) {
+    R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
+    return ko;
+  }
+
+  const selectedGroups = selectedThirds
+    .map(tid => {
+      for (const [group, thirdId] of Object.entries(allThirds)) {
+        if (thirdId === tid) return group;
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .sort();
+
+  if (selectedGroups.length !== 8) {
+    R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
+    return ko;
+  }
+
+  const advancingGroups = selectedGroups.join('');
+  const combo = THIRD_PLACE_COMBOS[advancingGroups];
+  const assignments: readonly string[] = combo ?? selectedGroups;
+
+  const thirdByGroup: Record<string, string> = {};
+  selectedThirds.forEach(tid => {
+    for (const [group, thirdId] of Object.entries(allThirds)) {
+      if (thirdId === tid) { thirdByGroup[group] = tid; break; }
+    }
+  });
+
+  const resolveFixed = (slot: string): string => {
+    if (slot.startsWith('W_'))  return groupWinners[slot.slice(2)] ?? 'TBD';
+    if (slot.startsWith('RU_')) return groupRunnersUp[slot.slice(3)] ?? 'TBD';
+    return 'TBD';
+  };
+
+  R32_FIXTURES.forEach(f => {
+    const t3Idx = T3_MATCH_ORDER.indexOf(f.matchNum);
+    const home = f.homeSlot === 'T3' ? (t3Idx >= 0 ? (thirdByGroup[assignments[t3Idx]] ?? 'TBD') : 'TBD') : resolveFixed(f.homeSlot);
+    const away = f.awaySlot === 'T3' ? (t3Idx >= 0 ? (thirdByGroup[assignments[t3Idx]] ?? 'TBD') : 'TBD') : resolveFixed(f.awaySlot);
+    ko = setTeams(ko, f.matchNum, home, away);
+  });
+
+  return ko;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -282,6 +367,32 @@ export const updateKnockoutBracket = (
   ko = setTeams(ko, FINAL_FIXTURE.matchNum, sf1Winner, sf2Winner);
 
   // ── 4. Third-place play-off (losers of SF) ────────────────────────────────
+  const sf1Loser = getMatchLoser(ko[matchIdFromNum(SF_FIXTURES[0].matchNum)]);
+  const sf2Loser = getMatchLoser(ko[matchIdFromNum(SF_FIXTURES[1].matchNum)]);
+  ko = setTeams(ko, THIRD_PLACE_FIXTURE.matchNum, sf1Loser, sf2Loser);
+
+  return ko;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Propagate knockout winners from existing R32 → Final (no R32 re-seeding)
+// Used in the new system where R32 is seeded from group positions
+// ─────────────────────────────────────────────────────────────────────────────
+export const propagateKnockoutWinners = (
+  currentKnockout: Record<string, Match>
+): Record<string, Match> => {
+  let ko = { ...currentKnockout };
+
+  [...R16_FIXTURES, ...QF_FIXTURES, ...SF_FIXTURES].forEach(f => {
+    const homeWinner = getMatchWinner(ko[matchIdFromNum(f.homeFrom)]);
+    const awayWinner = getMatchWinner(ko[matchIdFromNum(f.awayFrom)]);
+    ko = setTeams(ko, f.matchNum, homeWinner, awayWinner);
+  });
+
+  const sf1Winner = getMatchWinner(ko[matchIdFromNum(SF_FIXTURES[0].matchNum)]);
+  const sf2Winner = getMatchWinner(ko[matchIdFromNum(SF_FIXTURES[1].matchNum)]);
+  ko = setTeams(ko, FINAL_FIXTURE.matchNum, sf1Winner, sf2Winner);
+
   const sf1Loser = getMatchLoser(ko[matchIdFromNum(SF_FIXTURES[0].matchNum)]);
   const sf2Loser = getMatchLoser(ko[matchIdFromNum(SF_FIXTURES[1].matchNum)]);
   ko = setTeams(ko, THIRD_PLACE_FIXTURE.matchNum, sf1Loser, sf2Loser);

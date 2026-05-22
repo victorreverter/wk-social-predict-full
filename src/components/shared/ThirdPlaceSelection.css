@@ -119,6 +119,13 @@
     margin-bottom: 0.75rem;
 }
 
+.third-flag {
+    width: 22px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
 .third-rank {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);

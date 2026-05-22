@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { determineQualifiedTeams } from '../../utils/bracket-logic';
 import { initialTeams } from '../../utils/data-init';
 import { useAuth } from '../../context/AuthContext';
 import './ThirdPlaceSelection.css';
 
 export const ThirdPlaceSelection: React.FC = () => {
     const { state, setSelectedThirds, setActiveTab, setThirdsModalDismissed } = useApp();
-    const { groupMatches, selectedThirds } = state;
+    const { customGroupPositions, selectedThirds } = state;
     const { isLocked } = useAuth();
 
-    const totalGroupMatches = Object.keys(groupMatches).length;
-    const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
+    const allThirdTeamIds = Object.values(customGroupPositions)
+        .filter(order => order.length >= 3)
+        .map(order => order[2]);
 
-    // We only show if all matches are done and they haven't submitted 8 teams yet.
-    // Also, we prevent it entirely if the app is locked.
-    const isGroupsFinished = totalGroupMatches === 72 && completedGroupMatches === 72;
-    const needsSelection = isGroupsFinished && selectedThirds.length !== 8 && !isLocked;
+    const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && !isLocked;
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);
 
@@ -34,13 +31,6 @@ export const ThirdPlaceSelection: React.FC = () => {
 
     if (!needsSelection || state.isThirdsModalDismissed) return null;
 
-    const { allThirds, best8Thirds } = determineQualifiedTeams(groupMatches);
-
-    // Provide a helper to pre-fill the "correct" best 8 based on points
-    const handleAutoSelectBest = () => {
-        setLocalSelection(best8Thirds.map(t => t.teamId));
-    };
-
     const toggleTeam = (teamId: string) => {
         setLocalSelection(prev => {
             if (prev.includes(teamId)) {
@@ -56,13 +46,13 @@ export const ThirdPlaceSelection: React.FC = () => {
     const handleSubmit = () => {
         if (localSelection.length === 8) {
             setSelectedThirds(localSelection);
-            setActiveTab('BRACKET'); // Take user straight to bracket
+            setActiveTab('BRACKET');
         }
     };
 
     const handleClose = () => {
         setThirdsModalDismissed(true);
-        setActiveTab('GROUP');
+        setActiveTab('GROUP_POSITIONS');
     };
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -82,27 +72,26 @@ export const ThirdPlaceSelection: React.FC = () => {
                     ×
                 </button>
                 <h2 className="text-gradient">Select Qualifying 3rd-Place Teams</h2>
-                <p>The Group Stage is complete! Choose exactly 8 third-place teams to advance to the Round of 32.</p>
+                <p>Choose exactly 8 third-place teams to advance to the Round of 32.</p>
                 <div className="thirds-grid">
-                    {allThirds.map((standing, idx) => {
-                        const team = initialTeams.find(t => t.id === standing.teamId);
-                        const isSelected = localSelection.includes(standing.teamId);
-                        const isTop8 = idx < 8; // Automatically calculate if they technically earned it
+                    {allThirdTeamIds.map((teamId) => {
+                        const team = initialTeams.find(t => t.id === teamId);
+                        const isSelected = localSelection.includes(teamId);
 
                         return (
                             <div
-                                key={standing.teamId}
+                                key={teamId}
                                 className={`third-card ${isSelected ? 'selected' : ''} ${!isSelected && localSelection.length >= 8 ? 'disabled' : ''}`}
-                                onClick={() => toggleTeam(standing.teamId)}
+                                onClick={() => toggleTeam(teamId)}
                             >
                                 <div className="third-card-header">
-                                    <span className="third-rank">#{idx + 1}</span>
-                                    <span className="third-name">{team?.name} (Gr. {team?.group})</span>
+                                    <img
+                                        src={`${import.meta.env.BASE_URL}flags/${team?.code || teamId}.svg`}
+                                        alt={team?.code || ''}
+                                        className="third-flag"
+                                    />
+                                    <span className="third-name">{team?.name || teamId} (Gr. {team?.group || '?'})</span>
                                 </div>
-                                <div className="third-stats">
-                                    PTS: {standing.points} | GD: {standing.goalDifference} | GF: {standing.goalsFor}
-                                </div>
-                                {isTop8 && <div className="third-badge">Top 8 Merit</div>}
                             </div>
                         );
                     })}
@@ -110,18 +99,15 @@ export const ThirdPlaceSelection: React.FC = () => {
 
                 <div className="modal-actions">
                     <span className="selection-count">Selected: {localSelection.length} / 8</span>
-                    <button className="btn-secondary" onClick={handleAutoSelectBest}>
-                        Auto-Pick the 8 Best
-                    </button>
                     <button
                         className="btn-primary"
                         disabled={localSelection.length !== 8}
                         onClick={handleSubmit}
                     >
-                        Confirm & Generate Bracket
+                        Confirm &amp; Generate Bracket
                     </button>
-                    <button className="btn-cancel" onClick={() => { setThirdsModalDismissed(true); setActiveTab('GROUP'); }}>
-                        Go Back to Edit Matches
+                    <button className="btn-cancel" onClick={handleClose}>
+                        Go Back to Positions
                     </button>
                 </div>
             </div>
