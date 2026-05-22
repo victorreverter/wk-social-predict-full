@@ -1,16 +1,22 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { groups, initialTeams } from '../../utils/data-init';
+import { groups, initialTeams, getDefaultGroupPositions } from '../../utils/data-init';
+import { supabase } from '../../lib/supabase';
 import { SortableGroup } from './SortableGroup';
 import './GroupPositionsView.css';
 
 export const GroupPositionsView: React.FC = () => {
-  const { state, updateGroupPosition, autoFillGroupPositions, resetUserPredictions } = useApp();
+  const { state, updateGroupPosition, autoFillGroupPositions, setGroupPositions } = useApp();
   const { customGroupPositions } = state;
 
   const handleReset = async () => {
     if (confirm('Reset all group positions to default order?')) {
-      await resetUserPredictions();
+      const defaults = getDefaultGroupPositions();
+      setGroupPositions(defaults);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('user_group_positions').delete().eq('user_id', user.id);
+      }
     }
   };
 

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { initialTeams } from '../../utils/data-init';
-import { calculateGroupStandings } from '../../utils/standings';
 import type { Match } from '../../types';
 import './SummaryView.css';
 
@@ -13,11 +12,12 @@ const getTeam = (teamId: string) => {
     return initialTeams.find(t => t.id === teamId);
 };
 
-const getGroupPosition = (teamId: string, groupMatches: Record<string, Match>) => {
+const getGroupPosition = (teamId: string, customGroupPositions: Record<string, string[]>) => {
     const team = initialTeams.find(t => t.id === teamId);
     if (!team) return '';
-    const standings = calculateGroupStandings(team.group, initialTeams, groupMatches);
-    const index = standings.findIndex(s => s.teamId === teamId);
+    const order = customGroupPositions[team.group];
+    if (!order) return '';
+    const index = order.indexOf(teamId);
     const pos = index === 0 ? '1st' : index === 1 ? '2nd' : '3rd';
     return `${pos} Group ${team.group}`;
 };
@@ -149,7 +149,7 @@ const FORMATIONS: Record<string, FormationConfig> = {
 
 export const SummaryView: React.FC = () => {
     const { state } = useApp();
-    const { groupMatches, knockoutMatches, awards, tournamentXI } = state;
+    const { knockoutMatches, awards, tournamentXI, customGroupPositions } = state;
 
     // Progression
     const classified32 = getTeamsInStage('R32', knockoutMatches);
@@ -293,7 +293,7 @@ export const SummaryView: React.FC = () => {
                         <ul className="classified-list">
                             {classified32.map(id => (
                                 <li key={id} className={`classified-team ${roundOf16.includes(id) ? 'advanced' : ''}`}>
-                                    <span className="team-pos">{getGroupPosition(id, groupMatches)}</span>
+                                    <span className="team-pos">{getGroupPosition(id, customGroupPositions)}</span>
                                     <div className="classified-team-info">
                                         {getTeam(id) && <img src={`${import.meta.env.BASE_URL}flags/${getTeam(id)?.code}.svg`} className="summary-flag" alt="" />}
                                         <span className="team-name">{getTeamName(id)}</span>

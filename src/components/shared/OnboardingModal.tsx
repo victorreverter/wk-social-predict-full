@@ -102,7 +102,7 @@ export const OnboardingModal: React.FC = () => {
                                     Predict the 2026 FIFA World Cup
                                 </h2>
                                 <p className="onboarding-intro">
-                                    Browse the daily match schedule, predict group &amp; knockout games,
+                                    Browse the daily match schedule, predict group &amp; knockout games for bonus points,
                                     pick awards, and build your Best XI.
                                     Every prediction earns points — compete on the global leaderboard.
                                 </p>
@@ -119,7 +119,7 @@ export const OnboardingModal: React.FC = () => {
                                     <div className="onboarding-mock-header">
                                         <div className="mock-tabs">
                                             <span className="mock-tab active">Games</span>
-                                            <span className="mock-tab">Groups</span>
+                                            <span className="mock-tab">Positions</span>
                                             <span className="mock-tab">Bracket</span>
                                             <span className="mock-tab">Awards</span>
                                             <span className="mock-tab">XI</span>
@@ -132,7 +132,7 @@ export const OnboardingModal: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="onboarding-mock-caption">
-                                        The <strong>progress ring</strong> tracks your prediction completion across Groups, Bracket, Awards, and XI so you always know how far you are.
+                                        The <strong>progress ring</strong> tracks your prediction completion across Positions, Bracket, Awards, and XI so you always know how far you are.
                                     </p>
                                     <p className="onboarding-layout-text" style={{marginTop: '0.5rem'}}>
                                         <span className="mock-fab-icon mock-fab-green">💾</span>
@@ -171,15 +171,15 @@ export const OnboardingModal: React.FC = () => {
                                     <li>
                                         <span className="step-icon">🏆</span>
                                         <div className="step-text">
-                                            <strong>Group Stage</strong>
-                                            Predict all 72 group matches — pick exact scores for every fixture.
+                                            <strong>Group Positions</strong>
+                                            Drag teams to predict the final ranking (1st–4th) for each group. No match scores needed!
                                         </div>
                                     </li>
                                     <li>
                                         <span className="step-icon">⚡</span>
                                         <div className="step-text">
                                             <strong>Auto-Fill</strong>
-                                            Short on time? Auto-Fill instantly simulates every group match — <em>find it in the Groups toolbar</em>.
+                                            Short on time? Auto-Fill shuffles all group positions randomly — <em>find it in the Positions toolbar</em>.
                                             <em className="onboarding-autofill-note">
                                                 Results are completely random — no football knowledge or bias involved.
                                             </em>
@@ -216,7 +216,23 @@ export const OnboardingModal: React.FC = () => {
                                 <h3 className="onboarding-section-title">Points — Matches &amp; Bracket</h3>
 
                                 <div className="onboarding-points-card">
-                                    <h4 className="onboarding-points-card-title">🎯 Group Stage Matches</h4>
+                                    <h4 className="onboarding-points-card-title">📊 Group Positions</h4>
+                                    <p className="onboarding-points-hint">Per correctly predicted position (1st–4th)</p>
+                                    <div className="onboarding-points-rows">
+                                        <div className="onboarding-points-row">
+                                            <span className="onboarding-points-label">Correct position</span>
+                                            <span className="onboarding-points-value">2 pts</span>
+                                        </div>
+                                        <div className="onboarding-points-row onboarding-points-row--muted">
+                                            <span className="onboarding-points-label">Wrong position</span>
+                                            <span className="onboarding-points-value">0 pts</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="onboarding-points-card">
+                                    <h4 className="onboarding-points-card-title">🎮 Games (Bonus)</h4>
+                                    <p className="onboarding-points-hint">Predict individual match scores during the tournament</p>
                                     <div className="onboarding-points-rows">
                                         <div className="onboarding-points-row">
                                             <span className="onboarding-points-label">Exact score</span>
@@ -225,10 +241,6 @@ export const OnboardingModal: React.FC = () => {
                                         <div className="onboarding-points-row">
                                             <span className="onboarding-points-label">Correct result only</span>
                                             <span className="onboarding-points-value">1 pt</span>
-                                        </div>
-                                        <div className="onboarding-points-row onboarding-points-row--muted">
-                                            <span className="onboarding-points-label">Wrong result</span>
-                                            <span className="onboarding-points-value">0 pts</span>
                                         </div>
                                     </div>
                                 </div>
@@ -305,7 +317,7 @@ export const OnboardingModal: React.FC = () => {
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">💡 How You Score</h4>
                                     <p className="onboarding-leaderboard-text">
-                                        Your total combines Group Stage + Knockout + Awards + Best XI points.
+                                        Your total combines Group Positions + Bracket + Games Bonus + Awards + Best XI points.
                                         The leaderboard updates live as official results come in.
                                     </p>
                                 </div>
@@ -337,11 +349,11 @@ export const OnboardingModal: React.FC = () => {
                                 </div>
 
                                 <div className="onboarding-points-card">
-                                    <h4 className="onboarding-points-card-title">🔧 Groups Toolbar</h4>
+                                    <h4 className="onboarding-points-card-title">🔧 Positions Toolbar</h4>
                                     <div className="onboarding-fab-states">
                                         <div className="fab-state-row">
-                                            <span className="step-icon">⚡</span>
-                                            <span className="fab-state-label">Auto‑Fill Groups — quick random results</span>
+                                            <span className="step-icon">🎲</span>
+                                            <span className="fab-state-label">Auto‑Fill Positions — random group rankings</span>
                                         </div>
                                         <div className="fab-state-row">
                                             <span className="step-icon">🗑️</span>
@@ -370,7 +382,7 @@ export const OnboardingModal: React.FC = () => {
                                 <h3 className="onboarding-section-title">Rules</h3>
                                 <p className="onboarding-rules-text" style={{ marginTop: '0.25rem' }}>
                                     ⚠️ Matches lock 1 hour before kickoff. Once locked, predictions cannot be changed.
-                                    Keep an eye on the countdown badges across <strong>Games</strong>, Groups, and Bracket.
+                                    Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Bracket.
                                 </p>
                                 <div className="onboarding-max-score">
                                     🏅 Maximum possible score: ~618 points
