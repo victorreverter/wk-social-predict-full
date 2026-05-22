@@ -4,34 +4,49 @@ import { groups, initialTeams, generateInitialGroupMatches } from '../utils/data
 import { calculateGroupStandings } from '../utils/standings';
 
 export const scoreGroupPositions = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
-    const { data: officialMatches, error: offErr } = await supabase
-        .from('official_matches')
-        .select('match_id, home_goals, away_goals, status');
+    // 1. Try admin-confirmed official_group_positions first
+    const { data: officialPosData, error: offPosErr } = await supabase
+        .from('official_group_positions')
+        .select('group_letter, "order"');
 
-    if (offErr) return { usersScored: 0, error: offErr.message };
+    let officialPositions: Record<string, string[]>;
+    let allGroupsDone = false;
 
-    const groupMatches = generateInitialGroupMatches();
-    (officialMatches || []).forEach(om => {
-        if (groupMatches[om.match_id] && om.status === 'FINISHED' && om.home_goals !== null && om.away_goals !== null) {
-            groupMatches[om.match_id] = {
-                ...groupMatches[om.match_id],
-                score: { homeGoals: om.home_goals, awayGoals: om.away_goals },
-                status: 'FINISHED',
-            };
-        }
-    });
+    if (!offPosErr && officialPosData && officialPosData.length === 12) {
+        officialPositions = {};
+        officialPosData.forEach(r => { officialPositions[r.group_letter] = r.order; });
+        allGroupsDone = true;
+    } else {
+        // 2. Fallback: compute from official_matches
+        const { data: officialMatches, error: offErr } = await supabase
+            .from('official_matches')
+            .select('match_id, home_goals, away_goals, status');
 
-    const officialPositions: Record<string, string[]> = {};
-    let allGroupsDone = true;
-    groups.forEach(group => {
-        const standings = calculateGroupStandings(group, initialTeams, groupMatches);
-        const orderedIds = standings.map(s => s.teamId);
-        if (orderedIds.length >= 4) {
-            officialPositions[group] = orderedIds;
-        } else {
-            allGroupsDone = false;
-        }
-    });
+        if (offErr) return { usersScored: 0, error: offErr.message };
+
+        const groupMatches = generateInitialGroupMatches();
+        (officialMatches || []).forEach(om => {
+            if (groupMatches[om.match_id] && om.status === 'FINISHED' && om.home_goals !== null && om.away_goals !== null) {
+                groupMatches[om.match_id] = {
+                    ...groupMatches[om.match_id],
+                    score: { homeGoals: om.home_goals, awayGoals: om.away_goals },
+                    status: 'FINISHED',
+                };
+            }
+        });
+
+        officialPositions = {};
+        allGroupsDone = true;
+        groups.forEach(group => {
+            const standings = calculateGroupStandings(group, initialTeams, groupMatches);
+            const orderedIds = standings.map(s => s.teamId);
+            if (orderedIds.length >= 4) {
+                officialPositions[group] = orderedIds;
+            } else {
+                allGroupsDone = false;
+            }
+        });
+    }
 
     if (!allGroupsDone) return { usersScored: 0 };
 

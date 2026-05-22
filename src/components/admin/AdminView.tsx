@@ -9,12 +9,14 @@ import { scoreAwards } from '../../lib/scoreAwards';
 import { scoreXI } from '../../lib/scoreXI';
 import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
+import { scoreGroupPositions } from '../../lib/scoreGroupPositions';
 import { scoreEredivisie } from '../../lib/scoreEredivisie';
 import { fetchTournamentResults } from '../../lib/footballDataApi';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
+import { calculateGroupStandings } from '../../utils/standings';
 import type { Match, OfficialMatch } from '../../types';
 
 import './AdminView.css';
@@ -150,7 +152,7 @@ export const AdminView: React.FC = () => {
     const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock, isTestModeEnabled, toggleTestMode } = useAuth();
     const { resetTournament } = useApp();
     
-    const [section, setSection]           = useState<'group' | 'knockout' | 'awards' | 'xi'>('group');
+    const [section, setSection]           = useState<'group' | 'knockout' | 'positions' | 'awards' | 'xi'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
     const [activeKoRound, setActiveKoRound] = useState<string>('R32');
     const [officialMatches, setOfficialMatches] = useState<Record<string, OfficialMatch>>({});
@@ -168,6 +170,8 @@ export const AdminView: React.FC = () => {
     const [apiLastCheck, setApiLastCheck] = useState<string | null>(null);
     const [autoFetchEnabled, setAutoFetchEnabled] = useState(false);
     const [nextFetchIn, setNextFetchIn] = useState<number | null>(null);
+    const [officialPositions, setOfficialPositions] = useState<Record<string, string[]>>({});
+    const [positionsSaving, setPositionsSaving] = useState(false);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -200,6 +204,12 @@ export const AdminView: React.FC = () => {
             const map: Record<string, { home_goals: number | null; away_goals: number | null }> = {};
             (eData as any[]).forEach(r => { map[r.match_id] = { home_goals: r.home_goals, away_goals: r.away_goals }; });
             setEredivisieOfficial(map);
+        }
+        const { data: pData } = await supabase.from('official_group_positions').select('group_letter, "order"');
+        if (pData) {
+            const map: Record<string, string[]> = {};
+            (pData as { group_letter: string; order: string[] }[]).forEach(r => { map[r.group_letter] = r.order; });
+            setOfficialPositions(map);
         }
     }, []);
 
@@ -342,6 +352,42 @@ export const AdminView: React.FC = () => {
         }));
     };
 
+    const computedGroupPositions = React.useMemo(() => {
+        const gm = generateInitialGroupMatches();
+        Object.keys(gm).forEach(id => {
+            const om = officialMatches[id];
+            if (om && om.status === 'FINISHED' && om.home_goals !== null && om.away_goals !== null) {
+                gm[id].score.homeGoals = om.home_goals;
+                gm[id].score.awayGoals = om.away_goals;
+                gm[id].status = 'FINISHED';
+            }
+        });
+        const result: Record<string, string[]> = {};
+        groups.forEach(group => {
+            const standings = calculateGroupStandings(group, initialTeams, gm);
+            result[group] = standings.map(s => s.teamId);
+        });
+        return result;
+    }, [officialMatches]);
+
+    const saveOfficialPositions = async () => {
+        setPositionsSaving(true);
+        const rows = Object.entries(computedGroupPositions).map(([group, order]) => ({
+            group_letter: group,
+            order,
+            updated_at: new Date().toISOString(),
+        }));
+        const { error } = await supabase.from('official_group_positions').upsert(rows, { onConflict: 'group_letter' });
+        if (!error) {
+            setOfficialPositions(computedGroupPositions);
+            const { usersScored, error: sErr } = await scoreGroupPositions();
+            showToast(sErr ? `❌ Saved but scoring failed: ${sErr}` : `✅ Positions saved & ${usersScored} users scored!`);
+        } else {
+            showToast(`❌ ${error.message}`);
+        }
+        setPositionsSaving(false);
+    };
+
     const eredivisieTeamName = (id: string) => EREDIVISIE_TEAMS.find(t => t.id === id)?.name ?? id;
 
     const setEredivisieResult = (matchId: string, type: 'home' | 'away', val: string) => {
@@ -474,10 +520,11 @@ export const AdminView: React.FC = () => {
                 <h2 className="text-gradient">⚙️ Master Admin</h2>
                 <p>Enter official match results and award winners. Only you can see and edit this.</p>
                 <div className="admin-section-tabs">
-                    <button className={`admin-sec-btn ${section === 'group'    ? 'active' : ''}`} onClick={() => setSection('group')}>⚽ Group Stage</button>
-                    <button className={`admin-sec-btn ${section === 'knockout' ? 'active' : ''}`} onClick={() => setSection('knockout')}>🏆 Knockout Rounds</button>
-                    <button className={`admin-sec-btn ${section === 'awards'   ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
-                    <button className={`admin-sec-btn ${section === 'xi'       ? 'active' : ''}`} onClick={() => setSection('xi')}>👕 Tournament XI</button>
+                    <button className={`admin-sec-btn ${section === 'group'     ? 'active' : ''}`} onClick={() => setSection('group')}>⚽ Group Stage</button>
+                    <button className={`admin-sec-btn ${section === 'knockout'  ? 'active' : ''}`} onClick={() => setSection('knockout')}>🏆 Knockout Rounds</button>
+                    <button className={`admin-sec-btn ${section === 'positions' ? 'active' : ''}`} onClick={() => setSection('positions')}>📊 Positions</button>
+                    <button className={`admin-sec-btn ${section === 'awards'    ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
+                    <button className={`admin-sec-btn ${section === 'xi'        ? 'active' : ''}`} onClick={() => setSection('xi')}>👕 Tournament XI</button>
                     <div className="admin-reset-area">
                         <button 
                             className={`admin-lock-btn ${isLocked ? 'locked' : 'unlocked'}`}
@@ -625,6 +672,60 @@ export const AdminView: React.FC = () => {
                                     row={row} hasPens saving={saving} isSavedData={!!savedQueue[id]}
                                     onChange={(f, v) => setMatchField(id, f, v)}
                                     onSave={() => saveMatch(id)} />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* ── POSITIONS ─────────────────────────────────────── */}
+            {section === 'positions' && (
+                <div className="admin-positions-section">
+                    <div className="admin-positions-header">
+                        <h3>📊 Official Group Positions</h3>
+                        <p>Review computed standings from match results. Click <strong>Save &amp; Score</strong> to publish the official group positions. This will trigger automatic scoring of all user group position predictions (2 pts per correct position).</p>
+                        <button
+                            className="admin-save-btn admin-save-btn--large"
+                            onClick={saveOfficialPositions}
+                            disabled={positionsSaving}
+                        >
+                            {positionsSaving ? '⏳ Saving…' : '💾 Save & Score Positions'}
+                        </button>
+                    </div>
+
+                    <div className="admin-positions-grid">
+                        {groups.map(group => {
+                            const order = computedGroupPositions[group] || officialPositions[group] || [];
+                            return (
+                                <div key={group} className="admin-position-group glass-panel">
+                                    <h4>Group {group}</h4>
+                                    <table className="admin-positions-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Flag</th>
+                                                <th>Team</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {order.map((teamId, idx) => {
+                                                const team = initialTeams.find(t => t.id === teamId);
+                                                return (
+                                                    <tr key={teamId}>
+                                                        <td className="pos-col">{idx + 1}</td>
+                                                        <td className="flag-col">
+                                                            {team && <img src={`${import.meta.env.BASE_URL}flags/${team.code}.svg`} alt={team.code} className="team-flag" />}
+                                                        </td>
+                                                        <td>{team?.name || teamId}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {order.length === 0 && (
+                                                <tr><td colSpan={3} className="empty-msg">No data yet</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             );
                         })}
                     </div>

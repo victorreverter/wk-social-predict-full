@@ -41,6 +41,8 @@ begin
         delete from public.official_awards where true;
         delete from public.official_tournament_xi where true;
         delete from public.official_eredivisie where true;
+        delete from public.official_group_positions where true;
+        delete from public.official_bracket where true;
 
         update public.user_group_positions set pts_earned = 0 where true;
         update public.profiles set total_points = 0 where true;
