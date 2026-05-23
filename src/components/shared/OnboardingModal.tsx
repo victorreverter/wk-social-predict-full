@@ -5,7 +5,7 @@ import './OnboardingModal.css';
 const TOTAL_STEPS = 7;
 
 export const OnboardingModal: React.FC = () => {
-    const { state, setHelpModalOpen } = useApp();
+    const { state, setHelpModalOpen, setActiveTab } = useApp();
     const [isVisible, setIsVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const touchStartX = useRef<number | null>(null);
@@ -13,18 +13,19 @@ export const OnboardingModal: React.FC = () => {
     const trackRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-        if (!hasSeenOnboarding) {
+        const hasSeenOnboarding_v2 = localStorage.getItem('hasSeenOnboarding_v2');
+        if (!hasSeenOnboarding_v2) {
             setIsVisible(true);
             setCurrentStep(0);
         }
     }, []);
 
     const handleDismiss = useCallback(() => {
-        localStorage.setItem('hasSeenOnboarding', 'true');
+        localStorage.setItem('hasSeenOnboarding_v2', 'true');
         setIsVisible(false);
         setHelpModalOpen(false);
-    }, [setHelpModalOpen]);
+        setActiveTab('GAMES');
+    }, [setHelpModalOpen, setActiveTab]);
 
     const goNext = useCallback(() => {
         setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS - 1));

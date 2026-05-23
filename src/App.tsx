@@ -40,7 +40,6 @@ const MainContent = () => {
       {state.activeTab === 'SUMMARY'       && <SummaryView />}
       {state.activeTab === 'LEADERBOARD'   && <LeaderboardView />}
       {state.activeTab === 'ADMIN' && profile?.is_master && <AdminView />}
-      <ThirdPlaceSelection />
     </main>
   );
 };
@@ -65,6 +64,7 @@ const AppShell = () => {
     <AppProvider>
       <ErrorBoundary>
         <AppContentWrapper />
+        <ThirdPlaceSelection />
         <OnboardingModal />
         {isAuthModalOpen && <AuthModal />}
       </ErrorBoundary>

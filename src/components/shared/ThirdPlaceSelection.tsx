@@ -4,6 +4,8 @@ import { initialTeams } from '../../utils/data-init';
 import { useAuth } from '../../context/AuthContext';
 import './ThirdPlaceSelection.css';
 
+const THIRDS_DISMISSED_KEY = 'wk_thirds_modal_dismissed';
+
 export const ThirdPlaceSelection: React.FC = () => {
     const { state, setSelectedThirds, setActiveTab, setThirdsModalDismissed } = useApp();
     const { customGroupPositions, selectedThirds } = state;
@@ -14,6 +16,7 @@ export const ThirdPlaceSelection: React.FC = () => {
         .map(order => order[2]);
 
     const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && !isLocked;
+    const isPersistedDismissed = localStorage.getItem(THIRDS_DISMISSED_KEY) === 'true';
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);
 
@@ -24,12 +27,19 @@ export const ThirdPlaceSelection: React.FC = () => {
     }, [needsSelection]);
 
     useEffect(() => {
+        if (isPersistedDismissed) {
+            setThirdsModalDismissed(true);
+        }
+    }, []);
+
+    useEffect(() => {
         if (state.activeTab === 'BRACKET' && needsSelection && state.isThirdsModalDismissed) {
             setThirdsModalDismissed(false);
+            localStorage.removeItem(THIRDS_DISMISSED_KEY);
         }
     }, [state.activeTab, needsSelection]);
 
-    if (!needsSelection || state.isThirdsModalDismissed) return null;
+    if (state.activeTab !== 'BRACKET' || !needsSelection || isPersistedDismissed || state.isThirdsModalDismissed) return null;
 
     const toggleTeam = (teamId: string) => {
         setLocalSelection(prev => {
@@ -51,8 +61,9 @@ export const ThirdPlaceSelection: React.FC = () => {
     };
 
     const handleClose = () => {
+        localStorage.setItem(THIRDS_DISMISSED_KEY, 'true');
         setThirdsModalDismissed(true);
-        setActiveTab('GROUP_POSITIONS');
+        setActiveTab('GAMES');
     };
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {

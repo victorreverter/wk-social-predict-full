@@ -46,7 +46,7 @@ const getFreshState = (): AppState => {
     return {
         mode: 'EASY',
         theme: initialTheme,
-        activeTab: 'GROUP_POSITIONS',
+        activeTab: 'GAMES',
         groupMatches: generateInitialGroupMatches(),
         knockoutMatches: generateInitialKnockoutMatches(),
         eredivisieMatches: generateEredivisieMatches(),
