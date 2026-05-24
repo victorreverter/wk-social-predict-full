@@ -160,54 +160,66 @@ export const OnboardingModal: React.FC = () => {
                         {/* ── Step 3: How It Works ─────────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
-                                <h3 className="onboarding-section-title">How It Works</h3>
-                                <ul className="onboarding-steps">
-                                    <li>
-                                        <span className="step-icon">📅</span>
-                                        <div className="step-text">
+                                <h3 className="onboarding-section-title">Your Prediction Journey</h3>
+                                <p className="onboarding-points-hint" style={{marginBottom: '0.75rem'}}>
+                                    Pre-tournament predictions drive your bracket. Games are bonus during the tournament.
+                                </p>
+
+                                <div className="onboarding-points-card">
+                                    <h4 className="onboarding-points-card-title">🔮 Pre‑Tournament</h4>
+                                    <div className="onboarding-flow-steps">
+                                        <div className="onboarding-flow-step">
+                                            <span className="flow-step-icon">⚽</span>
+                                            <div className="flow-step-body">
+                                                <strong>Group Positions</strong>
+                                                <span>Drag teams 1st–4th for all 12 groups — no match scores!</span>
+                                            </div>
+                                        </div>
+                                        <div className="onboarding-flow-arrow">→</div>
+                                        <div className="onboarding-flow-step">
+                                            <span className="flow-step-icon">🥉</span>
+                                            <div className="flow-step-body">
+                                                <strong>Select Thirds</strong>
+                                                <span>Manually pick 8 of the 12 third-place teams to advance</span>
+                                            </div>
+                                        </div>
+                                        <div className="onboarding-flow-arrow">→</div>
+                                        <div className="onboarding-flow-step">
+                                            <span className="flow-step-icon">⚔️</span>
+                                            <div className="flow-step-body">
+                                                <strong>Bracket</strong>
+                                                <span>Auto‑seeded from your positions &amp; thirds — R32 to Champ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="onboarding-points-example">
+                                        <strong>Quick start:</strong> Use Auto‑Fill (🎲) in the Positions toolbar to randomly shuffle all groups, then jump to Thirds!
+                                    </p>
+                                </div>
+
+                                <div className="onboarding-points-card" style={{marginTop: '0.5rem'}}>
+                                    <h4 className="onboarding-points-card-title">🎮 In‑Tournament</h4>
+                                    <div className="onboarding-flow-step">
+                                        <span className="flow-step-icon">📅</span>
+                                        <div className="flow-step-body">
                                             <strong>Games</strong>
-                                             Browse the full tournament calendar day by day — all 72 group matches and knockout rounds in one chronological feed.
+                                            <span>Bonus points predicting match scores — 72 group + 32 knockout games</span>
                                         </div>
-                                    </li>
-                                    <li>
-                                        <span className="step-icon">🏆</span>
-                                        <div className="step-text">
-                                            <strong>Group Positions</strong>
-                                            Drag teams to predict the final ranking (1st–4th) for each group. No match scores needed!
+                                    </div>
+                                </div>
+
+                                <div className="onboarding-points-card" style={{marginTop: '0.5rem'}}>
+                                    <h4 className="onboarding-points-card-title">🏆 Independent Picks</h4>
+                                    <div className="onboarding-flow-steps">
+                                        <div className="onboarding-flow-step">
+                                            <span className="flow-step-icon">🎖️</span>
+                                            <div className="flow-step-body">
+                                                <strong>Awards &amp; Best XI</strong>
+                                                <span>Predict 11 FIFA award winners + the Tournament's Best XI</span>
+                                            </div>
                                         </div>
-                                    </li>
-                                    <li>
-                                        <span className="step-icon">⚡</span>
-                                        <div className="step-text">
-                                            <strong>Auto-Fill</strong>
-                                            Short on time? Auto-Fill shuffles all group positions randomly — <em>find it in the Positions toolbar</em>.
-                                            <em className="onboarding-autofill-note">
-                                                Results are completely random — no football knowledge or bias involved.
-                                            </em>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span className="step-icon">🥉</span>
-                                        <div className="step-text">
-                                            <strong>Third Place</strong>
-                                            Once groups finish, pick the 8 best third-placed teams to complete the Round of 32.
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span className="step-icon">⚔️</span>
-                                        <div className="step-text">
-                                            <strong>Knockout Bracket</strong>
-                                            Progress teams through the bracket — Round of 32 all the way to the Final.
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <span className="step-icon">🎖️</span>
-                                        <div className="step-text">
-                                            <strong>Awards &amp; Best XI</strong>
-                                            Predict the 11 FIFA award winners and the Tournament's Best XI (1 GK + 10 field players).
-                                        </div>
-                                    </li>
-                                </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -362,7 +374,7 @@ export const OnboardingModal: React.FC = () => {
                                         </div>
                                         <div className="fab-state-row">
                                             <span className="step-icon">🥉</span>
-                                            <span className="fab-state-label">Select Thirds — pick best 3rd‑place teams (when groups are done)</span>
+                                            <span className="fab-state-label">Select Thirds — pick 8 third‑place teams for the bracket</span>
                                         </div>
                                     </div>
                                 </div>
@@ -386,7 +398,7 @@ export const OnboardingModal: React.FC = () => {
                                     Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Bracket.
                                 </p>
                                 <div className="onboarding-max-score">
-                                    🏅 Maximum possible score: ~618 points
+                                    🏅 Maximum possible score: ~758 points
                                 </div>
                             </div>
                         </div>

@@ -549,7 +549,69 @@
     background: rgba(0, 0, 0, 0.07);
 }
 
-/* ── Animations ────────────────────────────────── */
+/* ── How It Works flow diagram (Step 3) ──────────── */
+.onboarding-flow-steps {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+    margin: 0.35rem 0;
+}
+
+.onboarding-flow-step {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+}
+
+:root.light .onboarding-flow-step {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.flow-step-icon {
+    font-size: 1.15rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(213, 131, 255, 0.12);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.flow-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.flow-step-body strong {
+    font-size: 0.84rem;
+    color: var(--text-primary);
+    font-family: var(--font-family-display);
+}
+
+.flow-step-body span {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.onboarding-flow-arrow {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    font-weight: 700;
+    opacity: 0.7;
+    line-height: 1;
+    margin: -0.2rem 0;
+}
 @keyframes fadeIn {
     from { opacity: 0; backdrop-filter: blur(0px); }
     to   { opacity: 1; backdrop-filter: blur(8px); }
