@@ -339,7 +339,7 @@ export const OnboardingModal: React.FC = () => {
 
                         {/* ── Step 6: Saving Your Predictions ──── */}
                         <div className="onboarding-step">
-                            <div className="onboarding-step-content onboarding-step-content--scroll">
+                            <div className="onboarding-step-content">
                                 <h3 className="onboarding-section-title">Saving Your Predictions</h3>
                                 <p className="onboarding-points-hint">The save button lives in the bottom‑right corner of every page</p>
 
