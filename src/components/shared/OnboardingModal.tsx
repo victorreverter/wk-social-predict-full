@@ -398,7 +398,7 @@ export const OnboardingModal: React.FC = () => {
                                     Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Bracket.
                                 </p>
                                 <div className="onboarding-max-score">
-                                    🏅 Maximum possible score: ~758 points
+                                    🏅 Maximum possible score: ~570  points (plus Games bonus)
                                 </div>
                             </div>
                         </div>
