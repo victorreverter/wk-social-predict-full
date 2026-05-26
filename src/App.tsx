@@ -7,6 +7,7 @@ import { GroupPositionsView } from './components/group-positions/GroupPositionsV
 import { BracketTree } from './components/knockout-stage/BracketTree';
 import { ThirdPlaceSelection } from './components/shared/ThirdPlaceSelection';
 import { OnboardingModal } from './components/shared/OnboardingModal';
+import { TutorialOverlay } from './components/shared/TutorialOverlay';
 import { AwardsView } from './components/awards/AwardsView';
 import { SummaryView } from './components/summary/SummaryView';
 import { TournamentXIView } from './components/tournament-xi/TournamentXIView';
@@ -65,6 +66,7 @@ const AppShell = () => {
       <ErrorBoundary>
         <AppContentWrapper />
         <ThirdPlaceSelection />
+        <TutorialOverlay />
         <OnboardingModal />
         {isAuthModalOpen && <AuthModal />}
       </ErrorBoundary>

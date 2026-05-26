@@ -75,18 +75,21 @@ export const Header: React.FC = () => {
                         <button
                             className={`tab-btn ${activeTab === 'GAMES' ? 'active' : ''}`}
                             onClick={() => setActiveTab('GAMES')}
+                            data-tutorial-id="tutorial-games"
                         >
                             Games
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'GROUP_POSITIONS' ? 'active' : ''}`}
                             onClick={() => setActiveTab('GROUP_POSITIONS')}
+                            data-tutorial-id="tutorial-group-positions"
                         >
                             Positions
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'BRACKET' ? 'active' : ''}`}
                             onClick={() => setActiveTab('BRACKET')}
+                            data-tutorial-id="tutorial-bracket"
                         >
                             Bracket
                         </button>
@@ -161,6 +164,7 @@ export const Header: React.FC = () => {
                         className="help-icon-btn"
                         onClick={() => setHelpModalOpen(true)}
                         title="How to use"
+                        data-tutorial-id="tutorial-help"
                     >
                         ?
                     </button>

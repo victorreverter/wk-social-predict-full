@@ -43,6 +43,7 @@ export const MobileBottomNav: React.FC = () => {
                         ].filter(Boolean).join(' ')}
                         onClick={() => setActiveTab(item.tab)}
                         title={isSummaryDimmed ? 'Complete all predictions to unlock' : item.label}
+                        data-tutorial-id={item.tab === 'GAMES' ? 'tutorial-games' : item.tab === 'GROUP_POSITIONS' ? 'tutorial-group-positions' : item.tab === 'BRACKET' ? 'tutorial-bracket' : undefined}
                     >
                         <span className="bottom-nav-icon">{item.icon}</span>
                         <span className="bottom-nav-label">{item.label}</span>

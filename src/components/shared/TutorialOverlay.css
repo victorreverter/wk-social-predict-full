@@ -1,0 +1,144 @@
+.tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1250;
+    pointer-events: all;
+}
+
+.tutorial-spotlight {
+    position: fixed;
+    z-index: 1251;
+    pointer-events: none;
+    border-radius: 10px;
+    box-shadow: 0 0 0 200vw rgba(0, 0, 0, 0.7);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tutorial-tooltip {
+    position: fixed;
+    z-index: 1252;
+    width: 280px;
+    max-width: calc(100vw - 32px);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 1.25rem 1.1rem 1rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    cursor: default;
+    pointer-events: all;
+}
+
+:root.light .tutorial-tooltip {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.tutorial-tooltip--center {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.tutorial-tooltip--arrow-left::before,
+.tutorial-tooltip--arrow-right::before,
+.tutorial-tooltip--arrow-bottom::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    transform: rotate(45deg);
+}
+
+.tutorial-tooltip--arrow-left::before {
+    left: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-right: none;
+    border-top: none;
+}
+
+.tutorial-tooltip--arrow-right::before {
+    right: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.tutorial-tooltip--arrow-bottom::before {
+    bottom: -7px;
+    left: 50%;
+    margin-left: -6px;
+    border-left: none;
+    border-top: none;
+}
+
+.tutorial-tooltip-step {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 0.5rem;
+}
+
+.tutorial-tooltip-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-family: var(--font-family-display);
+}
+
+.tutorial-tooltip-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.tutorial-tooltip-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.tutorial-skip-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    padding: 0.35rem 0.5rem;
+    transition: color 0.15s ease;
+}
+
+.tutorial-skip-btn:hover {
+    color: var(--text-secondary);
+}
+
+.tutorial-next-btn {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.45rem 1.25rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: var(--font-family-display);
+}
+
+.tutorial-next-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(213, 131, 255, 0.35);
+}
+
+@media (max-width: 480px) {
+    .tutorial-tooltip {
+        width: calc(100vw - 32px);
+    }
+}

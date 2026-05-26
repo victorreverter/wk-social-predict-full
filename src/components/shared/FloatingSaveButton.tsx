@@ -92,6 +92,7 @@ export const FloatingSaveButton: React.FC = () => {
                 onClick={saveAll}
                 disabled={saveStatus === 'saving'}
                 title={hasUnsavedChanges ? 'You have unsaved changes' : 'All predictions saved'}
+                data-tutorial-id="tutorial-save"
             >
                 {saveStatus === 'saving' ? '⏳' : justSaved ? '✓' : '💾'}
             </button>
