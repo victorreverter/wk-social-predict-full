@@ -125,6 +125,7 @@ export const TutorialOverlay: React.FC = () => {
         localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
         setVisible(false);
         setActiveTab('GAMES');
+        window.dispatchEvent(new Event('tutorial-complete'));
     };
 
     const advance = () => {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePredictorCompletion } from '../../hooks/usePredictorCompletion';
@@ -15,6 +15,17 @@ export const Header: React.FC = () => {
     const { activeTab, groupMatches, knockoutMatches, awards, tournamentXI, customGroupPositions } = state;
     const { isComplete } = usePredictorCompletion();
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [helpEnabled, setHelpEnabled] = useState(
+        () => localStorage.getItem('hasSeenOnboarding_v2') !== null
+    );
+
+    useEffect(() => {
+        const check = () => {
+            setHelpEnabled(localStorage.getItem('hasSeenOnboarding_v2') !== null);
+        };
+        window.addEventListener('onboarding-complete', check);
+        return () => window.removeEventListener('onboarding-complete', check);
+    }, []);
 
     const { overallPct, sections } = useMemo(() => {
         const gp = Object.keys(customGroupPositions).length;
@@ -46,6 +57,7 @@ export const Header: React.FC = () => {
     };
 
     const handleHelpClick = () => {
+        if (!helpEnabled) return;
         setHelpModalOpen(true);
         setDrawerOpen(false);
     };
@@ -162,9 +174,10 @@ export const Header: React.FC = () => {
 
                     <button
                         className="help-icon-btn"
-                        onClick={() => setHelpModalOpen(true)}
-                        title="How to use"
+                        onClick={() => helpEnabled && setHelpModalOpen(true)}
+                        title={helpEnabled ? "How to use" : "Complete the tutorial first"}
                         data-tutorial-id="tutorial-help"
+                        style={!helpEnabled ? { opacity: 0.35, cursor: 'default' } : undefined}
                     >
                         ?
                     </button>
@@ -338,6 +351,7 @@ export const Header: React.FC = () => {
                     <button
                         className="mobile-drawer-action-btn"
                         onClick={handleHelpClick}
+                        style={!helpEnabled ? { opacity: 0.35, pointerEvents: 'none' } : undefined}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>

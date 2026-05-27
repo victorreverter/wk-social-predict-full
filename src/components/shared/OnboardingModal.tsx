@@ -13,18 +13,36 @@ export const OnboardingModal: React.FC = () => {
     const trackRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const hasSeenOnboarding_v2 = localStorage.getItem('hasSeenOnboarding_v2');
-        if (!hasSeenOnboarding_v2) {
+        const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding_v2');
+        if (hasSeenOnboarding) return;
+
+        const hasSeenTutorial = localStorage.getItem('hasSeenTutorial_v1') === 'true';
+        if (hasSeenTutorial) {
             setIsVisible(true);
             setCurrentStep(0);
+            return;
         }
+
+        const handler = () => {
+            setIsVisible(true);
+            setCurrentStep(0);
+        };
+        window.addEventListener('tutorial-complete', handler);
+        return () => window.removeEventListener('tutorial-complete', handler);
     }, []);
+
+    useEffect(() => {
+        if (state.isHelpModalOpen) {
+            setCurrentStep(0);
+        }
+    }, [state.isHelpModalOpen]);
 
     const handleDismiss = useCallback(() => {
         localStorage.setItem('hasSeenOnboarding_v2', 'true');
         setIsVisible(false);
         setHelpModalOpen(false);
         setActiveTab('GAMES');
+        window.dispatchEvent(new Event('onboarding-complete'));
     }, [setHelpModalOpen, setActiveTab]);
 
     const goNext = useCallback(() => {
