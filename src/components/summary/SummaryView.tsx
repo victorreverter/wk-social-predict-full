@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { initialTeams } from '../../utils/data-init';
 import type { Match } from '../../types';
@@ -99,57 +99,9 @@ const KO_LABELS: Record<string, string> = {
     SF: 'Semi-Finals', '3RD': '🥉 Third Place Match', F: '🏆 Final',
 };
 
-type FormationConfig = {
-    name: string;
-    rows: {
-        rowClass: string;
-        slots: { dataKey: string; badge: string }[];
-    }[];
-};
-
-const FORMATIONS: Record<string, FormationConfig> = {
-    '4-2-3-1': {
-        name: '4-2-3-1',
-        rows: [
-            { rowClass: 'st', slots: [{ dataKey: 'FP1', badge: 'ST' }] },
-            { rowClass: 'am', slots: [{ dataKey: 'FP2', badge: 'LAM' }, { dataKey: 'FP3', badge: 'CAM' }, { dataKey: 'FP4', badge: 'RAM' }] },
-            { rowClass: 'dm', slots: [{ dataKey: 'FP5', badge: 'LDM' }, { dataKey: 'FP6', badge: 'RDM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
-            { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
-        ]
-    },
-    '4-3-3': {
-        name: '4-3-3',
-        rows: [
-            { rowClass: 'fwd', slots: [{ dataKey: 'FP1', badge: 'LW' }, { dataKey: 'FP2', badge: 'ST' }, { dataKey: 'FP3', badge: 'RW' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'FP4', badge: 'LCM' }, { dataKey: 'FP5', badge: 'CM' }, { dataKey: 'FP6', badge: 'RCM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
-            { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
-        ]
-    },
-    '4-4-2': {
-        name: '4-4-2',
-        rows: [
-            { rowClass: 'fwd-2', slots: [{ dataKey: 'FP1', badge: 'ST' }, { dataKey: 'FP2', badge: 'ST' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'FP3', badge: 'LM' }, { dataKey: 'FP4', badge: 'CM' }, { dataKey: 'FP5', badge: 'CM' }, { dataKey: 'FP6', badge: 'RM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'FP7', badge: 'LB' }, { dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'RCB' }, { dataKey: 'FP10', badge: 'RB' }] },
-            { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
-        ]
-    },
-    '3-5-2': {
-        name: '3-5-2',
-        rows: [
-            { rowClass: 'fwd-2', slots: [{ dataKey: 'FP1', badge: 'ST' }, { dataKey: 'FP2', badge: 'ST' }] },
-            { rowClass: 'mid', slots: [{ dataKey: 'FP3', badge: 'LM' }, { dataKey: 'FP4', badge: 'LCM' }, { dataKey: 'FP5', badge: 'CAM' }, { dataKey: 'FP6', badge: 'RCM' }, { dataKey: 'FP7', badge: 'RM' }] },
-            { rowClass: 'def', slots: [{ dataKey: 'FP8', badge: 'LCB' }, { dataKey: 'FP9', badge: 'CB' }, { dataKey: 'FP10', badge: 'RCB' }] },
-            { rowClass: 'gk', slots: [{ dataKey: 'GK', badge: 'GK' }] },
-        ]
-    }
-};
-
 export const SummaryView: React.FC = () => {
     const { state } = useApp();
-    const { knockoutMatches, awards, tournamentXI, customGroupPositions } = state;
+    const { knockoutMatches, awards, customGroupPositions } = state;
 
     // Progression
     const classified32 = getTeamsInStage('R32', knockoutMatches);
@@ -176,9 +128,6 @@ export const SummaryView: React.FC = () => {
         });
         return result;
     }, [knockoutMatches]);
-
-    const [selectedFormation, setSelectedFormation] = useState<string>('4-2-3-1');
-    const activeFormation = FORMATIONS[selectedFormation];
 
     return (
         <div className="summary-view fade-in">
@@ -274,14 +223,6 @@ export const SummaryView: React.FC = () => {
                             <li><span>🏆 MVP:</span> <strong>{awards.goldenBall}</strong></li>
                             <li><span>⚽ Top Scorer:</span> <strong>{awards.goldenBoot}</strong></li>
                             <li><span>🧤 Best Goalkeeper:</span> <strong>{awards.goldenGlove}</strong></li>
-                            <li><span>⭐ Young Player:</span> <strong>{awards.fifaYoungPlayer}</strong></li>
-                            <li><span>🤝 Fair Play Team:</span> <strong>{awards.fifaFairPlay}</strong></li>
-                            <li><span>🥈 Silver Ball:</span> <strong>{awards.silverBall}</strong></li>
-                            <li><span>🥉 Bronze Ball:</span> <strong>{awards.bronzeBall}</strong></li>
-                            <li><span>👟 Silver Boot:</span> <strong>{awards.silverBoot}</strong></li>
-                            <li><span>👞 Bronze Boot:</span> <strong>{awards.bronzeBoot}</strong></li>
-                            <li><span>🟨 Most Yellow Cards:</span> <strong>{awards.mostYellowCards}</strong></li>
-                            <li><span>🟥 Most Red Cards:</span> <strong>{awards.mostRedCards}</strong></li>
                         </ul>
                     </div>
                 </div>
@@ -302,66 +243,6 @@ export const SummaryView: React.FC = () => {
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Team of the Tournament ── */}
-            <div className="summary-section xi-summary-section glass-panel">
-                <h3>⚽ Your Team of the Tournament</h3>
-                <p className="section-desc">Your ultimate XI selection in a {selectedFormation} formation.</p>
-                
-                <div className="formation-selector">
-                    {Object.keys(FORMATIONS).map(fmt => (
-                        <button 
-                            key={fmt} 
-                            className={`formation-btn ${selectedFormation === fmt ? 'active' : ''}`}
-                            onClick={() => setSelectedFormation(fmt)}
-                        >
-                            {fmt}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="xi-summary-field-wrap">
-                    {/* SVG pitch (background + lines) */}
-                    <svg
-                        className="xi-summary-field-svg"
-                        viewBox="0 0 400 500"
-                        preserveAspectRatio="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <rect x="2" y="2" width="396" height="496" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="3" rx="8" />
-                        <line x1="2" y1="250" x2="398" y2="250" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <circle cx="200" cy="250" r="60" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <circle cx="200" cy="250" r="4" fill="rgba(255,255,255,0.8)" />
-                        <rect x="90" y="2" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <rect x="145" y="2" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <circle cx="200" cy="72" r="3" fill="rgba(255,255,255,0.8)" />
-                        <path d="M 155 92 A 55 55 0 0 0 245 92" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <rect x="90" y="408" width="220" height="90" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <rect x="145" y="463" width="110" height="35" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                        <circle cx="200" cy="428" r="3" fill="rgba(255,255,255,0.8)" />
-                        <path d="M 155 408 A 55 55 0 0 1 245 408" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                    </svg>
-
-                    {/* Players layout */}
-                    <div className="xi-summary-players">
-                        {activeFormation.rows.map(({ rowClass, slots }, rowIndex) => (
-                            <div key={`${rowClass}-${rowIndex}`} className={`xi-summary-row xi-row-${rowClass}`}>
-                                {slots.map(({ dataKey, badge }, slotIndex) => (
-                                    <div key={`${dataKey}-${slotIndex}`} className="xi-summary-slot">
-                                        <div className="xi-summary-shirt">
-                                            <div className="xi-shirt-icon" />
-                                            <span className="xi-pos-badge">{badge}</span>
-                                        </div>
-                                        <span className="xi-player-label">
-                                            {tournamentXI[dataKey] || '—'}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
                     </div>
                 </div>
             </div>

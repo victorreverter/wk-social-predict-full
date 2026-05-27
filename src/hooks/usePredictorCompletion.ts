@@ -11,7 +11,8 @@ export const usePredictorCompletion = () => {
         const isFinalFinished = knockoutMatches['m104']?.status === 'FINISHED';
 
         // 2. Check if all awards are filled out (non-empty strings).
-        const areAwardsFilled = Object.values(awards).every((value) => value.trim() !== '');
+        const visibleAwards = ['goldenBall', 'goldenBoot', 'goldenGlove'];
+        const areAwardsFilled = visibleAwards.every(k => (awards[k as keyof typeof awards] || '').trim() !== '');
 
         return {
             isComplete: isFinalFinished,

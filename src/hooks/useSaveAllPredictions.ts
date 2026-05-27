@@ -241,16 +241,32 @@ export const useSaveAllPredictions = () => {
             const hasError = results.some(r => r.error);
             if (hasError) {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
+                const msg = errors.map(e => e.error?.message || String(e.error) || String(e.status)).join('; ');
                 logger.error('Save predictions failed', errors);
-                setAlert('error', 'Failed to save. Check console for details.');
-                addToast('Failed to save predictions. Please try again.', 'error');
+                setAlert('error', `Save failed: ${msg}`);
+                addToast(`Save failed: ${msg}`, 'error');
             } else {
-                await withRetry(() => scoreMatches(session.user.id));
-                await withRetry(() => scoreKnockout(session.user.id));
-                await withRetry(() => scoreAwards(session.user.id));
-                await withRetry(() => scoreXI(session.user.id));
-                await withRetry(() => scoreGroupPositions(session.user.id));
-                await withRetry(() => scoreEredivisie(session.user.id));
+                const scorable: { label: string; fn: () => Promise<any> }[] = [
+                    { label: 'Matches', fn: () => scoreMatches(session.user.id) },
+                    { label: 'Bracket', fn: () => scoreKnockout(session.user.id) },
+                    { label: 'Awards', fn: () => scoreAwards(session.user.id) },
+                    { label: 'XI', fn: () => scoreXI(session.user.id) },
+                    { label: 'Positions', fn: () => scoreGroupPositions(session.user.id) },
+                    { label: 'Eredivisie', fn: () => scoreEredivisie(session.user.id) },
+                ];
+                let scoringError: string | null = null;
+                for (const { label, fn } of scorable) {
+                    try {
+                        await withRetry(() => (fn as () => Promise<any>)());
+                    } catch (err: any) {
+                        logger.error(`Score ${label} error`, err);
+                        scoringError = (scoringError ? scoringError + '; ' : '') + `${label}: ${err.message}`;
+                    }
+                }
+                if (scoringError) {
+                    setAlert('error', `Scoring error: ${scoringError}`);
+                    addToast(`Scoring error: ${scoringError}`, 'error');
+                }
 
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 

@@ -122,7 +122,7 @@ export const OnboardingModal: React.FC = () => {
                                 </h2>
                                 <p className="onboarding-intro">
                                     Browse the daily match schedule, predict group &amp; knockout games for bonus points,
-                                    pick awards, and build your Best XI.
+                                    and pick the tournament's top awards.
                                     Every prediction earns points — compete on the global leaderboard.
                                 </p>
                             </div>
@@ -141,7 +141,6 @@ export const OnboardingModal: React.FC = () => {
                                             <span className="mock-tab">Positions</span>
                                             <span className="mock-tab">Bracket</span>
                                             <span className="mock-tab">Awards</span>
-                                            <span className="mock-tab">XI</span>
                                             <span className="mock-tab">Summary</span>
                                             <span className="mock-tab">Leader</span>
                                         </div>
@@ -151,7 +150,7 @@ export const OnboardingModal: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="onboarding-mock-caption">
-                                        The <strong>progress ring</strong> tracks your prediction completion across Positions, Bracket, Awards, and XI so you always know how far you are.
+                                        The <strong>progress ring</strong> tracks your prediction completion across Positions, Bracket, and Awards so you always know how far you are.
                                     </p>
                                     <p className="onboarding-layout-text" style={{marginTop: '0.5rem'}}>
                                         <span className="mock-fab-icon mock-fab-green">💾</span>
@@ -166,7 +165,6 @@ export const OnboardingModal: React.FC = () => {
                                         <span className="mock-nav-icon">⚽</span>
                                         <span className="mock-nav-icon">⚔</span>
                                         <span className="mock-nav-icon">🏅</span>
-                                        <span className="mock-nav-icon">⭐</span>
                                         <span className="mock-nav-icon">📝</span>
                                         <span className="mock-nav-icon">🏆</span>
                                     </div>
@@ -232,8 +230,8 @@ export const OnboardingModal: React.FC = () => {
                                         <div className="onboarding-flow-step">
                                             <span className="flow-step-icon">🎖️</span>
                                             <div className="flow-step-body">
-                                                <strong>Awards &amp; Best XI</strong>
-                                                <span>Predict 11 FIFA award winners + the Tournament's Best XI</span>
+                                                <strong>Awards</strong>
+                                                <span>Predict Golden Ball, Golden Boot &amp; Golden Glove</span>
                                             </div>
                                         </div>
                                     </div>
@@ -312,35 +310,17 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 5: Points — Awards & XI ───────── */}
+                        {/* ── Step 5: Points — Awards ────────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
-                                <h3 className="onboarding-section-title">Points — Awards &amp; Best XI</h3>
+                                <h3 className="onboarding-section-title">Points — Awards</h3>
 
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">🏅 Awards</h4>
                                     <div className="onboarding-points-rows">
                                         <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Major awards (Ball, Boot, Glove)</span>
+                                            <span className="onboarding-points-label">Golden Ball, Golden Boot, Golden Glove</span>
                                             <span className="onboarding-points-value">10 pts each</span>
-                                        </div>
-                                        <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Other awards</span>
-                                            <span className="onboarding-points-value">5 pts each</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="onboarding-points-card">
-                                    <h4 className="onboarding-points-card-title">👕 Tournament Best XI</h4>
-                                    <div className="onboarding-points-rows">
-                                        <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Correct Goalkeeper</span>
-                                            <span className="onboarding-points-value">5 pts</span>
-                                        </div>
-                                        <div className="onboarding-points-row">
-                                            <span className="onboarding-points-label">Correct Field Player (any of 10)</span>
-                                            <span className="onboarding-points-value">3 pts each</span>
                                         </div>
                                     </div>
                                 </div>
@@ -348,7 +328,7 @@ export const OnboardingModal: React.FC = () => {
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">💡 How You Score</h4>
                                     <p className="onboarding-leaderboard-text">
-                                        Your total combines Group Positions + Bracket + Games Bonus + Awards + Best XI points.
+                                        Your total combines Group Positions + Bracket + Games Bonus + Awards points.
                                         The leaderboard updates live as official results come in.
                                     </p>
                                 </div>
@@ -416,7 +396,7 @@ export const OnboardingModal: React.FC = () => {
                                     Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Bracket.
                                 </p>
                                 <div className="onboarding-max-score">
-                                    🏅 Maximum possible score: ~570  points (plus Games bonus)
+                                    🏅 Maximum possible score: ~475  points (plus Games bonus)
                                 </div>
                             </div>
                         </div>

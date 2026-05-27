@@ -12,7 +12,7 @@ export const Header: React.FC = () => {
 
     const { state, setActiveTab, setHelpModalOpen } = useApp();
     const { profile, user, signOut, openAuthModal, isLocked, isTestModeEnabled } = useAuth();
-    const { activeTab, groupMatches, knockoutMatches, awards, tournamentXI, customGroupPositions } = state;
+    const { activeTab, knockoutMatches, awards, customGroupPositions } = state;
     const { isComplete } = usePredictorCompletion();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [helpEnabled, setHelpEnabled] = useState(
@@ -32,24 +32,22 @@ export const Header: React.FC = () => {
         const gpTotal = 12;
         const km = Object.values(knockoutMatches).filter(m => m.status === 'FINISHED').length;
         const kmTotal = Object.keys(knockoutMatches).length;
-        const aw = Object.values(awards).filter(v => v.trim()).length;
-        const awTotal = Object.keys(awards).length;
-        const xi = Object.values(tournamentXI).filter(v => v.trim()).length;
-        const xiTotal = Object.keys(tournamentXI).length;
+        const awKeys = ['goldenBall', 'goldenBoot', 'goldenGlove'];
+        const aw = awKeys.filter(k => awards[k as keyof typeof awards]?.trim()).length;
+        const awTotal = awKeys.length;
 
         const sections: SectionStat[] = [
             { label: 'Positions', done: gp, total: gpTotal },
             { label: 'Bracket', done: km, total: kmTotal },
             { label: 'Awards', done: aw, total: awTotal },
-            { label: 'XI', done: xi, total: xiTotal },
         ];
 
-        const totalDone = gp + km + aw + xi;
-        const totalAll = gpTotal + kmTotal + awTotal + xiTotal;
+        const totalDone = gp + km + aw;
+        const totalAll = gpTotal + kmTotal + awTotal;
         const overallPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
 
         return { overallPct, sections };
-    }, [groupMatches, knockoutMatches, awards, tournamentXI, customGroupPositions]);
+    }, [knockoutMatches, awards, customGroupPositions]);
 
     const handleTabClick = (tab: ViewTab) => {
         setActiveTab(tab);
@@ -110,12 +108,6 @@ export const Header: React.FC = () => {
                             onClick={() => setActiveTab('AWARDS')}
                         >
                             Awards
-                        </button>
-                        <button
-                            className={`tab-btn ${activeTab === 'TOURNAMENT_XI' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('TOURNAMENT_XI')}
-                        >
-                            XI
                         </button>
                         <button
                             className={`tab-btn summary-btn ${!isComplete ? 'tab-btn-dimmed' : ''} ${activeTab === 'SUMMARY' ? 'active' : ''}`}

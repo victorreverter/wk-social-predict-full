@@ -15,7 +15,6 @@ const NAV_ITEMS: NavItem[] = [
     { tab: 'GROUP_POSITIONS', label: 'Positions', icon: '⚽' },
     { tab: 'BRACKET', label: 'Bracket', icon: '⚔' },
     { tab: 'AWARDS', label: 'Awards', icon: '🏅' },
-    { tab: 'TOURNAMENT_XI', label: 'XI', icon: '⭐' },
     { tab: 'SUMMARY', label: 'Summary', icon: '📝' },
     { tab: 'LEADERBOARD', label: 'Rank', icon: '🏆' },
 ];

@@ -5,16 +5,8 @@ import './AwardsView.css';
 
 const AWARD_CATEGORIES: { key: keyof AwardsState; label: string; icon: string; shortPlaceholder: string }[] = [
     { key: 'goldenBall', label: 'Golden Ball (MVP)', icon: '🏆', shortPlaceholder: 'Predict MVP' },
-    { key: 'silverBall', label: 'Silver Ball', icon: '🥈', shortPlaceholder: 'Predict Silver Ball' },
-    { key: 'bronzeBall', label: 'Bronze Ball', icon: '🥉', shortPlaceholder: 'Predict Bronze Ball' },
     { key: 'goldenBoot', label: 'Golden Boot (Top Scorer)', icon: '⚽', shortPlaceholder: 'Predict Top Scorer' },
-    { key: 'silverBoot', label: 'Silver Boot', icon: '👟', shortPlaceholder: 'Predict Silver Boot' },
-    { key: 'bronzeBoot', label: 'Bronze Boot', icon: '👞', shortPlaceholder: 'Predict Bronze Boot' },
     { key: 'goldenGlove', label: 'Golden Glove (Best GK)', icon: '🧤', shortPlaceholder: 'Predict Best GK' },
-    { key: 'fifaYoungPlayer', label: 'Young Player Award', icon: '⭐', shortPlaceholder: 'Predict Young Player' },
-    { key: 'mostYellowCards', label: 'Most Yellow Cards (Player)', icon: '🟨', shortPlaceholder: 'Predict Player' },
-    { key: 'mostRedCards', label: 'Most Red Cards (Player)', icon: '🟥', shortPlaceholder: 'Predict Player' },
-    { key: 'fifaFairPlay', label: 'Fair Play Award (Team)', icon: '🤝', shortPlaceholder: 'Predict Fair Play Team' },
 ];
 
 export const AwardsView: React.FC = () => {

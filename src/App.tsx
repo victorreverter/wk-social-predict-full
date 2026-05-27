@@ -10,7 +10,7 @@ import { OnboardingModal } from './components/shared/OnboardingModal';
 import { TutorialOverlay } from './components/shared/TutorialOverlay';
 import { AwardsView } from './components/awards/AwardsView';
 import { SummaryView } from './components/summary/SummaryView';
-import { TournamentXIView } from './components/tournament-xi/TournamentXIView';
+
 import { AuthModal } from './components/auth/AuthModal';
 import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
@@ -37,7 +37,6 @@ const MainContent = () => {
       {state.activeTab === 'GROUP_POSITIONS'  && <GroupPositionsView />}
       {state.activeTab === 'BRACKET'       && <BracketTree />}
       {state.activeTab === 'AWARDS'        && <AwardsView />}
-      {state.activeTab === 'TOURNAMENT_XI' && <TournamentXIView />}
       {state.activeTab === 'SUMMARY'       && <SummaryView />}
       {state.activeTab === 'LEADERBOARD'   && <LeaderboardView />}
       {state.activeTab === 'ADMIN' && profile?.is_master && <AdminView />}
