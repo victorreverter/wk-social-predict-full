@@ -348,10 +348,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const setGroupPositions = (positions: CustomGroupPositions) => {
-        setState(prev => ({
-            ...prev,
-            customGroupPositions: positions
-        }));
+        setState(prev => {
+            const newKnockoutMatches = seedBracketFromPositions(
+                prev.knockoutMatches,
+                positions,
+                []
+            );
+            return {
+                ...prev,
+                customGroupPositions: positions,
+                knockoutMatches: newKnockoutMatches,
+                selectedThirds: [],
+            };
+        });
     };
 
     const autoFillGroupPositions = () => {
@@ -365,9 +374,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 newPositions[group] = teamIds;
             }
+            const newKnockoutMatches = seedBracketFromPositions(
+                prev.knockoutMatches,
+                newPositions,
+                []
+            );
             return {
                 ...prev,
-                customGroupPositions: newPositions
+                customGroupPositions: newPositions,
+                knockoutMatches: newKnockoutMatches,
+                selectedThirds: [],
             };
         });
     };
