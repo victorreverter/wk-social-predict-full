@@ -173,6 +173,15 @@ export const Header: React.FC = () => {
                     >
                         ?
                     </button>
+                    <button
+                        className="help-icon-btn tutorial-replay-btn"
+                        onClick={() => window.dispatchEvent(new Event('tutorial-reset'))}
+                        title="Replay the 5-step tutorial"
+                        style={!helpEnabled ? { opacity: 0.35, cursor: 'default' } : undefined}
+                        disabled={!helpEnabled}
+                    >
+                        🎓
+                    </button>
                     <ThemeToggle />
 
                     {isLocked && (

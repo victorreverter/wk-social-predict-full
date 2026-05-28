@@ -23,7 +23,7 @@ const STEPS = [
     {
         selector: '[data-tutorial-id="tutorial-save"]',
         title: 'Save Anytime',
-        text: 'Tap the floating save button to persist your predictions. It lives on every page.',
+        text: 'Tap the floating save button to persist your predictions. It lives on every page — but only appears once you sign in.',
     },
     {
         selector: '[data-tutorial-id="tutorial-help"]',
@@ -156,6 +156,24 @@ export const TutorialOverlay: React.FC = () => {
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current);
         };
+    }, []);
+
+    useEffect(() => {
+        const onReset = () => {
+            localStorage.removeItem(TUTORIAL_STORAGE_KEY);
+            setStep(0);
+            setTargetEl(null);
+            setSpotlight(null);
+            setTooltip(null);
+            setVisible(true);
+            const attempt = () => {
+                if (locate(0)) return;
+                timerRef.current = setTimeout(attempt, 250);
+            };
+            attempt();
+        };
+        window.addEventListener('tutorial-reset', onReset);
+        return () => window.removeEventListener('tutorial-reset', onReset);
     }, []);
 
     useEffect(() => {
