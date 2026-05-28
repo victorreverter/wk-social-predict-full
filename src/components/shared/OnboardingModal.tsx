@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import './OnboardingModal.css';
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 
 export const OnboardingModal: React.FC = () => {
     const { state, setHelpModalOpen, setActiveTab } = useApp();
@@ -239,10 +239,10 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 4: Points — Matches ─────────── */}
+                        {/* ── Step 4: Points — Matches, Bracket & Awards ── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
-                                <h3 className="onboarding-section-title">Points — Matches &amp; Bracket</h3>
+                                <h3 className="onboarding-section-title">Points — Matches, Bracket &amp; Awards</h3>
 
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">📊 Group Positions</h4>
@@ -307,13 +307,6 @@ export const OnboardingModal: React.FC = () => {
                                         A champion pick alone earns 2 + 5 + 10 + 15 + 20 + 25 = <strong>77 points</strong>
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* ── Step 5: Points — Awards ────────────── */}
-                        <div className="onboarding-step">
-                            <div className="onboarding-step-content">
-                                <h3 className="onboarding-section-title">Points — Awards</h3>
 
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">🏅 Awards</h4>
@@ -335,7 +328,7 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 6: Saving Your Predictions ──── */}
+                        {/* ── Step 5: Saving Your Predictions ──── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
                                 <h3 className="onboarding-section-title">Saving Your Predictions</h3>
@@ -387,7 +380,7 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 7: Rules & Ready ────────────── */}
+                        {/* ── Step 6: Rules & Ready ────────────── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content onboarding-step--center">
                                 <h3 className="onboarding-section-title">Rules</h3>
