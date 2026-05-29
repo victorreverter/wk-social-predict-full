@@ -58,6 +58,7 @@ export const GamesView: React.FC = () => {
 
   return (
     <div className="games-view">
+      <p className="games-subtitle">Predict match scores day by day — browse the full tournament calendar below.</p>
       <div className="games-scroller-wrapper glass-panel">
         <button
           className="games-today-btn"
