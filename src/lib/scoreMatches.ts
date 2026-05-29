@@ -29,6 +29,10 @@ const getOutcome = (home: number | null, away: number | null) => {
     return 'DRAW';
 };
 
+const isExactPred = (off: OfficialMatchRow, pred: PredMatchRow): boolean => {
+    return off.home_goals === pred.pred_home_goals && off.away_goals === pred.pred_away_goals;
+};
+
 export const scoreMatches = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
     // 1. Load Finished Official Matches
     const { data: official, error: offErr } = await supabase
@@ -85,19 +89,19 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
             }
         }
 
-        // Penalty Shootout Logic
+        // Penalty Shootout Logic — award exact score for correct penalty winner too
         if (off.went_to_pens) {
             const predIsDraw = predOutcome === 'DRAW';
-            // Note: Since standard groups don't have pens, this primarily triggers on knockout matches
-            if (predIsDraw) {
-                pts += ptsWentPens;
-            }
             
             const offPenWinner = getOutcome(off.home_penalties, off.away_penalties);
             const predPenWinner = getOutcome(pred.pred_home_pens, pred.pred_away_pens);
 
             if (offPenWinner !== null && offPenWinner !== 'DRAW' && offPenWinner === predPenWinner) {
                 pts += ptsPensWinner;
+                if (predIsDraw) pts += ptsWentPens;
+                if (!isExactPred(off, pred)) pts += ptsExact;
+            } else if (predIsDraw) {
+                pts += ptsWentPens;
             }
         }
 

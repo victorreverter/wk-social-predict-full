@@ -28,14 +28,16 @@ const stageLabel = (stage: string): string => {
 export const DailyMatchCard: React.FC<Props> = ({ match }) => {
   const { state, updateGroupMatchScore, updateKnockoutMatchScore } = useApp();
   const { isLocked: isMatchTimeLocked, formatted: lockCountdown, urgency } = useMatchLock(match);
-  const { officialMatches } = state;
+  const { officialMatches, officialKnockoutMatches } = state;
 
   const isKO = isMatchKnockout(match);
 
-  const homeTeam = initialTeams.find(t => t.id === match.homeTeamId)
-    || (match.homeTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: match.homeTeamId });
-  const awayTeam = initialTeams.find(t => t.id === match.awayTeamId)
-    || (match.awayTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: match.awayTeamId });
+  const displayMatch = isKO ? (officialKnockoutMatches[match.id] || match) : match;
+
+  const homeTeam = initialTeams.find(t => t.id === displayMatch.homeTeamId)
+    || (displayMatch.homeTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: displayMatch.homeTeamId });
+  const awayTeam = initialTeams.find(t => t.id === displayMatch.awayTeamId)
+    || (displayMatch.awayTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: displayMatch.awayTeamId });
 
   const isTiedKO = isKO
     && match.score.homeGoals !== null

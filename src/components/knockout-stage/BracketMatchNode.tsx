@@ -8,12 +8,15 @@ interface Props {
     match: Match;
     homeTeam?: Team;
     awayTeam?: Team;
+    readonly?: boolean;
 }
 
-export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam }) => {
+export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, awayTeam, readonly }) => {
     const { state, updateKnockoutMatchEasyResult, updateKnockoutMatchScore } = useApp();
     const { isLocked: isMatchTimeLocked, formatted: lockCountdown, urgency } = useMatchLock(match);
     const { mode, officialMatches } = state;
+
+    const isDisabled = readonly || isMatchTimeLocked;
 
     const handleEasyResult = (result: ResultType) => {
         updateKnockoutMatchEasyResult(match.id, result);
@@ -58,7 +61,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                                 title="Penalties"
                                 value={isHome ? (match.score?.homePenalties ?? '') : (match.score?.awayPenalties ?? '')}
                                 onChange={(e) => handleHardScoreChange(isHome ? 'home-pen' : 'away-pen', e.target.value)}
-                                disabled={isMatchTimeLocked}
+                                disabled={isDisabled}
                             />
                         )}
                         <input
@@ -68,7 +71,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             placeholder="-"
                             value={isHome ? (match.score?.homeGoals ?? '') : (match.score?.awayGoals ?? '')}
                             onChange={(e) => handleHardScoreChange(isHome ? 'home' : 'away', e.target.value)}
-                            disabled={isMatchTimeLocked}
+                            disabled={isDisabled}
                         />
                     </div>
                 ) : (
@@ -77,7 +80,7 @@ export const BracketMatchNode: React.FC<Props> = React.memo(({ match, homeTeam, 
                             className={`btn-easy-bracket ${match.result === (isHome ? 'HOME_WIN' : 'AWAY_WIN') ? 'active' : ''}`}
                             onClick={() => handleEasyResult(isHome ? 'HOME_WIN' : 'AWAY_WIN')}
                             title="Select Winner"
-                            disabled={isMatchTimeLocked}
+                            disabled={isDisabled}
                         >
                             W
                         </button>

@@ -90,6 +90,7 @@ export interface AppState {
   awards: AwardsState;
   tournamentXI: TournamentXIState;
   officialMatches: Record<string, OfficialMatch>;
+  officialKnockoutMatches: Record<string, Match>;
   customGroupPositions: CustomGroupPositions;
 }
 

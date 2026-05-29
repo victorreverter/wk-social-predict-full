@@ -10,10 +10,48 @@
     padding-bottom: 5rem;
 }
 
+.bracket-tree-wrapper.bracket-tree--tournament {
+    background: rgba(10, 10, 12, 0.8);
+}
+
 :root.light .bracket-tree-wrapper {
     background: rgba(221, 221, 221, 0.5);
     /* Close to #dddddd but translucent */
     box-shadow: inset 0 0 100px rgba(169, 0, 255, 0.02);
+}
+
+/* ── Bracket Mode Toggle ────────────────────────── */
+.bracket-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.bracket-mode-pill {
+    padding: 0.45rem 1.25rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font-family-display);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.bracket-mode-pill:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.bracket-mode-pill.active {
+    background: var(--color-primary);
+    color: #000;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(213, 131, 255, 0.4);
+    font-weight: 700;
 }
 
 .bracket-user-prediction-input-container {
@@ -80,6 +118,10 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .btn-export {

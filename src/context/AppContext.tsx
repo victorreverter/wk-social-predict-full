@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { AppState, PredictionMode, ViewTab, MatchScore, ResultType, Match, MatchStatus, Theme, AwardsState, OfficialMatch, CustomGroupPositions } from '../types';
 import { generateInitialGroupMatches, generateEredivisieMatches, getDefaultGroupPositions } from '../utils/data-init';
 import { generateInitialKnockoutMatches, updateKnockoutBracket, seedBracketFromPositions, propagateKnockoutWinners } from '../utils/bracket-logic';
+import { deriveOfficialKnockoutBracket } from '../utils/official-bracket';
 import { supabase } from '../lib/supabase';
 
 interface AppContextType {
@@ -73,6 +74,7 @@ const getFreshState = (): AppState => {
             FP9: '', FP10: ''
         },
         officialMatches: {},
+        officialKnockoutMatches: generateInitialKnockoutMatches(),
         customGroupPositions: getDefaultGroupPositions()
     };
 };
@@ -408,7 +410,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const loadOfficialMatches = (officialMatches: Record<string, OfficialMatch>) => {
-        setState(prev => ({ ...prev, officialMatches }));
+        setState(prev => ({
+            ...prev,
+            officialMatches,
+            officialKnockoutMatches: deriveOfficialKnockoutBracket(officialMatches),
+        }));
     };
 
     const contextValue = React.useMemo(() => ({

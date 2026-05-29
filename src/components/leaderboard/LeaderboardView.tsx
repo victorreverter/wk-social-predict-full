@@ -14,7 +14,6 @@ interface ProfileData {
     matches_pts: number;
     ko_pts: number;
     awa_pts: number;
-    xi_pts: number;
     total: number;
 }
 
@@ -74,10 +73,6 @@ export const LeaderboardView: React.FC = () => {
                 const awa_pts = (user.user_predictions_awards || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
-                const xi_pts = (user.user_predictions_xi || []).reduce(
-                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
-                );
-
                 return {
                     id: user.id,
                     username: user.username,
@@ -86,8 +81,7 @@ export const LeaderboardView: React.FC = () => {
                     matches_pts,
                     ko_pts,
                     awa_pts,
-                    xi_pts,
-                    total: matches_pts + ko_pts + awa_pts + xi_pts,
+                    total: matches_pts + ko_pts + awa_pts,
                 };
             });
 
@@ -294,7 +288,6 @@ export const LeaderboardView: React.FC = () => {
                                     <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
                                     <th className="th-score" title="Points from Bracket progressions">Knockout</th>
                                     <th className="th-score" title="Points from Awards">Awards</th>
-                                    <th className="th-score" title="Points from Tournament XI">XI</th>
                                     <th className="th-total">Total</th>
                                 </>
                             ) : (
@@ -362,7 +355,6 @@ export const LeaderboardView: React.FC = () => {
                                                 <td className="td-score">{(user as ProfileData).matches_pts}</td>
                                                 <td className="td-score">{(user as ProfileData).ko_pts}</td>
                                                 <td className="td-score">{(user as ProfileData).awa_pts}</td>
-                                                <td className="td-score">{(user as ProfileData).xi_pts}</td>
                                                 <td className="td-total">{user.total}</td>
                                             </>
                                         ) : (

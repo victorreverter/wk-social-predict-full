@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Match } from '../../types';
 import { BracketMatchNode } from './BracketMatchNode';
 import { useApp } from '../../context/AppContext';
@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { initialTeams } from '../../utils/data-init';
 import { exportBracketToImage } from '../../utils/export-image';
 import './BracketTree.css';
+
+type BracketMode = 'predictions' | 'tournament';
 
 const LEFT_STAGES = ['R32', 'R16', 'QF', 'SF'];
 const RIGHT_STAGES = ['SF', 'QF', 'R16', 'R32'];
@@ -38,9 +40,21 @@ export const BracketTree: React.FC = () => {
     const { state } = useApp();
     const { profile } = useAuth();
     const [userName, setUserName] = useState('');
-    const matchesList = Object.values(state.knockoutMatches);
+    const [bracketMode, setBracketMode] = useState<BracketMode>('predictions');
 
-    useEffect(() => {
+    const userMatches = useMemo(() =>
+        Object.values(state.knockoutMatches),
+        [state.knockoutMatches]
+    );
+
+    const officialMatches = useMemo(() =>
+        Object.values(state.officialKnockoutMatches),
+        [state.officialKnockoutMatches]
+    );
+
+    const matchesList = bracketMode === 'predictions' ? userMatches : officialMatches;
+
+    React.useEffect(() => {
         if (profile) {
             const displayName = profile.display_name || profile.username;
             if (displayName) {
@@ -75,7 +89,7 @@ export const BracketTree: React.FC = () => {
                         const awayTeam = initialTeams.find(t => t.id === match.awayTeamId);
                         return (
                             <div key={match.id} className={`match-connector-wrapper ${side}-connector`}>
-                                <BracketMatchNode match={match} homeTeam={homeTeam} awayTeam={awayTeam} />
+                                <BracketMatchNode match={match} homeTeam={homeTeam} awayTeam={awayTeam} readonly={bracketMode === 'tournament'} />
                             </div>
                         );
                     })}
@@ -105,29 +119,47 @@ export const BracketTree: React.FC = () => {
     const championId = getMatchWinner(finalMatch);
     const championTeam = championId !== 'TBD' ? initialTeams.find(t => t.id === championId) : undefined;
 
+    const isTournament = bracketMode === 'tournament';
+
     return (
         <div className="bracket-view-container">
-            <div className="bracket-actions">
-                <button className="btn-export" onClick={handleExport}>
-                    📸 Export Bracket
+            <div className="bracket-mode-toggle">
+                <button
+                    className={`bracket-mode-pill ${!isTournament ? 'active' : ''}`}
+                    onClick={() => setBracketMode('predictions')}
+                >
+                    My Predictions
+                </button>
+                <button
+                    className={`bracket-mode-pill ${isTournament ? 'active' : ''}`}
+                    onClick={() => setBracketMode('tournament')}
+                >
+                    Tournament
                 </button>
             </div>
 
-            <div className="bracket-tree-wrapper" id="bracket-export-target">
-                <div className="bracket-user-prediction-input-container">
-                    <div className="prediction-input-wrapper">
-                        <input
-                            type="text"
-                            className="user-prediction-input"
-                            placeholder="Enter Prediction Name..."
-                            value={userName}
-                            onChange={(e) => setUserName(e.target.value)}
-                            maxLength={40}
-                            autoComplete="off"
-                        />
+            {!isTournament && (
+                <div className="bracket-actions">
+                    <div className="bracket-user-prediction-input-container">
+                        <div className="prediction-input-wrapper">
+                            <input
+                                type="text"
+                                className="user-prediction-input"
+                                placeholder="Enter Prediction Name..."
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                maxLength={40}
+                                autoComplete="off"
+                            />
+                        </div>
                     </div>
+                    <button className="btn-export" onClick={handleExport}>
+                        📸 Export Knockout
+                    </button>
                 </div>
+            )}
 
+            <div className={`bracket-tree-wrapper ${isTournament ? 'bracket-tree--tournament' : ''}`} id="bracket-export-target">
                 <div className="bracket-scroll-container">
                     <div className="bracket-columns">
                         {LEFT_STAGES.map(stage => renderStageColumn(stage, 'left'))}

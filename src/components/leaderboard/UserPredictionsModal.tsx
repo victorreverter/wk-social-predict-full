@@ -58,14 +58,6 @@ const AWARD_LABELS: Record<string, string> = {
   mostYellowCards: 'Yellow Cards', mostRedCards: 'Red Cards', fifaFairPlay: 'Fair Play',
 };
 
-const XI_POSITIONS: Record<string, string> = {
-  GK: 'GK', FP1: 'FWD', FP2: 'FWD',
-  FP3: 'MID', FP4: 'MID', FP5: 'MID', FP6: 'MID',
-  FP7: 'DEF', FP8: 'DEF', FP9: 'DEF', FP10: 'DEF',
-};
-
-const SORTED_XI_KEYS = ['GK', 'FP7', 'FP8', 'FP9', 'FP10', 'FP3', 'FP4', 'FP5', 'FP6', 'FP1', 'FP2'];
-
 const MATCH_STAGE_MAP: Record<string, string> = {};
 for (let i = 1; i <= 72; i++) MATCH_STAGE_MAP[`m${i}`] = 'GROUP';
 for (let i = 73; i <= 88; i++) MATCH_STAGE_MAP[`m${i}`] = 'R32';
@@ -368,12 +360,6 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             <span className="points-card-label">Awards</span>
             <span className="points-card-sub">{stats.awardsHit} correct</span>
           </div>
-          <div className="points-card">
-            <span className="points-card-icon">👕</span>
-            <span className="points-card-val">{stats.xiPts}</span>
-            <span className="points-card-label">XI</span>
-            <span className="points-card-sub">{stats.xiHit} correct</span>
-          </div>
         </div>
 
         <div className="user-preds-body">
@@ -428,7 +414,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             <div className="group-standings-grid">
               {stats.groupStandings.map(({ group, standings }) => (
                 <div key={group} className="group-standings-block">
-                  <div className="group-standings-title">Group {group}</div>
+                    <div className="group-standings-title">Group {group}</div>
                   <table className="group-standings-table">
                     <tbody>
                       {standings.map((s, i) => {
@@ -440,7 +426,6 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
                               {team && <img src={`${import.meta.env.BASE_URL}flags/${team.code}.svg`} className="gs-flag" alt="" />}
                               <span>{team?.name || s.teamId}</span>
                             </td>
-                            <td className="gs-pts">{s.points} pts</td>
                           </tr>
                         );
                       })}
@@ -491,7 +476,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
           <div className="flat-section">
             <h3 className="flat-section-title">🎖️ Awards</h3>
             <div className="awards-list">
-              {pd.awards.map(a => (
+              {pd.awards.filter(a => ['goldenBall', 'goldenBoot', 'goldenGlove'].includes(a.category)).map(a => (
                 <div key={a.category} className="award-row">
                   <span className="award-cat">{AWARD_LABELS[a.category] || a.category}</span>
                   <span className="award-val">{a.value || '—'}</span>
@@ -500,28 +485,10 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
                   </span>
                 </div>
               ))}
-              {pd.awards.length === 0 && <span className="flat-empty">No award predictions made.</span>}
+              {pd.awards.filter(a => ['goldenBall', 'goldenBoot', 'goldenGlove'].includes(a.category)).length === 0 && <span className="flat-empty">No award predictions made.</span>}
             </div>
           </div>
 
-          {/* ── Tournament XI ── */}
-          <div className="flat-section">
-            <h3 className="flat-section-title">👕 Tournament XI</h3>
-            <div className="xi-list">
-              {SORTED_XI_KEYS.map(pos => {
-                const entry = pd.xi.find(x => x.position === pos);
-                return (
-                  <div key={pos} className="xi-row">
-                    <span className="xi-pos-badge">{XI_POSITIONS[pos] || pos}</span>
-                    <span className="xi-player">{entry?.player_name || '—'}</span>
-                    <span className={`xi-pts ${(entry?.pts_earned ?? 0) > 0 ? 'pts-correct' : ''}`}>
-                      {(entry?.pts_earned ?? 0) > 0 ? `+${entry?.pts_earned}` : '0'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
     </div>

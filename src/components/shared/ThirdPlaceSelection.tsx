@@ -63,7 +63,7 @@ export const ThirdPlaceSelection: React.FC = () => {
     const handleClose = () => {
         localStorage.setItem(THIRDS_DISMISSED_KEY, 'true');
         setThirdsModalDismissed(true);
-        setActiveTab('GAMES');
+        setActiveTab('GROUP_POSITIONS');
     };
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
