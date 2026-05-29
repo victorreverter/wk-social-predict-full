@@ -12,7 +12,7 @@ const STEPS = [
     },
     {
         selector: '[data-tutorial-id="tutorial-bracket"]',
-        title: 'Complete Your Bracket',
+        title: 'Complete Your Knockout',
         text: 'After positions, pick 8 third-placers and fill the knockout bracket \u2014 also before kickoff.',
     },
     {

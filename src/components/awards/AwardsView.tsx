@@ -6,7 +6,7 @@ import './AwardsView.css';
 const AWARD_CATEGORIES: { key: keyof AwardsState; label: string; icon: string; shortPlaceholder: string }[] = [
     { key: 'goldenBall', label: 'Golden Ball (MVP)', icon: '🏆', shortPlaceholder: 'Predict MVP' },
     { key: 'goldenBoot', label: 'Golden Boot (Top Scorer)', icon: '⚽', shortPlaceholder: 'Predict Top Scorer' },
-    { key: 'goldenGlove', label: 'Golden Glove (Best GK)', icon: '🧤', shortPlaceholder: 'Predict Best GK' },
+    { key: 'goldenGlove', label: 'Golden Glove (Best Goalkeeper)', icon: '🧤', shortPlaceholder: 'Predict Best Goalkeeper' },
 ];
 
 export const AwardsView: React.FC = () => {

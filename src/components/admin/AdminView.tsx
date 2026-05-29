@@ -54,7 +54,7 @@ const AWARD_CATEGORIES = [
     { key: 'goldenBoot',     label: 'Golden Boot (Top Scorer)',   icon: '⚽' },
     { key: 'silverBoot',     label: 'Silver Boot',                icon: '👟' },
     { key: 'bronzeBoot',     label: 'Bronze Boot',                icon: '👞' },
-    { key: 'goldenGlove',    label: 'Golden Glove (Best GK)',     icon: '🧤' },
+    { key: 'goldenGlove',    label: 'Golden Glove (Best Goalkeeper)',     icon: '🧤' },
     { key: 'fifaYoungPlayer',label: 'Young Player Award',         icon: '⭐' },
     { key: 'mostYellowCards',label: 'Most Yellow Cards (Player)', icon: '🟨' },
     { key: 'mostRedCards',   label: 'Most Red Cards (Player)',    icon: '🟥' },
@@ -557,7 +557,7 @@ export const AdminView: React.FC = () => {
                                         disabled={catSaving}
                                         title={isCatLocked ? `Unlock ${cat.replace(/_/g, ' ').toLowerCase()}` : `Lock ${cat.replace(/_/g, ' ').toLowerCase()}`}
                                     >
-                                        {catSaving ? '…' : isCatLocked ? '🔒' : '🔓'} {cat === 'GROUP_STAGE' ? 'Group' : cat === 'BRACKET' ? 'Bracket' : cat === 'AWARDS' ? 'Awards' : 'XI'}
+                                        {catSaving ? '…' : isCatLocked ? '🔒' : '🔓'} {cat === 'GROUP_STAGE' ? 'Group' : cat === 'BRACKET' ? 'Knockout' : cat === 'AWARDS' ? 'Awards' : 'XI'}
                                     </button>
                                 );
                             })}

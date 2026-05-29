@@ -186,7 +186,7 @@ export const SummaryView: React.FC = () => {
             <div className="summary-grid">
                 <div className="summary-col">
                     <div className="summary-section glass-panel">
-                        <h3>🏟️ Knockout Bracket — Match Results</h3>
+                        <h3>🏟️ Knockout — Match Results</h3>
                         {KO_ORDER.map(stage => {
                             const matches = bracketByRound[stage];
                             if (!matches || matches.length === 0) return null;

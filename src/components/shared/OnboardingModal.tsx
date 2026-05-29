@@ -139,7 +139,7 @@ export const OnboardingModal: React.FC = () => {
                                         <div className="mock-tabs">
                                             <span className="mock-tab active">Games</span>
                                             <span className="mock-tab">Positions</span>
-                                            <span className="mock-tab">Bracket</span>
+                                            <span className="mock-tab">Knockout</span>
                                             <span className="mock-tab">Awards</span>
                                             <span className="mock-tab">Summary</span>
                                             <span className="mock-tab">Leader</span>
@@ -150,7 +150,7 @@ export const OnboardingModal: React.FC = () => {
                                         </div>
                                     </div>
                                     <p className="onboarding-mock-caption">
-                                        The <strong>progress ring</strong> tracks your prediction completion across Positions, Bracket, and Awards so you always know how far you are.
+                                        The <strong>progress ring</strong> tracks your prediction completion across Positions, Knockout, and Awards so you always know how far you are.
                                     </p>
                                     <p className="onboarding-layout-text" style={{marginTop: '0.5rem'}}>
                                         <span className="mock-fab-icon mock-fab-green">💾</span>
@@ -203,7 +203,7 @@ export const OnboardingModal: React.FC = () => {
                                         <div className="onboarding-flow-step">
                                             <span className="flow-step-icon">⚔️</span>
                                             <div className="flow-step-body">
-                                                <strong>Bracket</strong>
+                                                <strong>Knockout</strong>
                                                 <span>Auto‑seeded from your positions &amp; thirds — R32 to Champ</span>
                                             </div>
                                         </div>
@@ -239,10 +239,10 @@ export const OnboardingModal: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Step 4: Points — Matches, Bracket & Awards ── */}
+                        {/* ── Step 4: Points — Matches, Knockout & Awards ── */}
                         <div className="onboarding-step">
                             <div className="onboarding-step-content">
-                                <h3 className="onboarding-section-title">Points — Matches, Bracket &amp; Awards</h3>
+                                <h3 className="onboarding-section-title">Points — Matches, Knockout &amp; Awards</h3>
 
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">📊 Group Positions</h4>
@@ -275,7 +275,7 @@ export const OnboardingModal: React.FC = () => {
                                 </div>
 
                                 <div className="onboarding-points-card">
-                                    <h4 className="onboarding-points-card-title">⚔️ Knockout Bracket</h4>
+                                    <h4 className="onboarding-points-card-title">⚔️ Knockout</h4>
                                     <p className="onboarding-points-hint">Per team reaching each round</p>
                                     <div className="onboarding-points-rows">
                                         <div className="onboarding-points-row">
@@ -321,7 +321,7 @@ export const OnboardingModal: React.FC = () => {
                                 <div className="onboarding-points-card">
                                     <h4 className="onboarding-points-card-title">💡 How You Score</h4>
                                     <p className="onboarding-leaderboard-text">
-                                        Your total combines Group Positions + Bracket + Games Bonus + Awards points.
+                                        Your total combines Group Positions + Knockout + Games Bonus + Awards points.
                                         The leaderboard updates live as official results come in.
                                     </p>
                                 </div>
@@ -386,7 +386,7 @@ export const OnboardingModal: React.FC = () => {
                                 <h3 className="onboarding-section-title">Rules</h3>
                                 <p className="onboarding-rules-text" style={{ marginTop: '0.25rem' }}>
                                     ⚠️ Matches lock 1 hour before kickoff. Once locked, predictions cannot be changed.
-                                    Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Bracket.
+                                    Keep an eye on the countdown badges across <strong>Games</strong>, Positions, and Knockout.
                                 </p>
                                 <div className="onboarding-max-score">
                                     🏅 Maximum possible score: ~475  points (plus Games bonus)

@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
 
         const sections: SectionStat[] = [
             { label: 'Positions', done: gp, total: gpTotal },
-            { label: 'Bracket', done: km, total: kmTotal },
+            { label: 'Knockout', done: km, total: kmTotal },
             { label: 'Awards', done: aw, total: awTotal },
         ];
 
@@ -101,7 +101,7 @@ export const Header: React.FC = () => {
                             onClick={() => setActiveTab('BRACKET')}
                             data-tutorial-id="tutorial-bracket"
                         >
-                            Bracket
+                            Knockout
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'AWARDS' ? 'active' : ''}`}
@@ -270,7 +270,7 @@ export const Header: React.FC = () => {
                         onClick={() => handleTabClick('BRACKET')}
                     >
                         <span className="mobile-drawer-nav-icon">⚔</span>
-                        <span className="mobile-drawer-nav-label">Bracket</span>
+                        <span className="mobile-drawer-nav-label">Knockout</span>
                     </button>
                     <button
                         className={`mobile-drawer-nav-item ${activeTab === 'AWARDS' ? 'active' : ''}`}

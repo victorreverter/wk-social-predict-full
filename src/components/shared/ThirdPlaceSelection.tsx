@@ -115,7 +115,7 @@ export const ThirdPlaceSelection: React.FC = () => {
                         disabled={localSelection.length !== 8}
                         onClick={handleSubmit}
                     >
-                        Confirm &amp; Generate Bracket
+                        Confirm &amp; Generate Knockout
                     </button>
                     <button className="btn-cancel" onClick={handleClose}>
                         Go Back to Positions

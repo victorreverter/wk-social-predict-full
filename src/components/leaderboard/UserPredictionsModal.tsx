@@ -54,7 +54,7 @@ interface Props {
 const AWARD_LABELS: Record<string, string> = {
   goldenBall: 'MVP', silverBall: 'Silver Ball', bronzeBall: 'Bronze Ball',
   goldenBoot: 'Top Scorer', silverBoot: 'Silver Boot', bronzeBoot: 'Bronze Boot',
-  goldenGlove: 'Best GK', fifaYoungPlayer: 'Young Player',
+  goldenGlove: 'Best Goalkeeper', fifaYoungPlayer: 'Young Player',
   mostYellowCards: 'Yellow Cards', mostRedCards: 'Red Cards', fifaFairPlay: 'Fair Play',
 };
 
@@ -359,7 +359,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
           <div className="points-card">
             <span className="points-card-icon">🏆</span>
             <span className="points-card-val">{stats.koPts}</span>
-            <span className="points-card-label">Bracket</span>
+            <span className="points-card-label">Knockout</span>
             <span className="points-card-sub">R16×{stats.koR16} QF×{stats.koQF} SF×{stats.koSF} F×{stats.koF}</span>
           </div>
           <div className="points-card">
@@ -453,7 +453,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
 
           {/* ── Bracket Match-by-Match ── */}
           <div className="flat-section">
-            <h3 className="flat-section-title">🏟️ Bracket — Match Results</h3>
+            <h3 className="flat-section-title">🏟️ Knockout — Match Results</h3>
             {KO_BRACKET_ORDER.map(stage => {
               const matches = stats.knockoutMatchesByRound[stage];
               if (!matches || matches.length === 0) return null;
