@@ -63,7 +63,7 @@ export const Header: React.FC = () => {
     return (
         <>
             <header className="app-header glass-panel">
-                <div className="header-logo">
+                <div className="header-logo" onClick={() => setActiveTab('GAMES')} style={{ cursor: 'pointer' }} title="Go to Games"> 
                     <img
                         src={`${import.meta.env.BASE_URL}${state.theme === 'light' ? '2026_FIFA_World_Cup_Dark_Logo.png' : '2026_FIFA_World_Cup_Light_Logo.png'}`}
                         alt="WC 2026 Logo"
