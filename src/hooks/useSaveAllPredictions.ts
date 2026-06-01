@@ -93,6 +93,7 @@ export const useSaveAllPredictions = () => {
         // Ensure profile exists for this user (auto-creates if missing)
         const { error: profileErr } = await supabase.rpc('ensure_profile', { target_id: session.user.id });
         if (profileErr) {
+            console.error('[saveAll] ensure_profile RPC failed:', profileErr);
             setAlert('error', 'Failed to verify account. Please sign in again.');
             setSaveStatus('error');
             return;
