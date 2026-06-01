@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { scoreEredivisie } from '../../lib/scoreEredivisie';
 import { EredivisieScoringPopup, isEredivisieScoringDismissed } from '../eredivisie/EredivisieScoringPopup';
 import { UserPredictionsModal } from './UserPredictionsModal';
 import './LeaderboardView.css';
@@ -14,6 +13,7 @@ interface ProfileData {
     matches_pts: number;
     ko_pts: number;
     awa_pts: number;
+    pos_pts: number;
     total: number;
 }
 
@@ -58,6 +58,7 @@ export const LeaderboardView: React.FC = () => {
                     user_predictions_matches (pts_earned),
                     user_predictions_knockout (pts_earned),
                     user_predictions_awards (pts_earned),
+                    user_group_positions (pts_earned),
                     user_predictions_xi (pts_earned)
                 `);
 
@@ -73,6 +74,12 @@ export const LeaderboardView: React.FC = () => {
                 const awa_pts = (user.user_predictions_awards || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
+                const pos_pts = (user.user_group_positions || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
+                const xi_pts = (user.user_predictions_xi || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
                 return {
                     id: user.id,
                     username: user.username,
@@ -81,7 +88,8 @@ export const LeaderboardView: React.FC = () => {
                     matches_pts,
                     ko_pts,
                     awa_pts,
-                    total: matches_pts + ko_pts + awa_pts,
+                    pos_pts,
+                    total: matches_pts + ko_pts + awa_pts + pos_pts + xi_pts,
                 };
             });
 
@@ -100,8 +108,6 @@ export const LeaderboardView: React.FC = () => {
         loadingRef.current = true;
         setError('');
         try {
-            await scoreEredivisie();
-
             const { data, error } = await supabase
                 .from('profiles')
                 .select(`
@@ -159,6 +165,7 @@ export const LeaderboardView: React.FC = () => {
             'user_predictions_matches',
             'user_predictions_knockout',
             'user_predictions_awards',
+            'user_group_positions',
             'user_predictions_xi',
         ];
 
@@ -194,7 +201,7 @@ export const LeaderboardView: React.FC = () => {
     }, [fetchWorldCupLeaderboard, fetchEredivisieLeaderboard]);
 
     const activeData = isWorldCup ? leaderboard : eredivisieLeaderboard;
-    const totalColSpan = isWorldCup ? 7 : 4;
+    const totalColSpan = isWorldCup ? 8 : 4;
 
     if (loading) {
         return (
@@ -288,6 +295,7 @@ export const LeaderboardView: React.FC = () => {
                                     <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
                                     <th className="th-score" title="Points from Bracket progressions">Knockout</th>
                                     <th className="th-score" title="Points from Awards">Awards</th>
+                                    <th className="th-score" title="Points from Group Positions">Pos</th>
                                     <th className="th-total">Total</th>
                                 </>
                             ) : (
@@ -355,6 +363,7 @@ export const LeaderboardView: React.FC = () => {
                                                 <td className="td-score">{(user as ProfileData).matches_pts}</td>
                                                 <td className="td-score">{(user as ProfileData).ko_pts}</td>
                                                 <td className="td-score">{(user as ProfileData).awa_pts}</td>
+                                                <td className="td-score">{(user as ProfileData).pos_pts}</td>
                                                 <td className="td-total">{user.total}</td>
                                             </>
                                         ) : (

@@ -4,6 +4,36 @@ import { groups, initialTeams, generateInitialGroupMatches } from '../utils/data
 import { calculateGroupStandings } from '../utils/standings';
 
 export const scoreGroupPositions = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
+    // Pre-tournament guard: count FINISHED group matches
+    const { data: matchCheck, error: matchCheckErr } = await supabase
+        .from('official_matches')
+        .select('match_id, status');
+
+    if (matchCheckErr) return { usersScored: 0, error: matchCheckErr.message };
+
+    const finishedGroupCount = (matchCheck || []).filter(m => {
+        const num = parseInt(m.match_id.slice(1), 10);
+        return !isNaN(num) && num <= 72 && m.status === 'FINISHED';
+    }).length;
+
+    if (finishedGroupCount === 0) {
+        let q = supabase.from('user_group_positions').select('id, user_id');
+        if (userId) q = q.eq('user_id', userId);
+        const { data: existing } = await q;
+        if (existing && existing.length > 0) {
+            await supabase
+                .from('user_group_positions')
+                .update({ pts_earned: 0 })
+                .in('id', existing.map(r => r.id));
+            const uids = [...new Set(existing.map(r => r.user_id))];
+            await Promise.all(uids.map(uid => recalculateUserPoints(uid)));
+            return { usersScored: uids.length };
+        }
+        return { usersScored: 0 };
+    }
+
+    if (finishedGroupCount < 72) return { usersScored: 0 };
+
     // 1. Try admin-confirmed official_group_positions first
     const { data: officialPosData, error: offPosErr } = await supabase
         .from('official_group_positions')
@@ -36,16 +66,15 @@ export const scoreGroupPositions = async (userId?: string): Promise<{ usersScore
         });
 
         officialPositions = {};
-        allGroupsDone = true;
-        groups.forEach(group => {
-            const standings = calculateGroupStandings(group, initialTeams, groupMatches);
-            const orderedIds = standings.map(s => s.teamId);
-            if (orderedIds.length >= 4) {
+        const actuallyFinished = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
+        allGroupsDone = actuallyFinished === 72;
+        if (allGroupsDone) {
+            groups.forEach(group => {
+                const standings = calculateGroupStandings(group, initialTeams, groupMatches);
+                const orderedIds = standings.map(s => s.teamId);
                 officialPositions[group] = orderedIds;
-            } else {
-                allGroupsDone = false;
-            }
-        });
+            });
+        }
     }
 
     if (!allGroupsDone) return { usersScored: 0 };
