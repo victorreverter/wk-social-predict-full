@@ -228,7 +228,16 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
 
     const allKoRows = hasStructure
       ? Object.values(baseKnockout)
-      : pd.matches.filter(mp => KO_BRACKET_ORDER.includes(MATCH_STAGE_MAP[mp.match_id] as any));
+      : Object.keys(bracket).map(matchId => {
+          const userPred = pd.matches.find(m => m.match_id === matchId);
+          return {
+            match_id: matchId,
+            pred_home_goals: userPred?.pred_home_goals ?? null,
+            pred_away_goals: userPred?.pred_away_goals ?? null,
+            pred_home_pens: userPred?.pred_home_pens ?? null,
+            pred_away_pens: userPred?.pred_away_pens ?? null,
+          };
+        });
 
     allKoRows.forEach((item: any) => {
       let mp: any;
