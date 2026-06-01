@@ -5,14 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/shared/Toast';
 import { logger } from '../lib/logger';
 
-import { scoreMatches } from '../lib/scoreMatches';
-import { scoreKnockout } from '../lib/scoreKnockout';
-import { scoreAwards } from '../lib/scoreAwards';
-import { scoreXI } from '../lib/scoreXI';
-import { scoreGroupPositions } from '../lib/scoreGroupPositions';
-import { scoreEredivisie } from '../lib/scoreEredivisie';
 import { rateLimiter } from '../lib/rateLimiter';
-import { withRetry } from '../lib/retry';
 import type { Match } from '../types';
 
 export const useSaveAllPredictions = () => {
@@ -262,28 +255,9 @@ export const useSaveAllPredictions = () => {
                 setAlert('error', `Save failed: ${msg}`);
                 addToast(`Save failed: ${msg}`, 'error');
             } else {
-                const scorable: { label: string; fn: () => Promise<any> }[] = [
-                    { label: 'Matches', fn: () => scoreMatches(session.user.id) },
-                    { label: 'Bracket', fn: () => scoreKnockout(session.user.id) },
-                    { label: 'Awards', fn: () => scoreAwards(session.user.id) },
-                    { label: 'XI', fn: () => scoreXI(session.user.id) },
-                    { label: 'Positions', fn: () => scoreGroupPositions(session.user.id) },
-                    { label: 'Eredivisie', fn: () => scoreEredivisie(session.user.id) },
-                ];
-                let scoringError: string | null = null;
-                for (const { label, fn } of scorable) {
-                    try {
-                        await withRetry(() => (fn as () => Promise<any>)());
-                    } catch (err: any) {
-                        logger.error(`Score ${label} error`, err);
-                        scoringError = (scoringError ? scoringError + '; ' : '') + `${label}: ${err.message}`;
-                    }
-                }
-                if (scoringError) {
-                    setAlert('error', `Scoring error: ${scoringError}`);
-                    addToast(`Scoring error: ${scoringError}`, 'error');
-                }
-
+                // Note: scoring is intentionally NOT triggered from the user save flow.
+                // Scoring belongs to the admin path (admin "Save match" / "Fetch API results")
+                // and to the auto-fetch cron. The user save only persists predictions.
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
                 const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + eredivisieRows.length + groupPositionsRows.length;

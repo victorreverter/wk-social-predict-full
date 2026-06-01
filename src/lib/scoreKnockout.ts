@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { recalculateUserPoints } from './scoreUtils';
 import { generateInitialGroupMatches } from '../utils/data-init';
-import { updateKnockoutBracket, determineQualifiedTeams } from '../utils/bracket-logic';
+import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../utils/bracket-logic';
 
 export const scoreKnockout = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
     // 1. Load Finished Official Matches
@@ -29,11 +29,44 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         }
     });
 
+    // ── Pre-tournament guard ─────────────────────────────────────────────────
+    // If no group match has been officially FINISHED yet, the knockout bracket
+    // does not exist. We must NOT fabricate a "R32 official set" from empty
+    // standings — that would award phantom points to users whose R32 prediction
+    // rows happen to match the fabricated team IDs.
+    const finishedGroupCount = Object.values(groupMatches)
+        .filter(m => m.status === 'FINISHED').length;
+
+    if (finishedGroupCount === 0) {
+        // Zero all KO points for the user(s) being scored and re-sum totals.
+        let q = supabase.from('user_predictions_knockout').select('id, user_id');
+        if (userId) q = q.eq('user_id', userId);
+        const { data: existing } = await q;
+        if (existing && existing.length > 0) {
+            await supabase
+                .from('user_predictions_knockout')
+                .update({ pts_earned: 0 })
+                .in('id', existing.map(r => r.id));
+            const uids = [...new Set(existing.map(r => r.user_id))];
+            await Promise.all(uids.map(uid => recalculateUserPoints(uid)));
+            return { usersScored: uids.length };
+        }
+        return { usersScored: 0 };
+    }
+
+    // R32 can only be considered "official" when ALL 72 group matches are FINISHED.
+    // Until then, no R32 points can be awarded.
+    const r32Official = finishedGroupCount === 72;
+
     const { best8Thirds } = determineQualifiedTeams(groupMatches);
     const thirdsIds = best8Thirds.map(t => t.teamId);
 
-    // Initial knockouts
-    let ko = updateKnockoutBracket({}, groupMatches, thirdsIds, true);
+    // Only seed R32 from group standings when we have the full group stage.
+    // This prevents the bracket-logic from fabricating team IDs when only a
+    // handful of group matches have been played.
+    let ko = r32Official
+        ? updateKnockoutBracket({}, groupMatches, thirdsIds, false)
+        : generateInitialKnockoutMatches();
     
     // Inject official KO scores
     Object.keys(ko).forEach(id => {
@@ -47,8 +80,10 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         }
     });
 
-    // Final mathematical propagation 
-    ko = updateKnockoutBracket(ko, groupMatches, thirdsIds, true);
+    // Final mathematical propagation (only when R32 is fully official)
+    if (r32Official) {
+        ko = updateKnockoutBracket(ko, groupMatches, thirdsIds, false);
+    }
 
     // 3. Extract mathematically precise official stage teams based off tournament progression
     const officialStages: Record<string, Set<string>> = {
@@ -80,6 +115,31 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
             }
         }
     });
+
+    // A round is "scorable" only when the previous round is fully FINISHED in
+    // official_matches. Otherwise users can only earn points for rounds whose
+    // results are actually known.
+    const finishedMatchCount = (roundMatchNums: number[]): boolean => {
+        return roundMatchNums.every(n => {
+            const om = omMap[`m${n}`];
+            return om && om.status === 'FINISHED' && om.home_goals !== null && om.away_goals !== null;
+        });
+    };
+
+    const r32Nums = Array.from({ length: 16 }, (_, i) => 73 + i);
+    const r16Nums = Array.from({ length: 8 },  (_, i) => 89 + i);
+    const qfNums  = Array.from({ length: 4 },  (_, i) => 97 + i);
+    const sfNums  = [101, 102];
+    const fNum    = 104;
+
+    if (!r32Official)                                  officialStages['R32'] = new Set();
+    if (!finishedMatchCount(r32Nums))                  officialStages['R16'] = new Set();
+    if (!finishedMatchCount(r16Nums))                  officialStages['QF']  = new Set();
+    if (!finishedMatchCount(qfNums))                   officialStages['SF']  = new Set();
+    if (!finishedMatchCount(sfNums) || !omMap[`m${fNum}`] || omMap[`m${fNum}`].status !== 'FINISHED') {
+        officialStages['F'] = new Set();
+        champion = '';
+    }
 
     // 4. Load Scoring Rules
     const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
