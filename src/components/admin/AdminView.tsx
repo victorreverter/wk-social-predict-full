@@ -15,7 +15,7 @@ import { fetchTournamentResults } from '../../lib/footballDataApi';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
-import { updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
+import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../../utils/bracket-logic';
 import { calculateGroupStandings } from '../../utils/standings';
 import type { Match, OfficialMatch } from '../../types';
 
@@ -228,6 +228,14 @@ export const AdminView: React.FC = () => {
                 fullGroupMatches[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
             }
         });
+
+        // No official group results yet — keep the entire knockout bracket as TBD.
+        // Slot labels (1A vs 2C, W.73, etc.) will be shown for every R32/R16/QF/SF/3RD/F match.
+        const hasAnyFinishedGroup = Object.values(fullGroupMatches).some(m => m.status === 'FINISHED');
+        if (!hasAnyFinishedGroup) {
+            setResolvedKo(generateInitialKnockoutMatches());
+            return;
+        }
 
         // Get thirds
         const { best8Thirds } = determineQualifiedTeams(fullGroupMatches);

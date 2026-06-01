@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 const API_KEY = Deno.env.get('FOOTBALL_DATA_API_KEY') || '924afe845f63492585fe21c0b58bafed';
 const COMPETITION_ID = '2000';
 const TOURNAMENT_START = '2026-06-11';
+const TOURNAMENT_END   = '2026-07-20';
 const SUPABASE_URL = 'https://xrgtoduqrrmfmyxduhab.supabase.co';
 
 interface RequestBody {
@@ -36,8 +37,28 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     const body: RequestBody = await req.json().catch(() => ({}));
-    const dateFrom = body.dateFrom || TOURNAMENT_START;
-    const dateTo = body.dateTo || new Date().toISOString().substring(0, 10);
+    const today = new Date().toISOString().substring(0, 10);
+    const requestedFrom = body.dateFrom || TOURNAMENT_START;
+    const requestedTo   = body.dateTo   || today;
+
+    // Tournament-window guard. The World Cup 2026 runs June 11 – July 19.
+    // Clamp the requested window to the tournament window so we don't burn API quota
+    // (or pick up wrong-season matches) when the cron fires on off-days.
+    const dateFrom = requestedFrom < TOURNAMENT_START ? TOURNAMENT_START : requestedFrom;
+    const dateTo   = requestedTo   > TOURNAMENT_END   ? TOURNAMENT_END   : requestedTo;
+
+    if (dateFrom > dateTo) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          updated: 0,
+          message: `Outside tournament window (${TOURNAMENT_START} → ${TOURNAMENT_END}); skipped.`,
+          dateFrom,
+          dateTo,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const apiUrl = `https://api.football-data.org/v4/competitions/${COMPETITION_ID}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
     const startTime = Date.now();

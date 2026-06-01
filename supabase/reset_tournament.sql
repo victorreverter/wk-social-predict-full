@@ -80,12 +80,13 @@ begin
         return jsonb_build_object('success', false, 'message', 'Not authenticated.');
     end if;
 
-    delete from public.user_predictions_matches    where user_id = caller_id;
-    delete from public.user_predictions_knockout     where user_id = caller_id;
-    delete from public.user_predictions_awards       where user_id = caller_id;
-    delete from public.user_predictions_xi           where user_id = caller_id;
-    delete from public.user_predictions_eredivisie   where user_id = caller_id;
-    delete from public.user_group_positions          where user_id = caller_id;
+    delete from public.user_predictions_matches              where user_id = caller_id;
+    delete from public.user_predictions_knockout               where user_id = caller_id;
+    delete from public.user_predictions_knockout_structure     where user_id = caller_id;
+    delete from public.user_predictions_awards                 where user_id = caller_id;
+    delete from public.user_predictions_xi                     where user_id = caller_id;
+    delete from public.user_predictions_eredivisie             where user_id = caller_id;
+    delete from public.user_group_positions                    where user_id = caller_id;
 
     update public.profiles set total_points = 0 where id = caller_id;
 

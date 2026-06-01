@@ -6,11 +6,21 @@ import './GamesView.css';
 
 export const GamesView: React.FC = () => {
   const { state } = useApp();
-  const { groupMatches, knockoutMatches } = state;
+  const { groupMatches, officialKnockoutMatches } = state;
+
+  const filteredKnockout = useMemo(() => {
+    const result: Record<string, typeof officialKnockoutMatches[string]> = {};
+    for (const [id, m] of Object.entries(officialKnockoutMatches)) {
+      if (m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD') {
+        result[id] = m;
+      }
+    }
+    return result;
+  }, [officialKnockoutMatches]);
 
   const schedules = useMemo(
-    () => getDailySchedules(groupMatches, knockoutMatches),
-    [groupMatches, knockoutMatches]
+    () => getDailySchedules(groupMatches, filteredKnockout),
+    [groupMatches, filteredKnockout]
   );
 
   const todayIdx = useMemo(() => findTodayIndex(schedules), [schedules]);

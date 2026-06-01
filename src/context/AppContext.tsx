@@ -131,7 +131,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             };
 
-            const newKnockoutMatches = updateKnockoutBracket(prev.knockoutMatches, newGroupMatches, []);
+            const freshKo = generateInitialKnockoutMatches();
+            const newKnockoutMatches = updateKnockoutBracket(freshKo, newGroupMatches, []);
 
             return {
                 ...prev,
@@ -156,7 +157,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             };
 
-            const newKnockoutMatches = updateKnockoutBracket(prev.knockoutMatches, newGroupMatches, []);
+            const freshKo = generateInitialKnockoutMatches();
+            const newKnockoutMatches = updateKnockoutBracket(freshKo, newGroupMatches, []);
 
             return {
                 ...prev,
@@ -259,6 +261,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (error) throw error;
         if (!(data as any)?.success) throw new Error((data as any)?.message || 'Unknown error');
 
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+            try {
+                await supabase.from('user_predictions_knockout_structure').delete().eq('user_id', authData.user.id);
+            } catch (_) { /* table may not exist yet */ }
+        }
+
         setState(getFreshState());
         const { data: { user } } = await supabase.auth.getUser();
         window.dispatchEvent(new Event('leaderboard-refresh'));
@@ -276,7 +285,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const setSelectedThirds = (teamIds: string[]) => {
         setState(prev => {
-            const newKnockoutMatches = seedBracketFromPositions(prev.knockoutMatches, prev.customGroupPositions, teamIds);
+            const freshKo = generateInitialKnockoutMatches();
+            const newKnockoutMatches = seedBracketFromPositions(freshKo, prev.customGroupPositions, teamIds);
             return {
                 ...prev,
                 selectedThirds: teamIds,
@@ -340,7 +350,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 ...prev.customGroupPositions,
                 [group]: order
             };
-            const newKnockoutMatches = seedBracketFromPositions(prev.knockoutMatches, newPositions, prev.selectedThirds);
+            const freshKo = generateInitialKnockoutMatches();
+            const newKnockoutMatches = seedBracketFromPositions(freshKo, newPositions, prev.selectedThirds);
             return {
                 ...prev,
                 customGroupPositions: newPositions,
@@ -351,8 +362,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const setGroupPositions = (positions: CustomGroupPositions) => {
         setState(prev => {
+            const freshKo = generateInitialKnockoutMatches();
             const newKnockoutMatches = seedBracketFromPositions(
-                prev.knockoutMatches,
+                freshKo,
                 positions,
                 []
             );
@@ -376,8 +388,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 newPositions[group] = teamIds;
             }
+            const freshKo = generateInitialKnockoutMatches();
             const newKnockoutMatches = seedBracketFromPositions(
-                prev.knockoutMatches,
+                freshKo,
                 newPositions,
                 []
             );
@@ -393,18 +406,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const loadFullState = (newState: Partial<AppState>) => {
         setState(prev => {
             const nextState = { ...prev, ...newState };
-            
-            // In case we only load matches, we need to enforce the bracket logic 
-            // so we correctly re-map knockouts.
-            if (newState.groupMatches) {
-                nextState.knockoutMatches = updateKnockoutBracket(
-                    nextState.knockoutMatches, 
-                    nextState.groupMatches, 
-                    nextState.selectedThirds,
-                    true
+
+            const hasExplicitBracket = nextState.knockoutMatches
+                && Object.values(nextState.knockoutMatches).some(
+                    (m: Match) => m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD'
                 );
+
+            if (!hasExplicitBracket) {
+                const hasGroupMatchData = nextState.groupMatches
+                    && Object.values(nextState.groupMatches).some(
+                        (m: Match) => m.status === 'FINISHED' || m.result
+                    );
+
+                if (hasGroupMatchData && nextState.groupMatches) {
+                    nextState.knockoutMatches = updateKnockoutBracket(
+                        nextState.knockoutMatches,
+                        nextState.groupMatches,
+                        nextState.selectedThirds,
+                        true
+                    );
+                } else if (newState.customGroupPositions) {
+                    const allPositionsSet = Object.values(newState.customGroupPositions as Record<string, string[]>)
+                        .every(arr => arr && arr.length === 4);
+                    if (allPositionsSet) {
+                        nextState.knockoutMatches = seedBracketFromPositions(
+                            nextState.knockoutMatches,
+                            newState.customGroupPositions as Record<string, string[]>,
+                            nextState.selectedThirds || []
+                        );
+                    }
+                }
             }
-            
+
             return nextState;
         });
     };

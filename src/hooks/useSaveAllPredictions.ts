@@ -225,6 +225,19 @@ export const useSaveAllPredictions = () => {
                 order: order,
             }));
 
+            // 7. Knockout Bracket Full Structure (match-by-match topology)
+            const koStructureRows = Object.values(state.knockoutMatches).map(m => ({
+                user_id: session.user.id,
+                match_id: m.id,
+                pred_home_team_id: m.homeTeamId,
+                pred_away_team_id: m.awayTeamId,
+                pred_home_goals: m.score?.homeGoals ?? null,
+                pred_away_goals: m.score?.awayGoals ?? null,
+                pred_home_pens: m.score?.homePenalties ?? null,
+                pred_away_pens: m.score?.awayPenalties ?? null,
+                pred_status: m.status,
+            }));
+
             // Make the requests
             await supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id);
             const promises = [
@@ -236,8 +249,11 @@ export const useSaveAllPredictions = () => {
             if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
             if (eredivisieRows.length > 0) promises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
             if (groupPositionsRows.length > 0) promises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
-            
-            const results = await Promise.all(promises);
+            // Delete old structure first, THEN upsert (sequential — must not race)
+            await supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id);
+            const koStructPromise = supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' });
+
+            const results = await Promise.all([...promises, koStructPromise]);
             const hasError = results.some(r => r.error);
             if (hasError) {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));

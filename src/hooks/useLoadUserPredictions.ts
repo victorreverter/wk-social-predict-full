@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { determineQualifiedTeams } from '../utils/bracket-logic';
+import { determineQualifiedTeams, generateInitialKnockoutMatches } from '../utils/bracket-logic';
 
 export const useLoadUserPredictions = () => {
     const { session } = useAuth();
@@ -15,13 +15,14 @@ export const useLoadUserPredictions = () => {
 
         const loadPredictions = async () => {
             try {
-                const [matchesRes, koRes, awardsRes, xiRes, eredivisieRes, groupPosRes] = await Promise.all([
+                const [matchesRes, koRes, awardsRes, xiRes, eredivisieRes, groupPosRes, koStructRes] = await Promise.all([
                     supabase.from('user_predictions_matches').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_awards').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_xi').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_eredivisie').select('*').eq('user_id', session.user.id),
-                    supabase.from('user_group_positions').select('*').eq('user_id', session.user.id)
+                    supabase.from('user_group_positions').select('*').eq('user_id', session.user.id),
+                    supabase.from('user_predictions_knockout_structure').select('*').eq('user_id', session.user.id),
                 ]);
 
                 if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || eredivisieRes.error || groupPosRes.error) {
@@ -31,7 +32,11 @@ export const useLoadUserPredictions = () => {
                     return;
                 }
 
-                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && eredivisieRes.data.length === 0 && groupPosRes.data?.length === 0) {
+                if (koStructRes.error && import.meta.env.DEV) {
+                    console.warn('Knockout structure load skipped:', koStructRes.error.message);
+                }
+
+                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && eredivisieRes.data.length === 0 && groupPosRes.data?.length === 0 && (koStructRes.data?.length || 0) === 0) {
                     return;
                 }
 
@@ -52,13 +57,43 @@ export const useLoadUserPredictions = () => {
                 const loadedGroups = { ...state.groupMatches };
                 const loadedKo = { ...state.knockoutMatches };
 
+                // Restore full knockout bracket structure from DB if available
+                const koStructData = koStructRes.data as any[] | null;
+                if (koStructData && koStructData.length > 0) {
+                    const baseKo = generateInitialKnockoutMatches();
+                    koStructData.forEach((row: any) => {
+                        const id = row.match_id;
+                        if (baseKo[id]) {
+                            const hasScore = row.pred_home_goals !== null && row.pred_away_goals !== null;
+                            baseKo[id] = {
+                                ...baseKo[id],
+                                homeTeamId: row.pred_home_team_id || 'TBD',
+                                awayTeamId: row.pred_away_team_id || 'TBD',
+                                score: {
+                                    homeGoals: row.pred_home_goals,
+                                    awayGoals: row.pred_away_goals,
+                                    homePenalties: row.pred_home_pens,
+                                    awayPenalties: row.pred_away_pens,
+                                },
+                                status: row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED'),
+                                result: hasScore
+                                    ? (row.pred_home_goals > row.pred_away_goals ? 'HOME_WIN'
+                                        : row.pred_home_goals < row.pred_away_goals ? 'AWAY_WIN'
+                                        : 'DRAW')
+                                    : undefined,
+                            };
+                        }
+                    });
+                    Object.assign(loadedKo, baseKo);
+                }
+
+                // Also overlay match predictions (scores) on top of loaded structure
+                // (for backwards compatibility or additional data)
                 matchesRes.data.forEach((m: any) => {
                     const id = m.match_id;
                     if (loadedGroups[id]) {
                         loadedGroups[id] = buildMatchObj(m, loadedGroups[id]);
                     } else if (loadedKo[id]) {
-                        // For KO, the team IDs are dynamically assigned by Bracket Logic!
-                        // So we just update the score, result and status. 
                         loadedKo[id] = buildMatchObj(m, loadedKo[id]);
                     }
                 });

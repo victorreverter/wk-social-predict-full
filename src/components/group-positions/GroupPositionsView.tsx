@@ -10,12 +10,15 @@ export const GroupPositionsView: React.FC = () => {
   const { customGroupPositions } = state;
 
   const handleReset = async () => {
-    if (confirm('Reset all group positions to default order?')) {
+    if (confirm('Reset all group positions to default order? This will also clear your knockout bracket.')) {
       const defaults = getDefaultGroupPositions();
       setGroupPositions(defaults);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from('user_group_positions').delete().eq('user_id', user.id);
+        try {
+          await supabase.from('user_predictions_knockout_structure').delete().eq('user_id', user.id);
+        } catch (_) { /* table may not exist yet */ }
       }
     }
   };

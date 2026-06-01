@@ -41,6 +41,7 @@ interface UserPredictions {
   awards: AwardPrediction[];
   xi: XIPrediction[];
   matches: MatchPrediction[];
+  koStructure: any[];
   totalPts: number;
 }
 
@@ -89,11 +90,12 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       setLoading(true);
       setError('');
       try {
-        const [koRes, awardsRes, xiRes, matchesRes] = await Promise.all([
+        const [koRes, awardsRes, xiRes, matchesRes, koStructRes] = await Promise.all([
           supabase.from('user_predictions_knockout').select('id, round, team_id, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_awards').select('category, value, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_xi').select('position, player_name, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_matches').select('match_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pts_earned').eq('user_id', userId),
+          supabase.from('user_predictions_knockout_structure').select('match_id, pred_home_team_id, pred_away_team_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pred_status').eq('user_id', userId),
         ]);
 
         if (cancelled) return;
@@ -106,11 +108,12 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
         const awards = (awardsRes.data || []) as AwardPrediction[];
         const xi = (xiRes.data || []) as XIPrediction[];
         const matches = (matchesRes.data || []) as MatchPrediction[];
+        const koStructure = (koStructRes.data || []) as any[];
 
         const totalPts = [...ko, ...awards, ...xi, ...matches]
           .reduce((sum, p) => sum + (p.pts_earned || 0), 0);
 
-        setPredictions({ ko, awards, xi, matches, totalPts });
+        setPredictions({ ko, awards, xi, matches, koStructure, totalPts });
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to load predictions');
       } finally {
@@ -169,21 +172,46 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     const selectedThirds = r32KoTeams.filter(tid => thirdPlaceIds.has(tid));
 
     const baseKnockout = generateInitialKnockoutMatches();
-    pd.matches.forEach(mp => {
-      const stage = MATCH_STAGE_MAP[mp.match_id];
-      if (stage === 'GROUP' || !baseKnockout[mp.match_id]) return;
-      const hasScore = mp.pred_home_goals !== null && mp.pred_away_goals !== null;
-      baseKnockout[mp.match_id] = {
-        ...baseKnockout[mp.match_id],
-        status: (hasScore ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
-        score: {
-          homeGoals: mp.pred_home_goals,
-          awayGoals: mp.pred_away_goals,
-          homePenalties: mp.pred_home_pens,
-          awayPenalties: mp.pred_away_pens,
-        },
-      };
-    });
+
+    // Build bracket from saved knockout structure if available
+    const hasStructure = pd.koStructure && pd.koStructure.length > 0;
+    if (hasStructure) {
+      pd.koStructure.forEach((row: any) => {
+        const id = row.match_id;
+        if (baseKnockout[id]) {
+          const hasScore = row.pred_home_goals !== null && row.pred_away_goals !== null;
+          baseKnockout[id] = {
+            ...baseKnockout[id],
+            homeTeamId: row.pred_home_team_id || 'TBD',
+            awayTeamId: row.pred_away_team_id || 'TBD',
+            status: (row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED')) as MatchStatus,
+            score: {
+              homeGoals: row.pred_home_goals,
+              awayGoals: row.pred_away_goals,
+              homePenalties: row.pred_home_pens,
+              awayPenalties: row.pred_away_pens,
+            },
+          };
+        }
+      });
+    } else {
+      // Fallback: overlay match prediction scores then derive bracket
+      pd.matches.forEach(mp => {
+        const stage = MATCH_STAGE_MAP[mp.match_id];
+        if (stage === 'GROUP' || !baseKnockout[mp.match_id]) return;
+        const hasScore = mp.pred_home_goals !== null && mp.pred_away_goals !== null;
+        baseKnockout[mp.match_id] = {
+          ...baseKnockout[mp.match_id],
+          status: (hasScore ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
+          score: {
+            homeGoals: mp.pred_home_goals,
+            awayGoals: mp.pred_away_goals,
+            homePenalties: mp.pred_home_pens,
+            awayPenalties: mp.pred_away_pens,
+          },
+        };
+      });
+    }
 
     let bracket: Record<string, Match> = {};
     const knockoutMatchesByRound: Record<string, { matchId: string; homeTeamId: string; awayTeamId: string; scoreDisp: string; winner: 'home' | 'away' | 'tbd' }[]> = {};
@@ -191,13 +219,31 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     KO_BRACKET_ORDER.forEach(stage => { knockoutMatchesByRound[stage] = []; });
 
     try {
-      bracket = updateKnockoutBracket(baseKnockout, predictedMatches, selectedThirds, !allGroupsDone);
+      if (hasStructure) {
+        bracket = baseKnockout;
+      } else {
+        bracket = updateKnockoutBracket(baseKnockout, predictedMatches, selectedThirds, !allGroupsDone);
+      }
     } catch (_) {}
 
-    pd.matches.forEach(mp => {
-      const stage = MATCH_STAGE_MAP[mp.match_id];
+    const allKoRows = hasStructure
+      ? Object.values(baseKnockout)
+      : pd.matches.filter(mp => KO_BRACKET_ORDER.includes(MATCH_STAGE_MAP[mp.match_id] as any));
+
+    allKoRows.forEach((item: any) => {
+      let mp: any;
+      let matchId: string;
+      if (hasStructure) {
+        const koMatch = item as Match;
+        matchId = koMatch.id;
+        mp = { pred_home_goals: koMatch.score?.homeGoals, pred_away_goals: koMatch.score?.awayGoals, pred_home_pens: koMatch.score?.homePenalties, pred_away_pens: koMatch.score?.awayPenalties };
+      } else {
+        mp = item;
+        matchId = mp.match_id;
+      }
+      const stage = MATCH_STAGE_MAP[matchId];
       if (stage === 'GROUP' || !KO_BRACKET_ORDER.includes(stage as any)) return;
-      const bm = bracket[mp.match_id];
+      const bm = bracket[matchId];
       const homeTeamId = bm?.homeTeamId || 'TBD';
       const awayTeamId = bm?.awayTeamId || 'TBD';
 
@@ -220,7 +266,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       }
 
       knockoutMatchesByRound[stage]!.push({
-        matchId: mp.match_id, homeTeamId, awayTeamId, scoreDisp, winner,
+        matchId, homeTeamId, awayTeamId, scoreDisp, winner,
       });
     });
 

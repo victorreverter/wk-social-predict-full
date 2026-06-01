@@ -314,6 +314,17 @@ export const updateKnockoutBracket = (
   const completedGroupMatches = Object.values(groupMatches).filter(m => m.status === 'FINISHED').length;
   const allGroupsDone         = totalGroupMatches === 72 && completedGroupMatches === 72;
 
+  // No official group results yet AND the bracket itself has no real teams (all TBD):
+  // leave the bracket untouched so we don't fabricate qualified teams from empty standings.
+  // This protects callers that pre-render the bracket before any group match has been played.
+  const bracketHasAnyTeam = Object.values(ko).some(
+    m => m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD'
+  );
+  if (completedGroupMatches === 0 && !allGroupsDone && !bracketHasAnyTeam) {
+    R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
+    return ko;
+  }
+
   if (allGroupsDone || allowIncomplete) {
     const { groupWinners, groupRunnersUp, best8Thirds, allThirds } = determineQualifiedTeams(groupMatches);
     const thirdsReady = Object.keys(groupWinners).length === 12 || allowIncomplete;
