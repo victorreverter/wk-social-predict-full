@@ -175,7 +175,11 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
 
     // Build bracket from saved knockout structure if available
     const hasStructure = pd.koStructure && pd.koStructure.length > 0;
-    if (hasStructure) {
+    const structureAllTbd = hasStructure && pd.koStructure.every(
+      (row: any) => row.pred_home_team_id === 'TBD' && row.pred_away_team_id === 'TBD'
+    );
+    const effectiveHasStructure = hasStructure && !structureAllTbd;
+    if (effectiveHasStructure) {
       pd.koStructure.forEach((row: any) => {
         const id = row.match_id;
         if (baseKnockout[id]) {
@@ -219,14 +223,42 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     KO_BRACKET_ORDER.forEach(stage => { knockoutMatchesByRound[stage] = []; });
 
     try {
-      if (hasStructure) {
+      if (effectiveHasStructure) {
         bracket = baseKnockout;
       } else {
         bracket = updateKnockoutBracket(baseKnockout, predictedMatches, selectedThirds, !allGroupsDone);
       }
     } catch (_) {}
 
-    const allKoRows = hasStructure
+    // ── Overlay pd.ko round picks onto the bracket when structure is all-TBD ──
+    if (structureAllTbd) {
+      const koPicksByRound: Record<string, string[]> = {};
+      pd.ko.forEach(k => {
+        if (k.round !== 'CHAMPION') {
+          if (!koPicksByRound[k.round]) koPicksByRound[k.round] = [];
+          koPicksByRound[k.round].push(k.team_id);
+        }
+      });
+      KO_BRACKET_ORDER.forEach(stage => {
+        const picks = koPicksByRound[stage];
+        if (!picks || picks.length === 0) return;
+        const matchIds = Object.keys(MATCH_STAGE_MAP).filter(mid => MATCH_STAGE_MAP[mid] === stage);
+        matchIds.sort();
+        let pickIdx = 0;
+        for (const matchId of matchIds) {
+          const m = bracket[matchId];
+          if (!m) continue;
+          if (m.homeTeamId === 'TBD' && pickIdx < picks.length) {
+            m.homeTeamId = picks[pickIdx++];
+          }
+          if (m.awayTeamId === 'TBD' && pickIdx < picks.length) {
+            m.awayTeamId = picks[pickIdx++];
+          }
+        }
+      });
+    }
+
+    const allKoRows = effectiveHasStructure
       ? Object.values(baseKnockout)
       : Object.keys(bracket).map(matchId => {
           const userPred = pd.matches.find(m => m.match_id === matchId);
@@ -242,7 +274,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     allKoRows.forEach((item: any) => {
       let mp: any;
       let matchId: string;
-      if (hasStructure) {
+      if (effectiveHasStructure) {
         const koMatch = item as Match;
         matchId = koMatch.id;
         mp = { pred_home_goals: koMatch.score?.homeGoals, pred_away_goals: koMatch.score?.awayGoals, pred_home_pens: koMatch.score?.homePenalties, pred_away_pens: koMatch.score?.awayPenalties };
