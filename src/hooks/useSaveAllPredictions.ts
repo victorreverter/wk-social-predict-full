@@ -232,22 +232,29 @@ export const useSaveAllPredictions = () => {
                 pred_status: m.status,
             }));
 
-            // Make the requests
-            await supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id);
-            const promises = [
+            // Delete all stale rows before upserting fresh data
+            // All deletes target independent tables for the same user — safe to batch
+            await Promise.all([
+                supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id),
+                supabase.from('user_predictions_matches').delete().eq('user_id', session.user.id),
+                supabase.from('user_predictions_awards').delete().eq('user_id', session.user.id),
+                supabase.from('user_predictions_xi').delete().eq('user_id', session.user.id),
+                supabase.from('user_predictions_eredivisie').delete().eq('user_id', session.user.id),
+                supabase.from('user_group_positions').delete().eq('user_id', session.user.id),
+                supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id),
+            ]);
+
+            const upsertPromises = [
                 supabase.from('user_predictions_matches').upsert(matchRows, { onConflict: 'user_id,match_id' }),
             ];
-            if (koRows.length > 0) promises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
+            if (koRows.length > 0) upsertPromises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
+            if (awardRows.length > 0) upsertPromises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
+            if (xiRows.length > 0) upsertPromises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
+            if (eredivisieRows.length > 0) upsertPromises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
+            if (groupPositionsRows.length > 0) upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
+            upsertPromises.push(supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' }));
 
-            if (awardRows.length > 0) promises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
-            if (xiRows.length > 0) promises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
-            if (eredivisieRows.length > 0) promises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
-            if (groupPositionsRows.length > 0) promises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
-            // Delete old structure first, THEN upsert (sequential — must not race)
-            await supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id);
-            const koStructPromise = supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' });
-
-            const results = await Promise.all([...promises, koStructPromise]);
+            const results = await Promise.all(upsertPromises);
             const hasError = results.some(r => r.error);
             if (hasError) {
                 const errors = results.filter(r => r.error).map(r => ({ error: r.error, status: r.status }));
