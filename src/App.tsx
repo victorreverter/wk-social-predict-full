@@ -15,7 +15,6 @@ import { AuthModal } from './components/auth/AuthModal';
 import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
-import { EredivisieTestView } from './components/eredivisie/EredivisieTestView';
 import { GamesView } from './components/games/GamesView';
 import { FloatingSaveButton } from './components/shared/FloatingSaveButton';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
@@ -28,10 +27,9 @@ import './styles/global.css';
 
 const MainContent = () => {
   const { state } = useApp();
-  const { profile, isTestModeEnabled } = useAuth();
+  const { profile } = useAuth();
   return (
     <main className="main-content">
-      {isTestModeEnabled && state.activeTab === 'EREDIVISIE_TEST' && <EredivisieTestView />}
       {state.activeTab === 'GAMES'         && <GamesView />}
       {state.activeTab === 'GROUP_DEP'        && <GroupView />}
       {state.activeTab === 'GROUP_POSITIONS'  && <GroupPositionsView />}

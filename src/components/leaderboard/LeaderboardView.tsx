@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { EredivisieScoringPopup, isEredivisieScoringDismissed } from '../eredivisie/EredivisieScoringPopup';
 import { UserPredictionsModal } from './UserPredictionsModal';
 import './LeaderboardView.css';
 
@@ -17,34 +16,18 @@ interface ProfileData {
     total: number;
 }
 
-interface EredivisieProfileData {
-    id: string;
-    username: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    total: number;
-    matches_filled: number;
-}
-
-type LeaderboardMode = 'worldcup' | 'eredivisie';
-
 export const LeaderboardView: React.FC = () => {
-    const { profile, isTestModeEnabled } = useAuth();
+    const { profile } = useAuth();
 
-    const [leaderboardMode, setLeaderboardMode] = useState<LeaderboardMode>('worldcup');
     const [leaderboard, setLeaderboard] = useState<ProfileData[]>([]);
-    const [eredivisieLeaderboard, setEredivisieLeaderboard] = useState<EredivisieProfileData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [page, setPage] = useState(0);
-    const [showScoringPopup, setShowScoringPopup] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<{ id: string; username: string; avatar: string | null } | null>(null);
     const [hintDismissed, setHintDismissed] = useState(false);
     const PAGE_SIZE = 15;
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
     const loadingRef = useRef(false);
-
-    const isWorldCup = leaderboardMode === 'worldcup';
 
     const fetchWorldCupLeaderboard = useCallback(async (force = false) => {
         if (!force && loadingRef.current) return;
@@ -103,61 +86,15 @@ export const LeaderboardView: React.FC = () => {
         }
     }, []);
 
-    const fetchEredivisieLeaderboard = useCallback(async (force = false) => {
-        if (!force && loadingRef.current) return;
-        loadingRef.current = true;
-        setError('');
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select(`
-                    id, username, display_name, avatar_url,
-                    user_predictions_eredivisie (pts_earned)
-                `);
-
-            if (error) throw error;
-
-            const processed: EredivisieProfileData[] = (data || []).map((user: any) => {
-                const predictions = user.user_predictions_eredivisie || [];
-                const total = predictions.reduce(
-                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
-                );
-                const matches_filled = predictions.length;
-
-                return {
-                    id: user.id,
-                    username: user.username,
-                    display_name: user.display_name,
-                    avatar_url: user.avatar_url,
-                    total,
-                    matches_filled,
-                };
-            });
-
-            processed.sort((a, b) => b.total - a.total);
-            setEredivisieLeaderboard(processed);
-        } catch (err: any) {
-            setError(err.message || 'Failed to load leaderboard data.');
-        } finally {
-            setLoading(false);
-            loadingRef.current = false;
-        }
-    }, []);
-
     useEffect(() => {
         setPage(0);
         setLoading(true);
-        if (isWorldCup) {
-            fetchWorldCupLeaderboard();
-        } else {
-            fetchEredivisieLeaderboard();
-        }
-    }, [leaderboardMode, fetchWorldCupLeaderboard, fetchEredivisieLeaderboard, isWorldCup]);
+        fetchWorldCupLeaderboard();
+    }, [fetchWorldCupLeaderboard]);
 
     useEffect(() => {
         const handleRefresh = () => {
             fetchWorldCupLeaderboard(true);
-            fetchEredivisieLeaderboard(true);
         };
         window.addEventListener('leaderboard-refresh', handleRefresh);
 
@@ -179,14 +116,9 @@ export const LeaderboardView: React.FC = () => {
                 .on('postgres_changes', { event: 'DELETE', schema: 'public', table }, doWcRefresh);
         });
 
-        const doEredivisieRefresh = () => fetchEredivisieLeaderboard();
         ch = ch
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'user_predictions_eredivisie' }, doEredivisieRefresh)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
                 fetchWorldCupLeaderboard();
-                fetchEredivisieLeaderboard();
             })
             .subscribe();
 
@@ -198,10 +130,9 @@ export const LeaderboardView: React.FC = () => {
                 supabase.removeChannel(channelRef.current);
             }
         };
-    }, [fetchWorldCupLeaderboard, fetchEredivisieLeaderboard]);
+    }, [fetchWorldCupLeaderboard]);
 
-    const activeData = isWorldCup ? leaderboard : eredivisieLeaderboard;
-    const totalColSpan = isWorldCup ? 8 : 4;
+    const totalColSpan = 8;
 
     if (loading) {
         return (
@@ -229,38 +160,14 @@ export const LeaderboardView: React.FC = () => {
         <div className="leaderboard-container fade-in">
             <header className="leaderboard-header glass-panel">
                 <h2 className="text-gradient">
-                    {isWorldCup ? '🏅 Global Leaderboard' : '🧪 Eredivisie Test'}
+                    🏅 Global Leaderboard
                 </h2>
                 <p>
-                    {isWorldCup
-                        ? 'The ultimate ranking across the entire prediction tournament.'
-                        : 'Eredivisie prediction rankings.'}
+                    The ultimate ranking across the entire prediction tournament.
                 </p>
             </header>
 
-            {isTestModeEnabled && (
-                <div className="leaderboard-mode-tabs">
-                    <button
-                        className={`mode-tab ${isWorldCup ? 'active' : ''}`}
-                        onClick={() => setLeaderboardMode('worldcup')}
-                    >
-                        🏆 World Cup
-                    </button>
-                    <button
-                        className={`mode-tab ${!isWorldCup ? 'active' : ''}`}
-                        onClick={() => {
-                            setLeaderboardMode('eredivisie');
-                            if (!isEredivisieScoringDismissed()) {
-                                setShowScoringPopup(true);
-                            }
-                        }}
-                    >
-                        🧪 Eredivisie
-                    </button>
-                </div>
-            )}
-
-            {isWorldCup && !hintDismissed && (
+            {!hintDismissed && (
                 <div className="lb-click-hint">
                     <span>👇 Click on any row to view the full prediction summary</span>
                     <button
@@ -273,44 +180,24 @@ export const LeaderboardView: React.FC = () => {
                 </div>
             )}
 
-            {!isWorldCup && (
-                <div className="eredivisie-help-link">
-                    <button
-                        className="info-btn"
-                        onClick={() => setShowScoringPopup(true)}
-                    >
-                        ⓘ How points work
-                    </button>
-                </div>
-            )}
-
             <div className="leaderboard-table-wrap glass-panel">
                 <table className="leaderboard-table">
                     <thead>
                         <tr>
                             <th className="th-rank">Rank</th>
                             <th className="th-user">Predictor</th>
-                            {isWorldCup ? (
-                                <>
-                                    <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
-                                    <th className="th-score" title="Points from Bracket progressions">Knockout</th>
-                                    <th className="th-score" title="Points from Awards">Awards</th>
-                                    <th className="th-score" title="Points from Group Positions">Pos</th>
-                                    <th className="th-total">Total</th>
-                                </>
-                            ) : (
-                                <>
-                                    <th className="th-score" title="Points from Eredivisie predictions">Test Pts</th>
-                                    <th className="th-score" title="Number of matches predicted">Matches Filled</th>
-                                </>
-                            )}
+                            <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
+                            <th className="th-score" title="Points from Bracket progressions">Knockout</th>
+                            <th className="th-score" title="Points from Awards">Awards</th>
+                            <th className="th-score" title="Points from Group Positions">Pos</th>
+                            <th className="th-total">Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {(activeData as any[])
+                        {leaderboard
                             .slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
                             .map((user, index) => {
-                                const sorted = activeData as any[];
+                                const sorted = leaderboard;
                                 let rank = index + 1;
                                 if (index > 0 && sorted[index - 1].total === user.total) {
                                     const firstTiedIndex = sorted.findIndex((u: any) => u.total === user.total);
@@ -324,11 +211,9 @@ export const LeaderboardView: React.FC = () => {
                                 return (
                                     <tr
                                         key={user.id}
-                                        className={`lb-clickable ${isWorldCup ? 'lb-hover' : ''} ${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}
+                                        className={`lb-clickable lb-hover ${isTop3 ? `top-rank-${rank}` : ''} ${isCurrentUser ? 'current-user' : ''}`}
                                         onClick={() => {
-                                            if (isWorldCup) {
-                                                setSelectedUserId({ id: user.id, username: user.username, avatar: user.avatar_url });
-                                            }
+                                            setSelectedUserId({ id: user.id, username: user.username, avatar: user.avatar_url });
                                         }}
                                     >
                                         <td className="td-rank">
@@ -353,39 +238,28 @@ export const LeaderboardView: React.FC = () => {
                                                         {isCurrentUser && <span className="you-suffix"> (you)</span>}
                                                     </span>
                                                 </div>
-                                                {isWorldCup && (
-                                                    <span className="lb-eye-icon" title="Click to view predictions">🔍</span>
-                                                )}
+                                                <span className="lb-eye-icon" title="Click to view predictions">🔍</span>
                                             </div>
                                         </td>
-                                        {isWorldCup ? (
-                                            <>
-                                                <td className="td-score">{(user as ProfileData).matches_pts}</td>
-                                                <td className="td-score">{(user as ProfileData).ko_pts}</td>
-                                                <td className="td-score">{(user as ProfileData).awa_pts}</td>
-                                                <td className="td-score">{(user as ProfileData).pos_pts}</td>
-                                                <td className="td-total">{user.total}</td>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <td className="td-total">{user.total}</td>
-                                                <td className="td-score">{(user as EredivisieProfileData).matches_filled}</td>
-                                            </>
-                                        )}
+                                        <td className="td-score">{user.matches_pts}</td>
+                                        <td className="td-score">{user.ko_pts}</td>
+                                        <td className="td-score">{user.awa_pts}</td>
+                                        <td className="td-score">{user.pos_pts}</td>
+                                        <td className="td-total">{user.total}</td>
                                     </tr>
                                 );
                             })}
-                        {activeData.length === 0 && (
+                        {leaderboard.length === 0 && (
                             <tr>
                                 <td colSpan={totalColSpan} className="td-empty">No predictors found.</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
-                {activeData.length > PAGE_SIZE && (
+                {leaderboard.length > PAGE_SIZE && (
                     <div className="leaderboard-pagination">
                         <span className="pagination-info">
-                            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, activeData.length)} of {activeData.length}
+                            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, leaderboard.length)} of {leaderboard.length}
                         </span>
                         <div className="pagination-buttons">
                             <button
@@ -397,7 +271,7 @@ export const LeaderboardView: React.FC = () => {
                             </button>
                             <button
                                 className="pagination-btn"
-                                disabled={(page + 1) * PAGE_SIZE >= activeData.length}
+                                disabled={(page + 1) * PAGE_SIZE >= leaderboard.length}
                                 onClick={() => setPage(p => p + 1)}
                             >
                                 Next →
@@ -406,10 +280,6 @@ export const LeaderboardView: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            {showScoringPopup && (
-                <EredivisieScoringPopup onClose={() => setShowScoringPopup(false)} />
-            )}
 
             {selectedUserId && (
                 <UserPredictionsModal

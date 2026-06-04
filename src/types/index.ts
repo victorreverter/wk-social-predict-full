@@ -1,7 +1,7 @@
 // types/index.ts
 
 export type PredictionMode = 'EASY' | 'HARD';
-export type ViewTab = 'EREDIVISIE_TEST' | 'GAMES' | 'GROUP_DEP' | 'GROUP' | 'GROUP_POSITIONS' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
+export type ViewTab = 'GAMES' | 'GROUP_DEP' | 'GROUP' | 'GROUP_POSITIONS' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
 
 export type CustomGroupPositions = Record<string, string[]>;
 export type MatchStatus = 'NOT_PLAYED' | 'FINISHED';
@@ -83,7 +83,6 @@ export interface AppState {
   activeTab: ViewTab;
   groupMatches: Record<string, Match>; // key is match ID
   knockoutMatches: Record<string, Match>;
-  eredivisieMatches: Record<string, Match>;
   selectedThirds: string[]; // IDs of the chosen 8 best 3rd placed teams
   isThirdsModalDismissed: boolean;
   isHelpModalOpen: boolean;

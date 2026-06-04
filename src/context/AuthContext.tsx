@@ -48,8 +48,6 @@ interface AuthContextType {
     isMatchLocked: (match: Match) => boolean;
     getTimeUntilLock: (match: Match) => number | null;
     lockMinutes: number;
-    isTestModeEnabled: boolean;
-    toggleTestMode: () => Promise<{ error: string | null }>;
 }
 
 
@@ -74,7 +72,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         TOURNAMENT_XI: false,
     });
     const [isEaseModeEnabled, setIsEaseModeEnabled] = useState(true);
-    const [isTestModeEnabled, setIsTestModeEnabled] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [recoveryMode, setRecoveryMode] = useState(false);
 
@@ -109,11 +106,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (easeRow) {
                 setIsEaseModeEnabled(easeRow.value === 'true');
-            }
-
-            const testRow = configData.find(r => r.key === 'eredivisie_test_enabled');
-            if (testRow) {
-                setIsTestModeEnabled(testRow.value === 'true');
             }
         } else {
             setIsLocked(new Date() >= FAR_FUTURE_LOCK);
@@ -295,18 +287,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const openAuthModal  = () => setIsAuthModalOpen(true);
     const closeAuthModal = () => setIsAuthModalOpen(false);
 
-    const toggleTestMode = async (): Promise<{ error: string | null }> => {
-        const newVal = !isTestModeEnabled;
-        const { error } = await supabase
-            .from('config')
-            .upsert({ key: 'eredivisie_test_enabled', value: String(newVal) }, { onConflict: 'key' });
-
-        if (!error) {
-            setIsTestModeEnabled(newVal);
-        }
-        return { error: error?.message || null };
-    };
-
     return (
         <AuthContext.Provider value={{
             session,
@@ -334,8 +314,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isMatchLocked,
             getTimeUntilLock,
             lockMinutes,
-            isTestModeEnabled,
-            toggleTestMode,
         }}>
             {children}
         </AuthContext.Provider>

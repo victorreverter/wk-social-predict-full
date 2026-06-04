@@ -71,9 +71,8 @@ export const useSaveAllPredictions = () => {
             ...Object.values(state.knockoutMatches)
         ];
         const completedMatches = allMatches.filter(m => m.score || m.result).length;
-        const eredivisieCompleted = Object.values(state.eredivisieMatches).filter(m => m.score || m.result).length;
         
-        if (completedMatches === 0 && eredivisieCompleted === 0 && !hasGroupPositions && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
+        if (completedMatches === 0 && !hasGroupPositions && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
             setAlert('error', 'No predictions to save. Complete at least 1 match or selection first.');
             return;
         }
@@ -190,36 +189,14 @@ export const useSaveAllPredictions = () => {
                     pts_earned: 0,
                 }));
 
-            // 5. Eredivisie Test matches
-            const eredivisieRows = Object.values(state.eredivisieMatches)
-                .filter(m => m.status === 'FINISHED' || m.result)
-                .map(m => {
-                    let hg = m.score?.homeGoals ?? null;
-                    let ag = m.score?.awayGoals ?? null;
-
-                    if (hg === null || ag === null) {
-                        if (m.result === 'HOME_WIN') { hg = 1; ag = 0; }
-                        else if (m.result === 'AWAY_WIN') { hg = 0; ag = 1; }
-                        else if (m.result === 'DRAW') { hg = 0; ag = 0; }
-                    }
-
-                    return {
-                        user_id: session.user.id,
-                        match_id: m.id,
-                        pred_home_goals: hg,
-                        pred_away_goals: ag,
-                        pts_earned: 0,
-                    };
-                });
-
-            // 6. Group Positions (ordered team IDs per group)
+            // 5. Group Positions (ordered team IDs per group)
             const groupPositionsRows = Object.entries(state.customGroupPositions).map(([group, order]) => ({
                 user_id: session.user.id,
                 group_letter: group,
                 order: order,
             }));
 
-            // 7. Knockout Bracket Full Structure (match-by-match topology)
+            // 6. Knockout Bracket Full Structure (match-by-match topology)
             const koStructureRows = Object.values(state.knockoutMatches).map(m => ({
                 user_id: session.user.id,
                 match_id: m.id,
@@ -239,7 +216,6 @@ export const useSaveAllPredictions = () => {
                 supabase.from('user_predictions_matches').delete().eq('user_id', session.user.id),
                 supabase.from('user_predictions_awards').delete().eq('user_id', session.user.id),
                 supabase.from('user_predictions_xi').delete().eq('user_id', session.user.id),
-                supabase.from('user_predictions_eredivisie').delete().eq('user_id', session.user.id),
                 supabase.from('user_group_positions').delete().eq('user_id', session.user.id),
                 supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id),
             ]);
@@ -250,7 +226,6 @@ export const useSaveAllPredictions = () => {
             if (koRows.length > 0) upsertPromises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
             if (awardRows.length > 0) upsertPromises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
             if (xiRows.length > 0) upsertPromises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
-            if (eredivisieRows.length > 0) upsertPromises.push(supabase.from('user_predictions_eredivisie').upsert(eredivisieRows, { onConflict: 'user_id,match_id' }));
             if (groupPositionsRows.length > 0) upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
             upsertPromises.push(supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' }));
 
@@ -268,7 +243,7 @@ export const useSaveAllPredictions = () => {
                 // and to the auto-fetch cron. The user save only persists predictions.
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
-                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + eredivisieRows.length + groupPositionsRows.length;
+                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + groupPositionsRows.length;
                 setAlert('saved', `✅ Saved ${savedCount} predictions!`);
                 addToast(`Saved ${savedCount} predictions!`, 'success');
             }

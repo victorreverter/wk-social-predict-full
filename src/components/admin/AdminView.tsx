@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { initialTeams, groups, generateInitialGroupMatches, GROUP_MATCH_SCHEDULE_DATA, EREDIVISIE_TEAMS, generateEredivisieMatches } from '../../utils/data-init';
+import { initialTeams, groups, generateInitialGroupMatches, GROUP_MATCH_SCHEDULE_DATA } from '../../utils/data-init';
 import {
     R32_FIXTURES, R16_FIXTURES, QF_FIXTURES, SF_FIXTURES,
     THIRD_PLACE_FIXTURE, FINAL_FIXTURE
@@ -10,7 +10,6 @@ import { scoreXI } from '../../lib/scoreXI';
 import { scoreMatches } from '../../lib/scoreMatches';
 import { scoreKnockout } from '../../lib/scoreKnockout';
 import { scoreGroupPositions } from '../../lib/scoreGroupPositions';
-import { scoreEredivisie } from '../../lib/scoreEredivisie';
 import { fetchTournamentResults } from '../../lib/footballDataApi';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
@@ -29,7 +28,6 @@ interface OfficialAward {
 // ── Utilities ─────────────────────────────────────────────
 const teamName = (id: string) => initialTeams.find(t => t.id === id)?.name ?? id;
 const allGroupMatches = generateInitialGroupMatches();
-const allEredivisieMatches = generateEredivisieMatches();
 
 const matchesByGroup: Record<string, { id: string; homeId: string; awayId: string }[]> = {};
 Object.entries(allGroupMatches).forEach(([id, m]) => {
@@ -149,7 +147,7 @@ const XI_SLOTS: { key: string; label: string; isGK: boolean }[] = [
 
 // ── Main Component ────────────────────────────────────────
 export const AdminView: React.FC = () => {
-    const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock, isTestModeEnabled, toggleTestMode } = useAuth();
+    const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock } = useAuth();
     const { resetTournament } = useApp();
     
     const [section, setSection]           = useState<'group' | 'knockout' | 'positions' | 'awards' | 'xi'>('group');
@@ -164,7 +162,6 @@ export const AdminView: React.FC = () => {
     const [savedQueue, setSavedQueue] = useState<Record<string, boolean>>({});
     const [toast, setToast]   = useState<string | null>(null);
     const [confirmReset, setConfirmReset] = useState(false);
-    const [eredivisieOfficial, setEredivisieOfficial] = useState<Record<string, { home_goals: number | null; away_goals: number | null }>>({});
     const [apiLoading, setApiLoading] = useState(false);
     const [apiStatus, setApiStatus] = useState<string | null>(null);
     const [apiLastCheck, setApiLastCheck] = useState<string | null>(null);
@@ -198,12 +195,6 @@ export const AdminView: React.FC = () => {
             const map: Record<string, string> = {};
             (xData as { position: string; player_name: string }[]).forEach(r => { map[r.position] = r.player_name; });
             setOfficialXI(map);
-        }
-        const { data: eData } = await supabase.from('official_eredivisie').select('*');
-        if (eData) {
-            const map: Record<string, { home_goals: number | null; away_goals: number | null }> = {};
-            (eData as any[]).forEach(r => { map[r.match_id] = { home_goals: r.home_goals, away_goals: r.away_goals }; });
-            setEredivisieOfficial(map);
         }
         const { data: pData } = await supabase.from('official_group_positions').select('group_letter, "order"');
         if (pData) {
@@ -328,7 +319,6 @@ export const AdminView: React.FC = () => {
             setOfficialMatches({});
             setOfficialAwards({});
             setOfficialXI({});
-            setEredivisieOfficial({});
             setConfirmReset(false);
             showToast('🗑️ Tournament reset complete! Official results cleared and scores reset.');
         } catch (err: any) {
@@ -394,50 +384,6 @@ export const AdminView: React.FC = () => {
             showToast(`❌ ${error.message}`);
         }
         setPositionsSaving(false);
-    };
-
-    const eredivisieTeamName = (id: string) => EREDIVISIE_TEAMS.find(t => t.id === id)?.name ?? id;
-
-    const setEredivisieResult = (matchId: string, type: 'home' | 'away', val: string) => {
-        const num = val === '' ? null : parseInt(val, 10);
-        if (val !== '' && (isNaN(num!) || num! < 0)) return;
-        setEredivisieOfficial(prev => {
-            const existing = prev[matchId] ?? { home_goals: null, away_goals: null };
-            return {
-                ...prev,
-                [matchId]: {
-                    ...existing,
-                    [type === 'home' ? 'home_goals' : 'away_goals']: num,
-                }
-            };
-        });
-    };
-
-    const saveEredivisieResult = async (matchId: string) => {
-        const row = eredivisieOfficial[matchId];
-        if (!row) return;
-        setSaving(`eredivisie_${matchId}`);
-        const { error } = await supabase.from('official_eredivisie').upsert({
-            match_id: matchId,
-            home_goals: row.home_goals,
-            away_goals: row.away_goals,
-            status: (row.home_goals !== null && row.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED',
-            updated_at: new Date().toISOString(),
-        }, { onConflict: 'match_id' });
-
-        if (!error) {
-            if (row.home_goals === null && row.away_goals === null) {
-                await supabase.from('user_predictions_eredivisie')
-                    .update({ pts_earned: 0 })
-                    .eq('match_id', matchId);
-            }
-            await scoreEredivisie();
-            flashSaved(`eredivisie_${matchId}`);
-            window.dispatchEvent(new Event('leaderboard-refresh'));
-        }
-
-        setSaving(null);
-        showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved & users scored!`);
     };
 
     const fetchApiResults = async () => {
@@ -806,97 +752,6 @@ export const AdminView: React.FC = () => {
                     </div>
                 </div>
             )}
-
-            {/* ── EREDIVISIE TEST MODE ADMIN ── */}
-            <div className="admin-eredivisie-section glass-panel">
-                <div className="admin-eredivisie-header">
-                    <h3>🧪 Eredivisie Test Mode</h3>
-                    <button
-                        className={`admin-eredivisie-toggle ${isTestModeEnabled ? 'enabled' : 'disabled'}`}
-                        onClick={async () => {
-                            setSaving('test_toggle');
-                            const { error } = await toggleTestMode();
-                            setSaving(null);
-                            showToast(error ? `❌ ${error}` : `✅ Test mode ${isTestModeEnabled ? 'disabled' : 'enabled'}`);
-                        }}
-                        disabled={saving === 'test_toggle'}
-                    >
-                        {saving === 'test_toggle' ? '…' : isTestModeEnabled ? '🟢 Enabled' : '⚫ Disabled'}
-                    </button>
-                </div>
-
-                <p className="admin-ko-hint">
-                    Enter official Eredivisie results for matchdays 33-34. Once saved, user predictions are automatically scored (5 pts exact score, 2 pts correct winner).
-                </p>
-
-                <div className="admin-eredivisie-results">
-                    <div className="admin-eredivisie-md">
-                        <h4>📅 Matchday 33 — May 10, 2026</h4>
-                        {['e01', 'e02', 'e03', 'e04', 'e05', 'e06', 'e07', 'e08', 'e09'].map(matchId => {
-                            const match = allEredivisieMatches[matchId];
-                            if (!match) return null;
-                            const om = eredivisieOfficial[matchId];
-                            return (
-                                <div key={matchId} className="admin-eredivisie-row">
-                                    <span className="admin-eredivisie-match-id">{matchId.toUpperCase()}</span>
-                                    <span className="admin-eredivisie-teams">
-                                        {eredivisieTeamName(match.homeTeamId)} vs {eredivisieTeamName(match.awayTeamId)}
-                                    </span>
-                                    <div className="admin-score-inputs">
-                                        <input type="number" min="0" max="20" className="score-input"
-                                            value={om?.home_goals ?? ''} placeholder="—"
-                                            onChange={e => setEredivisieResult(matchId, 'home', e.target.value)} />
-                                        <span className="score-sep">:</span>
-                                        <input type="number" min="0" max="20" className="score-input"
-                                            value={om?.away_goals ?? ''} placeholder="—"
-                                            onChange={e => setEredivisieResult(matchId, 'away', e.target.value)} />
-                                    </div>
-                                    <button
-                                        className={`admin-save-btn ${savedQueue[`eredivisie_${matchId}`] ? 'admin-save-btn--saved' : ''}`}
-                                        onClick={() => saveEredivisieResult(matchId)}
-                                        disabled={saving === `eredivisie_${matchId}`}
-                                    >
-                                        {saving === `eredivisie_${matchId}` ? '…' : savedQueue[`eredivisie_${matchId}`] ? '✓ Saved' : 'Save'}
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="admin-eredivisie-md">
-                        <h4>📅 Matchday 34 — May 17, 2026</h4>
-                        {['e10', 'e11', 'e12', 'e13', 'e14', 'e15', 'e16', 'e17', 'e18'].map(matchId => {
-                            const match = allEredivisieMatches[matchId];
-                            if (!match) return null;
-                            const om = eredivisieOfficial[matchId];
-                            return (
-                                <div key={matchId} className="admin-eredivisie-row">
-                                    <span className="admin-eredivisie-match-id">{matchId.toUpperCase()}</span>
-                                    <span className="admin-eredivisie-teams">
-                                        {eredivisieTeamName(match.homeTeamId)} vs {eredivisieTeamName(match.awayTeamId)}
-                                    </span>
-                                    <div className="admin-score-inputs">
-                                        <input type="number" min="0" max="20" className="score-input"
-                                            value={om?.home_goals ?? ''} placeholder="—"
-                                            onChange={e => setEredivisieResult(matchId, 'home', e.target.value)} />
-                                        <span className="score-sep">:</span>
-                                        <input type="number" min="0" max="20" className="score-input"
-                                            value={om?.away_goals ?? ''} placeholder="—"
-                                            onChange={e => setEredivisieResult(matchId, 'away', e.target.value)} />
-                                    </div>
-                                    <button
-                                        className={`admin-save-btn ${savedQueue[`eredivisie_${matchId}`] ? 'admin-save-btn--saved' : ''}`}
-                                        onClick={() => saveEredivisieResult(matchId)}
-                                        disabled={saving === `eredivisie_${matchId}`}
-                                    >
-                                        {saving === `eredivisie_${matchId}` ? '…' : savedQueue[`eredivisie_${matchId}`] ? '✓ Saved' : 'Save'}
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
 
             {/* ── DANGER ZONE: Manual Match Lock Override ── */}
             <div className="danger-zone-wrapper">

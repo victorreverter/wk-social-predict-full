@@ -11,7 +11,7 @@ interface SectionStat { label: string; done: number; total: number }
 export const Header: React.FC = () => {
 
     const { state, setActiveTab, setHelpModalOpen } = useApp();
-    const { profile, user, signOut, openAuthModal, isLocked, isTestModeEnabled } = useAuth();
+    const { profile, user, signOut, openAuthModal, isLocked } = useAuth();
     const { activeTab, knockoutMatches, awards, customGroupPositions } = state;
     const { isComplete } = usePredictorCompletion();
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -74,14 +74,6 @@ export const Header: React.FC = () => {
 
                 <div className="header-controls desktop-header-controls">
                     <div className="tab-switcher">
-                        {isTestModeEnabled && (
-                            <button
-                                className={`tab-btn test-tab ${activeTab === 'EREDIVISIE_TEST' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('EREDIVISIE_TEST')}
-                            >
-                                🧪 Test
-                            </button>
-                        )}
                         <button
                             className={`tab-btn ${activeTab === 'GAMES' ? 'active' : ''}`}
                             onClick={() => setActiveTab('GAMES')}
@@ -242,15 +234,6 @@ export const Header: React.FC = () => {
                 </div>
 
                 <nav className="mobile-drawer-nav">
-                    {isTestModeEnabled && (
-                        <button
-                            className={`mobile-drawer-nav-item ${activeTab === 'EREDIVISIE_TEST' ? 'active' : ''}`}
-                            onClick={() => handleTabClick('EREDIVISIE_TEST')}
-                        >
-                            <span className="mobile-drawer-nav-icon">🧪</span>
-                            <span className="mobile-drawer-nav-label">Test</span>
-                        </button>
-                    )}
                     <button
                         className={`mobile-drawer-nav-item ${activeTab === 'GAMES' ? 'active' : ''}`}
                         onClick={() => handleTabClick('GAMES')}
