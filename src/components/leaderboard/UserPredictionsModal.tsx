@@ -189,6 +189,11 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             homeTeamId: row.pred_home_team_id || 'TBD',
             awayTeamId: row.pred_away_team_id || 'TBD',
             status: (row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED')) as MatchStatus,
+            result: hasScore
+              ? (row.pred_home_goals > row.pred_away_goals ? 'HOME_WIN'
+                  : row.pred_home_goals < row.pred_away_goals ? 'AWAY_WIN'
+                  : 'DRAW')
+              : undefined,
             score: {
               homeGoals: row.pred_home_goals,
               awayGoals: row.pred_away_goals,
@@ -204,12 +209,19 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
         const stage = MATCH_STAGE_MAP[mp.match_id];
         if (stage === 'GROUP' || !baseKnockout[mp.match_id]) return;
         const hasScore = mp.pred_home_goals !== null && mp.pred_away_goals !== null;
+        const hg = mp.pred_home_goals;
+        const ag = mp.pred_away_goals;
         baseKnockout[mp.match_id] = {
           ...baseKnockout[mp.match_id],
           status: (hasScore ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
+          result: hasScore
+            ? (hg! > ag! ? 'HOME_WIN'
+                : hg! < ag! ? 'AWAY_WIN'
+                : 'DRAW')
+            : undefined,
           score: {
-            homeGoals: mp.pred_home_goals,
-            awayGoals: mp.pred_away_goals,
+            homeGoals: hg,
+            awayGoals: ag,
             homePenalties: mp.pred_home_pens,
             awayPenalties: mp.pred_away_pens,
           },
@@ -334,6 +346,8 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
 
     const getKoWinner = (match: Match | undefined): string => {
       if (!match || match.status !== 'FINISHED') return '';
+      if (match.result === 'HOME_WIN') return match.homeTeamId;
+      if (match.result === 'AWAY_WIN') return match.awayTeamId;
       if (match.score.homeGoals !== null && match.score.awayGoals !== null) {
         if (match.score.homeGoals > match.score.awayGoals) return match.homeTeamId;
         if (match.score.awayGoals > match.score.homeGoals) return match.awayTeamId;
@@ -354,9 +368,13 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       return w === match.homeTeamId ? match.awayTeamId : match.homeTeamId;
     };
 
-    const championId = getKoWinner(bracket['m104']);
-    const runnerUpId = getKoLoser(bracket['m104']);
-    const bronzeId = getKoWinner(bracket['m103']);
+    const championId = getKoWinner(bracket['m104']) || pd.ko.find(k => k.round === 'CHAMPION')?.team_id || '';
+    const runnerUpId = getKoLoser(bracket['m104']) || (() => {
+      const fPicks = pd.ko.filter(k => k.round === 'F').map(k => k.team_id);
+      if (fPicks.length >= 2) return fPicks.find(id => id !== championId) || fPicks[0];
+      return fPicks[0] || '';
+    })();
+    const bronzeId = getKoWinner(bracket['m103']) || pd.ko.find(k => k.round === '3RD')?.team_id || '';
 
     const championPick = championId
       ? (pd.ko.find(k => k.round === 'CHAMPION' && k.team_id === championId) || { id: 0, round: 'CHAMPION', team_id: championId, pts_earned: 0 })
