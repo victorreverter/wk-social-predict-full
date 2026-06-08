@@ -15,7 +15,10 @@ export const ThirdPlaceSelection: React.FC = () => {
         .filter(order => order.length >= 3)
         .map(order => order[2]);
 
-    const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && !isLocked;
+    const bracketIsEmpty = !Object.values(state.knockoutMatches).some(
+        m => m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD'
+    );
+    const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && bracketIsEmpty && !isLocked;
     const isPersistedDismissed = localStorage.getItem(THIRDS_DISMISSED_KEY) === 'true';
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);

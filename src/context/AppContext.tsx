@@ -33,11 +33,13 @@ interface AppContextType {
 const getFreshState = (): AppState => {
     // Try to restore user theme preference; if none, default to 'dark'
     let initialTheme: Theme = 'dark';
+    let initialThirdsDismissed = false;
     try {
         const stored = localStorage.getItem('wk-theme');
         if (stored === 'light' || stored === 'dark') {
             initialTheme = stored;
         }
+        initialThirdsDismissed = localStorage.getItem('wk_thirds_modal_dismissed') === 'true';
     } catch (e) {
         /* localStorage unavailable */
     }
@@ -49,7 +51,7 @@ const getFreshState = (): AppState => {
         groupMatches: generateInitialGroupMatches(),
         knockoutMatches: generateInitialKnockoutMatches(),
         selectedThirds: [],
-        isThirdsModalDismissed: false,
+        isThirdsModalDismissed: initialThirdsDismissed,
         isHelpModalOpen: false,
         awards: {
             goldenBall: '',

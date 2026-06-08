@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { determineQualifiedTeams, generateInitialKnockoutMatches } from '../utils/bracket-logic';
+import { determineQualifiedTeams, generateInitialKnockoutMatches, R32_FIXTURES, matchIdFromNum } from '../utils/bracket-logic';
 
 export const useLoadUserPredictions = () => {
     const { session } = useAuth();
@@ -118,22 +118,34 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
-                // Rehydrate dynamically chosen 3rd-place teams based on what made it to R32
-                const { allThirds } = determineQualifiedTeams(loadedGroups);
-                const matchBasedThirdIds = new Set(allThirds.map(t => t.teamId));
-
-                // Also extract 3rd-place teams from saved custom group positions (drag-and-drop users)
-                const positionBasedThirdIds = new Set<string>();
-                Object.values(loadedPositions).forEach(order => {
-                    if (order && order.length >= 3) {
-                        positionBasedThirdIds.add(order[2]);
+                // ── Rehydrate selectedThirds from the saved R32 bracket (EXACT source) ──
+                // Every R32 match slot labeled 'T3' contains one of the 8 selected thirds.
+                // This is far more reliable than re-computing group standings from match scores,
+                // which breaks for drag-and-drop users who never typed all 72 scores.
+                const t3Teams = new Set<string>();
+                R32_FIXTURES.forEach(f => {
+                    const match = loadedKo[matchIdFromNum(f.matchNum)];
+                    if (match) {
+                        if (f.homeSlot === 'T3' && match.homeTeamId !== 'TBD') t3Teams.add(match.homeTeamId);
+                        if (f.awaySlot === 'T3' && match.awayTeamId !== 'TBD') t3Teams.add(match.awayTeamId);
                     }
                 });
+                let loadedSelectedThirds = [...t3Teams];
 
-                // Combine both sources for maximum accuracy
-                const thirdPlaceIds = new Set([...matchBasedThirdIds, ...positionBasedThirdIds]);
-                const r32Teams = koRes.data.filter((k: any) => k.round === 'R32').map((k: any) => k.team_id);
-                const loadedSelectedThirds = r32Teams.filter((teamId: string) => thirdPlaceIds.has(teamId));
+                // Fallback: if the bracket had no T3 teams, fall back to match-based + position-based
+                if (loadedSelectedThirds.length !== 8) {
+                    const { allThirds } = determineQualifiedTeams(loadedGroups);
+                    const matchBasedThirdIds = new Set(allThirds.map(t => t.teamId));
+                    const positionBasedThirdIds = new Set<string>();
+                    Object.values(loadedPositions).forEach(order => {
+                        if (order && order.length >= 3) {
+                            positionBasedThirdIds.add(order[2]);
+                        }
+                    });
+                    const thirdPlaceIds = new Set([...matchBasedThirdIds, ...positionBasedThirdIds]);
+                    const r32Teams = koRes.data.filter((k: any) => k.round === 'R32').map((k: any) => k.team_id);
+                    loadedSelectedThirds = r32Teams.filter((teamId: string) => thirdPlaceIds.has(teamId));
+                }
 
                 loadFullState({
                     groupMatches: loadedGroups,
