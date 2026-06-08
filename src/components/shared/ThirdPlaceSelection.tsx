@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { initialTeams } from '../../utils/data-init';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,7 @@ export const ThirdPlaceSelection: React.FC = () => {
     const isPersistedDismissed = localStorage.getItem(THIRDS_DISMISSED_KEY) === 'true';
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);
+    const hasMounted = useRef(false);
 
     useEffect(() => {
         if (!needsSelection) {
@@ -33,6 +34,10 @@ export const ThirdPlaceSelection: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+            return;
+        }
         if (state.activeTab === 'BRACKET' && needsSelection && state.isThirdsModalDismissed) {
             setThirdsModalDismissed(false);
             localStorage.removeItem(THIRDS_DISMISSED_KEY);

@@ -120,11 +120,20 @@ export const useLoadUserPredictions = () => {
 
                 // Rehydrate dynamically chosen 3rd-place teams based on what made it to R32
                 const { allThirds } = determineQualifiedTeams(loadedGroups);
-                const thirdPlaceIds = allThirds.map(t => t.teamId);
+                const matchBasedThirdIds = new Set(allThirds.map(t => t.teamId));
+
+                // Also extract 3rd-place teams from saved custom group positions (drag-and-drop users)
+                const positionBasedThirdIds = new Set<string>();
+                Object.values(loadedPositions).forEach(order => {
+                    if (order && order.length >= 3) {
+                        positionBasedThirdIds.add(order[2]);
+                    }
+                });
+
+                // Combine both sources for maximum accuracy
+                const thirdPlaceIds = new Set([...matchBasedThirdIds, ...positionBasedThirdIds]);
                 const r32Teams = koRes.data.filter((k: any) => k.round === 'R32').map((k: any) => k.team_id);
-                
-                // If they have explicitly chosen thirds saved in DB, restore them!
-                const loadedSelectedThirds = r32Teams.filter((teamId: string) => thirdPlaceIds.includes(teamId));
+                const loadedSelectedThirds = r32Teams.filter((teamId: string) => thirdPlaceIds.has(teamId));
 
                 loadFullState({
                     groupMatches: loadedGroups,
