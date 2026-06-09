@@ -130,14 +130,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             };
 
-            const freshKo = generateInitialKnockoutMatches();
-            const newKnockoutMatches = updateKnockoutBracket(freshKo, newGroupMatches, []);
-
             return {
                 ...prev,
                 groupMatches: newGroupMatches,
-                knockoutMatches: newKnockoutMatches,
-                selectedThirds: []
             };
         });
     };
@@ -156,14 +151,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             };
 
-            const freshKo = generateInitialKnockoutMatches();
-            const newKnockoutMatches = updateKnockoutBracket(freshKo, newGroupMatches, []);
-
             return {
                 ...prev,
                 groupMatches: newGroupMatches,
-                knockoutMatches: newKnockoutMatches,
-                selectedThirds: []
             };
         });
     };
@@ -384,26 +374,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 );
 
             if (!hasExplicitBracket) {
-                const hasGroupMatchData = nextState.groupMatches
-                    && Object.values(nextState.groupMatches).some(
-                        (m: Match) => m.status === 'FINISHED' || m.result
-                    );
-
-                if (hasGroupMatchData && nextState.groupMatches) {
-                    nextState.knockoutMatches = updateKnockoutBracket(
-                        nextState.knockoutMatches,
-                        nextState.groupMatches,
-                        nextState.selectedThirds,
-                        true
-                    );
-                } else if (newState.customGroupPositions) {
-                    const allPositionsSet = Object.values(newState.customGroupPositions as Record<string, string[]>)
+                const allPositionsSet = newState.customGroupPositions
+                    && Object.values(newState.customGroupPositions as Record<string, string[]>)
                         .every(arr => arr && arr.length === 4);
-                    if (allPositionsSet) {
-                        nextState.knockoutMatches = seedBracketFromPositions(
+
+                if (allPositionsSet) {
+                    nextState.knockoutMatches = seedBracketFromPositions(
+                        nextState.knockoutMatches,
+                        newState.customGroupPositions as Record<string, string[]>,
+                        nextState.selectedThirds || []
+                    );
+                } else {
+                    const hasGroupMatchData = nextState.groupMatches
+                        && Object.values(nextState.groupMatches).some(
+                            (m: Match) => m.status === 'FINISHED' || m.result
+                        );
+
+                    if (hasGroupMatchData && nextState.groupMatches) {
+                        nextState.knockoutMatches = updateKnockoutBracket(
                             nextState.knockoutMatches,
-                            newState.customGroupPositions as Record<string, string[]>,
-                            nextState.selectedThirds || []
+                            nextState.groupMatches,
+                            nextState.selectedThirds,
+                            true
                         );
                     }
                 }

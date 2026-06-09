@@ -168,36 +168,10 @@ export const seedBracketFromPositions = (
   const { groupWinners, groupRunnersUp, allThirds } = determineQualifiedTeamsFromPositions(customGroupPositions);
   const numGroupsReady = Object.keys(groupWinners).length;
 
-  if (numGroupsReady !== 12 || selectedThirds.length !== 8) {
+  if (numGroupsReady !== 12) {
     R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
     return ko;
   }
-
-  const selectedGroups = selectedThirds
-    .map(tid => {
-      for (const [group, thirdId] of Object.entries(allThirds)) {
-        if (thirdId === tid) return group;
-      }
-      return '';
-    })
-    .filter(Boolean)
-    .sort();
-
-  if (selectedGroups.length !== 8) {
-    R32_FIXTURES.forEach(f => { ko = setTeams(ko, f.matchNum, 'TBD', 'TBD'); });
-    return ko;
-  }
-
-  const advancingGroups = selectedGroups.join('');
-  const combo = THIRD_PLACE_COMBOS[advancingGroups];
-  const assignments: readonly string[] = combo ?? selectedGroups;
-
-  const thirdByGroup: Record<string, string> = {};
-  selectedThirds.forEach(tid => {
-    for (const [group, thirdId] of Object.entries(allThirds)) {
-      if (thirdId === tid) { thirdByGroup[group] = tid; break; }
-    }
-  });
 
   const resolveFixed = (slot: string): string => {
     if (slot.startsWith('W_'))  return groupWinners[slot.slice(2)] ?? 'TBD';
@@ -205,10 +179,43 @@ export const seedBracketFromPositions = (
     return 'TBD';
   };
 
+  const thirdsReady = selectedThirds.length === 8;
+  let selectedGroups: string[] = [];
+  let assignments: readonly string[] = [];
+  let thirdByGroup: Record<string, string> = {};
+
+  if (thirdsReady) {
+    selectedGroups = selectedThirds
+      .map(tid => {
+        for (const [group, thirdId] of Object.entries(allThirds)) {
+          if (thirdId === tid) return group;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .sort();
+
+    if (selectedGroups.length === 8) {
+      const advancingGroups = selectedGroups.join('');
+      const combo = THIRD_PLACE_COMBOS[advancingGroups];
+      assignments = combo ?? selectedGroups;
+
+      selectedThirds.forEach(tid => {
+        for (const [group, thirdId] of Object.entries(allThirds)) {
+          if (thirdId === tid) { thirdByGroup[group] = tid; break; }
+        }
+      });
+    }
+  }
+
   R32_FIXTURES.forEach(f => {
     const t3Idx = T3_MATCH_ORDER.indexOf(f.matchNum);
-    const home = f.homeSlot === 'T3' ? (t3Idx >= 0 ? (thirdByGroup[assignments[t3Idx]] ?? 'TBD') : 'TBD') : resolveFixed(f.homeSlot);
-    const away = f.awaySlot === 'T3' ? (t3Idx >= 0 ? (thirdByGroup[assignments[t3Idx]] ?? 'TBD') : 'TBD') : resolveFixed(f.awaySlot);
+    const home = f.homeSlot === 'T3'
+      ? (t3Idx >= 0 && thirdByGroup[assignments[t3Idx]] ? thirdByGroup[assignments[t3Idx]] : 'TBD')
+      : resolveFixed(f.homeSlot);
+    const away = f.awaySlot === 'T3'
+      ? (t3Idx >= 0 && thirdByGroup[assignments[t3Idx]] ? thirdByGroup[assignments[t3Idx]] : 'TBD')
+      : resolveFixed(f.awaySlot);
     ko = setTeams(ko, f.matchNum, home, away);
   });
 

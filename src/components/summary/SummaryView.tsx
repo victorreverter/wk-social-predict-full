@@ -124,7 +124,11 @@ export const SummaryView: React.FC = () => {
             });
         });
         KO_ORDER.forEach(stage => {
-            if (result[stage]) result[stage]!.sort((a, b) => a.matchId.localeCompare(b.matchId));
+            if (result[stage]) {
+                result[stage] = result[stage]!
+                    .filter(m => m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD' || m.scoreDisp !== '—')
+                    .sort((a, b) => a.matchId.localeCompare(b.matchId));
+            }
         });
         return result;
     }, [knockoutMatches]);
@@ -187,34 +191,38 @@ export const SummaryView: React.FC = () => {
                 <div className="summary-col">
                     <div className="summary-section glass-panel">
                         <h3>🏟️ Knockout — Match Results</h3>
-                        {KO_ORDER.map(stage => {
-                            const matches = bracketByRound[stage];
-                            if (!matches || matches.length === 0) return null;
-                            return (
-                                <div key={stage} className="bracket-round-section">
-                                    <div className="ko-round-label">{KO_LABELS[stage]}</div>
-                                    {matches.map(m => {
-                                        const homeTeam = getTeam(m.homeTeamId);
-                                        const awayTeam = getTeam(m.awayTeamId);
-                                        return (
-                                            <div key={m.matchId} className="bracket-match-row">
-                                                <span className={`bm-team bm-home ${m.winner === 'home' ? 'bm-winner' : ''}`}>
-                                                    {homeTeam && <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="bm-flag" alt="" />}
-                                                    <span>{homeTeam?.name || m.homeTeamId}</span>
-                                                    {m.winner === 'home' && <span className="bm-trophy">🏆</span>}
-                                                </span>
-                                                <span className="bm-score">{m.scoreDisp}</span>
-                                                <span className={`bm-team bm-away ${m.winner === 'away' ? 'bm-winner' : ''}`}>
-                                                    {m.winner === 'away' && <span className="bm-trophy">🏆</span>}
-                                                    <span>{awayTeam?.name || m.awayTeamId}</span>
-                                                    {awayTeam && <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="bm-flag" alt="" />}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })}
+                        {Object.values(bracketByRound).every(arr => arr.length === 0) ? (
+                            <span className="flat-empty">No bracket predictions made. Set your group positions and select third-place teams to populate the bracket.</span>
+                        ) : (
+                            KO_ORDER.map(stage => {
+                                const matches = bracketByRound[stage];
+                                if (!matches || matches.length === 0) return null;
+                                return (
+                                    <div key={stage} className="bracket-round-section">
+                                        <div className="ko-round-label">{KO_LABELS[stage]}</div>
+                                        {matches.map(m => {
+                                            const homeTeam = getTeam(m.homeTeamId);
+                                            const awayTeam = getTeam(m.awayTeamId);
+                                            return (
+                                                <div key={m.matchId} className="bracket-match-row">
+                                                    <span className={`bm-team bm-home ${m.winner === 'home' ? 'bm-winner' : ''}`}>
+                                                        {homeTeam && <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="bm-flag" alt="" />}
+                                                        <span>{homeTeam?.name || m.homeTeamId}</span>
+                                                        {m.winner === 'home' && <span className="bm-trophy">🏆</span>}
+                                                    </span>
+                                                    <span className="bm-score">{m.scoreDisp}</span>
+                                                    <span className={`bm-team bm-away ${m.winner === 'away' ? 'bm-winner' : ''}`}>
+                                                        {m.winner === 'away' && <span className="bm-trophy">🏆</span>}
+                                                        <span>{awayTeam?.name || m.awayTeamId}</span>
+                                                        {awayTeam && <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="bm-flag" alt="" />}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
 
                     <div className="summary-section glass-panel">

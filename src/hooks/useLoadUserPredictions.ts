@@ -15,13 +15,14 @@ export const useLoadUserPredictions = () => {
 
         const loadPredictions = async () => {
             try {
-                const [matchesRes, koRes, awardsRes, xiRes, groupPosRes, koStructRes] = await Promise.all([
+                const [matchesRes, koRes, awardsRes, xiRes, groupPosRes, koStructRes, thirdsRes] = await Promise.all([
                     supabase.from('user_predictions_matches').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_awards').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_xi').select('*').eq('user_id', session.user.id),
                     supabase.from('user_group_positions').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout_structure').select('*').eq('user_id', session.user.id),
+                    supabase.from('user_selected_thirds').select('*').eq('user_id', session.user.id).maybeSingle(),
                 ]);
 
                 if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || groupPosRes.error) {
@@ -118,21 +119,27 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
-                // ── Rehydrate selectedThirds from the saved R32 bracket (EXACT source) ──
-                // Every R32 match slot labeled 'T3' contains one of the 8 selected thirds.
-                // This is far more reliable than re-computing group standings from match scores,
-                // which breaks for drag-and-drop users who never typed all 72 scores.
-                const t3Teams = new Set<string>();
-                R32_FIXTURES.forEach(f => {
-                    const match = loadedKo[matchIdFromNum(f.matchNum)];
-                    if (match) {
-                        if (f.homeSlot === 'T3' && match.homeTeamId !== 'TBD') t3Teams.add(match.homeTeamId);
-                        if (f.awaySlot === 'T3' && match.awayTeamId !== 'TBD') t3Teams.add(match.awayTeamId);
-                    }
-                });
-                let loadedSelectedThirds = [...t3Teams];
+                // ── Rehydrate selectedThirds ──
+                // 1. Primary source: user_selected_thirds table (explicitly persisted)
+                let loadedSelectedThirds: string[] = [];
+                if (thirdsRes.data && Array.isArray((thirdsRes.data as any).team_ids)) {
+                    loadedSelectedThirds = [...(thirdsRes.data as any).team_ids];
+                }
 
-                // Fallback: if the bracket had no T3 teams, fall back to match-based + position-based
+                // 2. Fallback: extract from the saved R32 bracket
+                if (loadedSelectedThirds.length !== 8) {
+                    const t3Teams = new Set<string>();
+                    R32_FIXTURES.forEach(f => {
+                        const match = loadedKo[matchIdFromNum(f.matchNum)];
+                        if (match) {
+                            if (f.homeSlot === 'T3' && match.homeTeamId !== 'TBD') t3Teams.add(match.homeTeamId);
+                            if (f.awaySlot === 'T3' && match.awayTeamId !== 'TBD') t3Teams.add(match.awayTeamId);
+                        }
+                    });
+                    loadedSelectedThirds = [...t3Teams];
+                }
+
+                // 3. Last-resort fallback: match-based + position-based inference
                 if (loadedSelectedThirds.length !== 8) {
                     const { allThirds } = determineQualifiedTeams(loadedGroups);
                     const matchBasedThirdIds = new Set(allThirds.map(t => t.teamId));

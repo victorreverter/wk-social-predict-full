@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { initialTeams } from '../../utils/data-init';
 import { useAuth } from '../../context/AuthContext';
+import { R32_FIXTURES, matchIdFromNum } from '../../utils/bracket-logic';
 import './ThirdPlaceSelection.css';
 
 const THIRDS_DISMISSED_KEY = 'wk_thirds_modal_dismissed';
@@ -15,10 +16,14 @@ export const ThirdPlaceSelection: React.FC = () => {
         .filter(order => order.length >= 3)
         .map(order => order[2]);
 
-    const bracketIsEmpty = !Object.values(state.knockoutMatches).some(
-        m => m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD'
-    );
-    const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && bracketIsEmpty && !isLocked;
+    const bracketHasT3Teams = R32_FIXTURES.some(f => {
+        if (f.homeSlot !== 'T3' && f.awaySlot !== 'T3') return false;
+        const match = state.knockoutMatches[matchIdFromNum(f.matchNum)];
+        if (!match) return false;
+        return (f.homeSlot === 'T3' && match.homeTeamId !== 'TBD')
+            || (f.awaySlot === 'T3' && match.awayTeamId !== 'TBD');
+    });
+    const needsSelection = allThirdTeamIds.length === 12 && selectedThirds.length !== 8 && !bracketHasT3Teams && !isLocked;
     const isPersistedDismissed = localStorage.getItem(THIRDS_DISMISSED_KEY) === 'true';
 
     const [localSelection, setLocalSelection] = useState<string[]>([]);

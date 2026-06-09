@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { initialTeams, groups, generateInitialGroupMatches } from '../../utils/data-init';
 import { calculateGroupStandings } from '../../utils/standings';
-import { generateInitialKnockoutMatches, updateKnockoutBracket, determineQualifiedTeams } from '../../utils/bracket-logic';
+import { generateInitialKnockoutMatches, updateKnockoutBracket, determineQualifiedTeams, seedBracketFromPositions } from '../../utils/bracket-logic';
 import type { Match, MatchStatus } from '../../types';
 
 const getTeamName = (teamId: string) => initialTeams.find(t => t.id === teamId)?.name || teamId;
@@ -42,6 +42,7 @@ interface UserPredictions {
   xi: XIPrediction[];
   matches: MatchPrediction[];
   koStructure: any[];
+  groupPositions: Record<string, string[]>;
   totalPts: number;
 }
 
@@ -90,12 +91,13 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       setLoading(true);
       setError('');
       try {
-        const [koRes, awardsRes, xiRes, matchesRes, koStructRes] = await Promise.all([
+        const [koRes, awardsRes, xiRes, matchesRes, koStructRes, groupPosRes] = await Promise.all([
           supabase.from('user_predictions_knockout').select('id, round, team_id, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_awards').select('category, value, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_xi').select('position, player_name, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_matches').select('match_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_knockout_structure').select('match_id, pred_home_team_id, pred_away_team_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pred_status').eq('user_id', userId),
+          supabase.from('user_group_positions').select('group_letter, "order", pts_earned').eq('user_id', userId),
         ]);
 
         if (cancelled) return;
@@ -109,11 +111,19 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
         const xi = (xiRes.data || []) as XIPrediction[];
         const matches = (matchesRes.data || []) as MatchPrediction[];
         const koStructure = (koStructRes.data || []) as any[];
+        const groupPositions: Record<string, string[]> = {};
+        if (groupPosRes.data) {
+          (groupPosRes.data as any[]).forEach((p: any) => {
+            if (p.group_letter && Array.isArray(p.order) && p.order.length === 4) {
+              groupPositions[p.group_letter] = p.order;
+            }
+          });
+        }
 
         const totalPts = [...ko, ...awards, ...xi, ...matches]
           .reduce((sum, p) => sum + (p.pts_earned || 0), 0);
 
-        setPredictions({ ko, awards, xi, matches, koStructure, totalPts });
+        setPredictions({ ko, awards, xi, matches, koStructure, groupPositions, totalPts });
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to load predictions');
       } finally {
@@ -234,9 +244,33 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
 
     KO_BRACKET_ORDER.forEach(stage => { knockoutMatchesByRound[stage] = []; });
 
+    const hasGroupPositions = Object.keys(pd.groupPositions).length === 12
+      && Object.values(pd.groupPositions).every(order => order && order.length === 4);
+
     try {
       if (effectiveHasStructure) {
         bracket = baseKnockout;
+      } else if (hasGroupPositions) {
+        const posBracket = seedBracketFromPositions(
+          generateInitialKnockoutMatches(),
+          pd.groupPositions,
+          selectedThirds
+        );
+        pd.matches.forEach(mp => {
+          if (posBracket[mp.match_id]) {
+            posBracket[mp.match_id] = {
+              ...posBracket[mp.match_id],
+              score: {
+                homeGoals: mp.pred_home_goals,
+                awayGoals: mp.pred_away_goals,
+                homePenalties: mp.pred_home_pens,
+                awayPenalties: mp.pred_away_pens,
+              },
+              status: ((mp.pred_home_goals !== null && mp.pred_away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
+            };
+          }
+        });
+        bracket = posBracket;
       } else {
         bracket = updateKnockoutBracket(baseKnockout, predictedMatches, selectedThirds, !allGroupsDone);
       }
@@ -544,36 +578,37 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
           {/* ── Bracket Match-by-Match ── */}
           <div className="flat-section">
             <h3 className="flat-section-title">🏟️ Knockout — Match Results</h3>
-            {KO_BRACKET_ORDER.map(stage => {
-              const matches = stats.knockoutMatchesByRound[stage];
-              if (!matches || matches.length === 0) return null;
-              return (
-                <div key={stage} className="bracket-round-section">
-                  <div className="ko-round-label">{KO_BRACKET_LABELS[stage] || stage}</div>
-                  {matches.map(m => {
-                    const homeTeam = getTeam(m.homeTeamId);
-                    const awayTeam = getTeam(m.awayTeamId);
-                    return (
-                      <div key={m.matchId} className="bracket-match-row">
-                        <span className={`bm-team bm-home ${m.winner === 'home' ? 'bm-winner' : ''}`}>
-                          {homeTeam && <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="bm-flag" alt="" />}
-                          <span>{homeTeam?.name || m.homeTeamId}</span>
-                          {m.winner === 'home' && <span className="bm-trophy">🏆</span>}
-                        </span>
-                        <span className="bm-score">{m.scoreDisp}</span>
-                        <span className={`bm-team bm-away ${m.winner === 'away' ? 'bm-winner' : ''}`}>
-                          {m.winner === 'away' && <span className="bm-trophy">🏆</span>}
-                          <span>{awayTeam?.name || m.awayTeamId}</span>
-                          {awayTeam && <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="bm-flag" alt="" />}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-            {Object.values(stats.knockoutMatchesByRound).every(arr => arr.length === 0) && (
-              <span className="flat-empty">No bracket predictions made.</span>
+            {Object.values(stats.knockoutMatchesByRound).every(arr => arr.length === 0) ? (
+              <span className="flat-empty">No bracket predictions made. Set group positions and select third-place teams to populate the bracket.</span>
+            ) : (
+              KO_BRACKET_ORDER.map(stage => {
+                const matches = stats.knockoutMatchesByRound[stage];
+                if (!matches || matches.length === 0) return null;
+                return (
+                  <div key={stage} className="bracket-round-section">
+                    <div className="ko-round-label">{KO_BRACKET_LABELS[stage] || stage}</div>
+                    {matches.map(m => {
+                      const homeTeam = getTeam(m.homeTeamId);
+                      const awayTeam = getTeam(m.awayTeamId);
+                      return (
+                        <div key={m.matchId} className="bracket-match-row">
+                          <span className={`bm-team bm-home ${m.winner === 'home' ? 'bm-winner' : ''}`}>
+                            {homeTeam && <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="bm-flag" alt="" />}
+                            <span>{homeTeam?.name || m.homeTeamId}</span>
+                            {m.winner === 'home' && <span className="bm-trophy">🏆</span>}
+                          </span>
+                          <span className="bm-score">{m.scoreDisp}</span>
+                          <span className={`bm-team bm-away ${m.winner === 'away' ? 'bm-winner' : ''}`}>
+                            {m.winner === 'away' && <span className="bm-trophy">🏆</span>}
+                            <span>{awayTeam?.name || m.awayTeamId}</span>
+                            {awayTeam && <img src={`${import.meta.env.BASE_URL}flags/${awayTeam.code}.svg`} className="bm-flag" alt="" />}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })
             )}
           </div>
 

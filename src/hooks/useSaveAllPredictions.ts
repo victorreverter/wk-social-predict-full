@@ -229,6 +229,10 @@ export const useSaveAllPredictions = () => {
             if (groupPositionsRows.length > 0) upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
             upsertPromises.push(supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' }));
 
+            if (state.selectedThirds.length > 0) {
+                upsertPromises.push(supabase.from('user_selected_thirds').upsert({ user_id: session.user.id, team_ids: state.selectedThirds }, { onConflict: 'user_id' }));
+            }
+
             const results = await Promise.all(upsertPromises);
             const hasError = results.some(r => r.error);
             if (hasError) {
