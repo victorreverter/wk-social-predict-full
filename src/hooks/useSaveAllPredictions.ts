@@ -108,9 +108,14 @@ export const useSaveAllPredictions = () => {
 
                 // Handle Easy mode mapping (if score is absent but result is set)
                 if (hg === null || ag === null) {
-                    if (m.result === 'HOME_WIN') { hg = 1; ag = 0; }
-                    else if (m.result === 'AWAY_WIN') { hg = 0; ag = 1; }
-                    else if (m.result === 'DRAW') { hg = 0; ag = 0; }
+                    if (m.stage !== 'GROUP') {
+                        hg = null;
+                        ag = null;
+                    } else {
+                        if (m.result === 'HOME_WIN') { hg = 1; ag = 0; }
+                        else if (m.result === 'AWAY_WIN') { hg = 0; ag = 1; }
+                        else if (m.result === 'DRAW') { hg = 0; ag = 0; }
+                    }
                 }
 
                 return {
@@ -207,6 +212,7 @@ export const useSaveAllPredictions = () => {
                 pred_home_pens: m.score?.homePenalties ?? null,
                 pred_away_pens: m.score?.awayPenalties ?? null,
                 pred_status: m.status,
+                pred_result: m.result ?? null,
             }));
 
             // Delete all stale rows before upserting fresh data

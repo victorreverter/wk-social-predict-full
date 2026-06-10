@@ -76,11 +76,12 @@ export const useLoadUserPredictions = () => {
                                     awayPenalties: row.pred_away_pens,
                                 },
                                 status: row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED'),
-                                result: hasScore
-                                    ? (row.pred_home_goals > row.pred_away_goals ? 'HOME_WIN'
-                                        : row.pred_home_goals < row.pred_away_goals ? 'AWAY_WIN'
-                                        : 'DRAW')
-                                    : undefined,
+                                result: row.pred_result
+                                    || (hasScore
+                                        ? (row.pred_home_goals > row.pred_away_goals ? 'HOME_WIN'
+                                            : row.pred_home_goals < row.pred_away_goals ? 'AWAY_WIN'
+                                            : 'DRAW')
+                                        : undefined),
                             };
                         }
                     });

@@ -22,8 +22,18 @@ interface PredMatchRow {
     pred_went_pens: boolean;
 }
 
-const getOutcome = (home: number | null, away: number | null) => {
-    if (home === null || away === null) return null;
+const resultToOutcome = (result: string | null): 'HOME' | 'AWAY' | 'DRAW' | null => {
+    if (result === 'HOME_WIN') return 'HOME';
+    if (result === 'AWAY_WIN') return 'AWAY';
+    if (result === 'DRAW') return 'DRAW';
+    return null;
+};
+
+const getOutcome = (home: number | null, away: number | null, fallbackResult?: string | null) => {
+    if (home === null || away === null) {
+        if (fallbackResult) return resultToOutcome(fallbackResult);
+        return null;
+    }
     if (home > away) return 'HOME';
     if (away > home) return 'AWAY';
     return 'DRAW';
@@ -46,6 +56,28 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
     // Map for faster lookup
     const offMap: Record<string, OfficialMatchRow> = {};
     official.forEach(o => offMap[o.match_id] = o);
+
+    // 1b. Load knockout structure for Easy Mode result fallback
+    const koMatchIds = official.filter(o => {
+        const n = parseInt(o.match_id.slice(1), 10);
+        return !isNaN(n) && n >= 73;
+    }).map(o => o.match_id);
+
+    let structMap: Record<string, Record<string, { pred_result: string | null }>> = {};
+    if (koMatchIds.length > 0) {
+        let structQuery = supabase
+            .from('user_predictions_knockout_structure')
+            .select('user_id, match_id, pred_result')
+            .in('match_id', koMatchIds);
+        if (userId) structQuery = structQuery.eq('user_id', userId);
+        const { data: structData } = await structQuery;
+        if (structData) {
+            structData.forEach((row: any) => {
+                if (!structMap[row.user_id]) structMap[row.user_id] = {};
+                structMap[row.user_id][row.match_id] = { pred_result: row.pred_result };
+            });
+        }
+    }
 
     // 2. Load User Match Predictions matching these match IDs
     let query = supabase
@@ -75,8 +107,11 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
         const off = offMap[pred.match_id];
         if (!off) return { id: pred.id, user_id: pred.user_id, pts_earned: 0 };
 
+        const structRow = structMap[pred.user_id]?.[pred.match_id];
+        const fallbackResult = structRow?.pred_result ?? null;
+
         const offOutcome = getOutcome(off.home_goals, off.away_goals);
-        const predOutcome = getOutcome(pred.pred_home_goals, pred.pred_away_goals);
+        const predOutcome = getOutcome(pred.pred_home_goals, pred.pred_away_goals, fallbackResult);
 
         // Regular Time Goals Logic
         if (offOutcome !== null && predOutcome !== null) {
@@ -89,8 +124,8 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
             }
         }
 
-        // Penalty Shootout Logic — award exact score for correct penalty winner too
-        if (off.went_to_pens) {
+        // Penalty Shootout Logic — only applies when user entered actual scores
+        if (off.went_to_pens && pred.pred_home_goals !== null && pred.pred_away_goals !== null) {
             const predIsDraw = predOutcome === 'DRAW';
             
             const offPenWinner = getOutcome(off.home_penalties, off.away_penalties);

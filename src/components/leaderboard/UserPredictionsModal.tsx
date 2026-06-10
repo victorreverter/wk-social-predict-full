@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { initialTeams, groups, generateInitialGroupMatches } from '../../utils/data-init';
 import { calculateGroupStandings } from '../../utils/standings';
-import { generateInitialKnockoutMatches, updateKnockoutBracket, determineQualifiedTeams, seedBracketFromPositions } from '../../utils/bracket-logic';
+import { generateInitialKnockoutMatches, determineQualifiedTeams, seedBracketFromPositions, propagateKnockoutWinners } from '../../utils/bracket-logic';
 import type { Match, MatchStatus } from '../../types';
 
 const getTeamName = (teamId: string) => initialTeams.find(t => t.id === teamId)?.name || teamId;
@@ -43,6 +43,7 @@ interface UserPredictions {
   matches: MatchPrediction[];
   koStructure: any[];
   groupPositions: Record<string, string[]>;
+  selectedThirds: string[];
   totalPts: number;
 }
 
@@ -91,13 +92,14 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       setLoading(true);
       setError('');
       try {
-        const [koRes, awardsRes, xiRes, matchesRes, koStructRes, groupPosRes] = await Promise.all([
+        const [koRes, awardsRes, xiRes, matchesRes, koStructRes, groupPosRes, thirdsRes] = await Promise.all([
           supabase.from('user_predictions_knockout').select('id, round, team_id, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_awards').select('category, value, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_xi').select('position, player_name, pts_earned').eq('user_id', userId),
           supabase.from('user_predictions_matches').select('match_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pts_earned').eq('user_id', userId),
-          supabase.from('user_predictions_knockout_structure').select('match_id, pred_home_team_id, pred_away_team_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pred_status').eq('user_id', userId),
+          supabase.from('user_predictions_knockout_structure').select('match_id, pred_home_team_id, pred_away_team_id, pred_home_goals, pred_away_goals, pred_home_pens, pred_away_pens, pred_status, pred_result').eq('user_id', userId),
           supabase.from('user_group_positions').select('group_letter, "order", pts_earned').eq('user_id', userId),
+          supabase.from('user_selected_thirds').select('*').eq('user_id', userId).maybeSingle(),
         ]);
 
         if (cancelled) return;
@@ -105,6 +107,9 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
         if (awardsRes.error) throw awardsRes.error;
         if (xiRes.error) throw xiRes.error;
         if (matchesRes.error) throw matchesRes.error;
+        if (koStructRes.error) throw koStructRes.error;
+        if (groupPosRes.error) throw groupPosRes.error;
+        if (thirdsRes.error && thirdsRes.status !== 406) throw thirdsRes.error;
 
         const ko = (koRes.data || []) as KoPrediction[];
         const awards = (awardsRes.data || []) as AwardPrediction[];
@@ -119,11 +124,14 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             }
           });
         }
+        const savedSelectedThirds: string[] = thirdsRes.data && Array.isArray((thirdsRes.data as any).team_ids)
+          ? [...(thirdsRes.data as any).team_ids]
+          : [];
 
         const totalPts = [...ko, ...awards, ...xi, ...matches]
           .reduce((sum, p) => sum + (p.pts_earned || 0), 0);
 
-        setPredictions({ ko, awards, xi, matches, koStructure, groupPositions, totalPts });
+        setPredictions({ ko, awards, xi, matches, koStructure, groupPositions, selectedThirds: savedSelectedThirds, totalPts });
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to load predictions');
       } finally {
@@ -163,66 +171,97 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
         score: { homeGoals: mp.pred_home_goals, awayGoals: mp.pred_away_goals },
       };
     });
-    const groupStandings = groups.map(group => ({
-      group,
-      standings: calculateGroupStandings(group, initialTeams, predictedMatches),
-    }));
+
+    const hasGroupPositions = Object.keys(pd.groupPositions).length === 12
+      && Object.values(pd.groupPositions).every(order => order && order.length === 4);
+
+    const groupStandings = groups.map(group => {
+      const order = pd.groupPositions[group];
+      if (order && order.length === 4) {
+        const standings = order.map((teamId) => ({
+          teamId,
+          points: 0,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+        }));
+        return { group, standings };
+      }
+      return {
+        group,
+        standings: calculateGroupStandings(group, initialTeams, predictedMatches),
+      };
+    });
 
     const { groupWinners, groupRunnersUp, best8Thirds, allThirds } = determineQualifiedTeams(predictedMatches);
-    const advancingTeamIds = new Set([
-      ...Object.values(groupWinners).map(s => s.teamId),
-      ...Object.values(groupRunnersUp).map(s => s.teamId),
-      ...best8Thirds.map(s => s.teamId),
-    ]);
-
-    const allGroupsDone = Object.keys(predictedMatches).length === 72;
+    const hasGroupPositionsBracket = hasGroupPositions;
+    const advancingTeamIds = hasGroupPositionsBracket
+      ? new Set<string>(groups.flatMap(g => {
+          const order = pd.groupPositions[g];
+          return order ? [order[0], order[1], order[2]] : [];
+        }))
+      : new Set([
+          ...Object.values(groupWinners).map(s => s.teamId),
+          ...Object.values(groupRunnersUp).map(s => s.teamId),
+          ...best8Thirds.map(s => s.teamId),
+        ]);
 
     const thirdPlaceIds = new Set(allThirds.map(t => t.teamId));
     const r32KoTeams = pd.ko.filter(k => k.round === 'R32').map(k => k.team_id);
-    const selectedThirds = r32KoTeams.filter(tid => thirdPlaceIds.has(tid));
+    let selectedThirds = pd.selectedThirds;
+    if (selectedThirds.length !== 8) {
+      selectedThirds = r32KoTeams.filter(tid => thirdPlaceIds.has(tid));
+    }
 
-    const baseKnockout = generateInitialKnockoutMatches();
+    // ── 1. Seed bracket from group positions (primary source for team identities) ──
+    let bracket: Record<string, Match> = {};
+    const knockoutMatchesByRound: Record<string, { matchId: string; homeTeamId: string; awayTeamId: string; scoreDisp: string; winner: 'home' | 'away' | 'tbd' }[]> = {};
 
-    // Build bracket from saved knockout structure if available
+    KO_BRACKET_ORDER.forEach(stage => { knockoutMatchesByRound[stage] = []; });
+
+    if (hasGroupPositions) {
+      bracket = seedBracketFromPositions(generateInitialKnockoutMatches(), pd.groupPositions, selectedThirds);
+    } else {
+      bracket = generateInitialKnockoutMatches();
+    }
+
+    // ── 2. Overlay scores & results from structure or match predictions (NEVER team IDs) ──
     const hasStructure = pd.koStructure && pd.koStructure.length > 0;
-    const structureAllTbd = hasStructure && pd.koStructure.every(
-      (row: any) => row.pred_home_team_id === 'TBD' && row.pred_away_team_id === 'TBD'
-    );
-    const effectiveHasStructure = hasStructure && !structureAllTbd;
-    if (effectiveHasStructure) {
+    if (hasStructure) {
       pd.koStructure.forEach((row: any) => {
         const id = row.match_id;
-        if (baseKnockout[id]) {
-          const hasScore = row.pred_home_goals !== null && row.pred_away_goals !== null;
-          baseKnockout[id] = {
-            ...baseKnockout[id],
-            homeTeamId: row.pred_home_team_id || 'TBD',
-            awayTeamId: row.pred_away_team_id || 'TBD',
-            status: (row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED')) as MatchStatus,
-            result: hasScore
+        if (!bracket[id]) return;
+        const hasScore = row.pred_home_goals !== null && row.pred_away_goals !== null;
+        bracket[id] = {
+          ...bracket[id],
+          status: (row.pred_status || (hasScore ? 'FINISHED' : 'NOT_PLAYED')) as MatchStatus,
+          result: row.pred_result
+            || (hasScore
               ? (row.pred_home_goals > row.pred_away_goals ? 'HOME_WIN'
                   : row.pred_home_goals < row.pred_away_goals ? 'AWAY_WIN'
                   : 'DRAW')
-              : undefined,
-            score: {
-              homeGoals: row.pred_home_goals,
-              awayGoals: row.pred_away_goals,
-              homePenalties: row.pred_home_pens,
-              awayPenalties: row.pred_away_pens,
-            },
-          };
-        }
+              : undefined),
+          score: {
+            homeGoals: row.pred_home_goals,
+            awayGoals: row.pred_away_goals,
+            homePenalties: row.pred_home_pens,
+            awayPenalties: row.pred_away_pens,
+          },
+        };
       });
     } else {
-      // Fallback: overlay match prediction scores then derive bracket
       pd.matches.forEach(mp => {
         const stage = MATCH_STAGE_MAP[mp.match_id];
-        if (stage === 'GROUP' || !baseKnockout[mp.match_id]) return;
+        if (stage === 'GROUP' || !bracket[mp.match_id]) return;
         const hasScore = mp.pred_home_goals !== null && mp.pred_away_goals !== null;
         const hg = mp.pred_home_goals;
         const ag = mp.pred_away_goals;
-        baseKnockout[mp.match_id] = {
-          ...baseKnockout[mp.match_id],
+        bracket[mp.match_id] = {
+          ...bracket[mp.match_id],
           status: (hasScore ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
           result: hasScore
             ? (hg! > ag! ? 'HOME_WIN'
@@ -239,44 +278,15 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       });
     }
 
-    let bracket: Record<string, Match> = {};
-    const knockoutMatchesByRound: Record<string, { matchId: string; homeTeamId: string; awayTeamId: string; scoreDisp: string; winner: 'home' | 'away' | 'tbd' }[]> = {};
-
-    KO_BRACKET_ORDER.forEach(stage => { knockoutMatchesByRound[stage] = []; });
-
-    const hasGroupPositions = Object.keys(pd.groupPositions).length === 12
-      && Object.values(pd.groupPositions).every(order => order && order.length === 4);
-
+    // ── 3. Propagate winners (R16 → Final) ──
     try {
-      if (effectiveHasStructure) {
-        bracket = baseKnockout;
-      } else if (hasGroupPositions) {
-        const posBracket = seedBracketFromPositions(
-          generateInitialKnockoutMatches(),
-          pd.groupPositions,
-          selectedThirds
-        );
-        pd.matches.forEach(mp => {
-          if (posBracket[mp.match_id]) {
-            posBracket[mp.match_id] = {
-              ...posBracket[mp.match_id],
-              score: {
-                homeGoals: mp.pred_home_goals,
-                awayGoals: mp.pred_away_goals,
-                homePenalties: mp.pred_home_pens,
-                awayPenalties: mp.pred_away_pens,
-              },
-              status: ((mp.pred_home_goals !== null && mp.pred_away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED') as MatchStatus,
-            };
-          }
-        });
-        bracket = posBracket;
-      } else {
-        bracket = updateKnockoutBracket(baseKnockout, predictedMatches, selectedThirds, !allGroupsDone);
-      }
+      bracket = propagateKnockoutWinners(bracket);
     } catch (_) {}
 
-    // ── Overlay pd.ko round picks onto the bracket when structure is all-TBD ──
+    // ── 4. Overlay KO round picks onto TBD slots (structure-all-TBD fallback) ──
+    const structureAllTbd = hasStructure && pd.koStructure.every(
+      (row: any) => row.pred_home_team_id === 'TBD' && row.pred_away_team_id === 'TBD'
+    );
     if (structureAllTbd) {
       const koPicksByRound: Record<string, string[]> = {};
       pd.ko.forEach(k => {
@@ -304,56 +314,31 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       });
     }
 
-    const allKoRows = effectiveHasStructure
-      ? Object.values(baseKnockout)
-      : Object.keys(bracket).map(matchId => {
-          const userPred = pd.matches.find(m => m.match_id === matchId);
-          return {
-            match_id: matchId,
-            pred_home_goals: userPred?.pred_home_goals ?? null,
-            pred_away_goals: userPred?.pred_away_goals ?? null,
-            pred_home_pens: userPred?.pred_home_pens ?? null,
-            pred_away_pens: userPred?.pred_away_pens ?? null,
-          };
+    // ── 5. Build knockoutMatchesByRound for rendering ──
+    KO_BRACKET_ORDER.forEach(stage => {
+      const matchIds = Object.keys(MATCH_STAGE_MAP).filter(mid => MATCH_STAGE_MAP[mid] === stage);
+      matchIds.sort();
+      matchIds.forEach(matchId => {
+        const bm = bracket[matchId];
+        if (!bm) return;
+        const homeTeamId = bm.homeTeamId || 'TBD';
+        const awayTeamId = bm.awayTeamId || 'TBD';
+
+        let winner: 'home' | 'away' | 'tbd' = 'tbd';
+        if (bm.result === 'HOME_WIN') winner = 'home';
+        else if (bm.result === 'AWAY_WIN') winner = 'away';
+        else if (bm.score.homeGoals !== null && bm.score.awayGoals !== null) {
+          if (bm.score.homeGoals > bm.score.awayGoals) winner = 'home';
+          else if (bm.score.awayGoals > bm.score.homeGoals) winner = 'away';
+          else if (bm.score.homePenalties != null && bm.score.awayPenalties != null) {
+            if (bm.score.homePenalties > bm.score.awayPenalties) winner = 'home';
+            else if (bm.score.awayPenalties > bm.score.homePenalties) winner = 'away';
+          }
+        }
+
+        knockoutMatchesByRound[stage]!.push({
+          matchId, homeTeamId, awayTeamId, scoreDisp: '—', winner,
         });
-
-    allKoRows.forEach((item: any) => {
-      let mp: any;
-      let matchId: string;
-      if (effectiveHasStructure) {
-        const koMatch = item as Match;
-        matchId = koMatch.id;
-        mp = { pred_home_goals: koMatch.score?.homeGoals, pred_away_goals: koMatch.score?.awayGoals, pred_home_pens: koMatch.score?.homePenalties, pred_away_pens: koMatch.score?.awayPenalties };
-      } else {
-        mp = item;
-        matchId = mp.match_id;
-      }
-      const stage = MATCH_STAGE_MAP[matchId];
-      if (stage === 'GROUP' || !KO_BRACKET_ORDER.includes(stage as any)) return;
-      const bm = bracket[matchId];
-      const homeTeamId = bm?.homeTeamId || 'TBD';
-      const awayTeamId = bm?.awayTeamId || 'TBD';
-
-      let scoreDisp = '—';
-      if (mp.pred_home_goals !== null && mp.pred_away_goals !== null) {
-        scoreDisp = `${mp.pred_home_goals}-${mp.pred_away_goals}`;
-        if (mp.pred_home_goals === mp.pred_away_goals && mp.pred_home_pens !== null && mp.pred_away_pens !== null) {
-          scoreDisp += ` (${mp.pred_home_pens}-${mp.pred_away_pens} pens)`;
-        }
-      }
-
-      let winner: 'home' | 'away' | 'tbd' = 'tbd';
-      if (mp.pred_home_goals !== null && mp.pred_away_goals !== null) {
-        if (mp.pred_home_goals > mp.pred_away_goals) winner = 'home';
-        else if (mp.pred_away_goals > mp.pred_home_goals) winner = 'away';
-        else if (mp.pred_home_pens !== null && mp.pred_away_pens !== null) {
-          if (mp.pred_home_pens > mp.pred_away_pens) winner = 'home';
-          else if (mp.pred_away_pens > mp.pred_home_pens) winner = 'away';
-        }
-      }
-
-      knockoutMatchesByRound[stage]!.push({
-        matchId, homeTeamId, awayTeamId, scoreDisp, winner,
       });
     });
 
