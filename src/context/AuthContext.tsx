@@ -57,8 +57,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // If the config is unavailable, default to far-future so predictions
 // are never locked until the admin explicitly sets a date.
 const FAR_FUTURE_LOCK = new Date('2099-12-31T23:59:59Z');
-const KICKOFF_LOCK = new Date('2026-06-11T18:00:00Z');
-const AWARDS_LOCK = new Date('2026-07-19T19:00:00Z');
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [session, setSession]         = useState<Session | null>(null);
@@ -117,20 +115,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (locks) {
             const lockMap: Record<LockCategory, boolean> = {
-                GROUP_STAGE: new Date() >= KICKOFF_LOCK,
-                BRACKET: new Date() >= KICKOFF_LOCK,
-                AWARDS: new Date() >= AWARDS_LOCK,
+                GROUP_STAGE: false,
+                BRACKET: false,
+                AWARDS: false,
                 TOURNAMENT_XI: false,
             };
             (locks as LockConfig[]).forEach(l => {
-                if (l.locked_at) lockMap[l.key] = true;
+                lockMap[l.key] = l.locked_at !== null;
             });
             setCategoryLocks(lockMap);
         } else {
             setCategoryLocks({
-                GROUP_STAGE: new Date() >= KICKOFF_LOCK,
-                BRACKET: new Date() >= KICKOFF_LOCK,
-                AWARDS: new Date() >= AWARDS_LOCK,
+                GROUP_STAGE: false,
+                BRACKET: false,
+                AWARDS: false,
                 TOURNAMENT_XI: false,
             });
         }

@@ -45,34 +45,37 @@ export const useSaveAllPredictions = () => {
             return;
         }
 
-        // Check per-category locks
-        const hasGroupMatches = Object.values(state.groupMatches).some(m => m.score || m.result);
-        const hasGroupPositions = Object.values(state.customGroupPositions).some(arr => arr.length === 4);
-        const hasKnockout = Object.values(state.knockoutMatches).some(m => m.score || m.result);
-        const hasXI = Object.values(state.tournamentXI).some(v => v.trim());
-        const hasAwards = Object.values(state.awards).some(v => v.trim());
-
+        // Track which categories are locked by admin.
+        // Individual match predictions are NOT affected by category locks —
+        // they are only blocked by per-match time lock (1hr before kickoff).
         const blockedCategories: string[] = [];
-        if ((hasGroupMatches || hasGroupPositions) && categoryLocks.GROUP_STAGE) blockedCategories.push('Group Stage');
-        if (hasKnockout && categoryLocks.BRACKET) blockedCategories.push('Bracket');
-        if (hasAwards && categoryLocks.AWARDS) blockedCategories.push('Awards');
-        if (hasXI && categoryLocks.TOURNAMENT_XI) blockedCategories.push('Tournament XI');
+        if (categoryLocks.GROUP_STAGE) blockedCategories.push('Group Stage');
+        if (categoryLocks.BRACKET) blockedCategories.push('Bracket');
+        if (categoryLocks.AWARDS) blockedCategories.push('Awards');
+        if (categoryLocks.TOURNAMENT_XI) blockedCategories.push('Tournament XI');
 
-        if (blockedCategories.length > 0) {
-            const msg = `Cannot save: ${blockedCategories.join(', ')} predictions are locked by admin.`;
-            setAlert('error', msg);
-            addToast(msg, 'error');
-            return;
-        }
+        const saveCategories = {
+            groupStage: !categoryLocks.GROUP_STAGE,
+            bracket: !categoryLocks.BRACKET,
+            awards: !categoryLocks.AWARDS,
+            tournamentXI: !categoryLocks.TOURNAMENT_XI,
+        };
 
         // Validate at least some predictions exist
         const allMatches = [
             ...Object.values(state.groupMatches),
             ...Object.values(state.knockoutMatches)
         ];
-        const completedMatches = allMatches.filter(m => m.score || m.result).length;
-        
-        if (completedMatches === 0 && !hasGroupPositions && Object.values(state.awards).every(v => !v.trim()) && Object.values(state.tournamentXI).every(v => !v.trim())) {
+        const hasGroupPositions = Object.values(state.customGroupPositions).some(arr => arr.length === 4);
+        const hasAwards = Object.values(state.awards).some(v => v.trim());
+        const hasXI = Object.values(state.tournamentXI).some(v => v.trim());
+
+        const savableMatches = allMatches.filter(m => (m.score || m.result) && !isMatchLocked(m as Match)).length;
+        const savableGroupPositions = hasGroupPositions && saveCategories.groupStage;
+        const savableAwards = hasAwards && saveCategories.awards;
+        const savableXI = hasXI && saveCategories.tournamentXI;
+
+        if (savableMatches === 0 && !savableGroupPositions && !savableAwards && !savableXI) {
             setAlert('error', 'No predictions to save. Complete at least 1 match or selection first.');
             return;
         }
@@ -211,28 +214,47 @@ export const useSaveAllPredictions = () => {
             }));
 
             // Delete stale rows before upserting fresh data.
-            // IMPORTANT: Do NOT delete user_predictions_matches here — we must
-            // preserve existing predictions for locked matches. Upsert handles
+            // Only delete tables whose category is NOT locked — this preserves
+            // existing predictions in locked categories.
+            // user_predictions_matches is never bulk-deleted; upsert handles
             // updates for unlocked matches via onConflict.
-            await Promise.all([
-                supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id),
-                supabase.from('user_predictions_awards').delete().eq('user_id', session.user.id),
-                supabase.from('user_predictions_xi').delete().eq('user_id', session.user.id),
-                supabase.from('user_group_positions').delete().eq('user_id', session.user.id),
-                supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id),
-            ]);
+            const deletePromises: any[] = [];
+            if (saveCategories.bracket) {
+                deletePromises.push(supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id));
+                deletePromises.push(supabase.from('user_predictions_knockout_structure').delete().eq('user_id', session.user.id));
+            }
+            if (saveCategories.awards) {
+                deletePromises.push(supabase.from('user_predictions_awards').delete().eq('user_id', session.user.id));
+            }
+            if (saveCategories.tournamentXI) {
+                deletePromises.push(supabase.from('user_predictions_xi').delete().eq('user_id', session.user.id));
+            }
+            if (saveCategories.groupStage) {
+                deletePromises.push(supabase.from('user_group_positions').delete().eq('user_id', session.user.id));
+            }
+            if (deletePromises.length > 0) {
+                await Promise.all(deletePromises);
+            }
 
-            const upsertPromises = [
-                supabase.from('user_predictions_matches').upsert(matchRows, { onConflict: 'user_id,match_id' }),
-            ];
-            if (koRows.length > 0) upsertPromises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
-            if (awardRows.length > 0) upsertPromises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
-            if (xiRows.length > 0) upsertPromises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
-            if (groupPositionsRows.length > 0) upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
-            upsertPromises.push(supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' }));
-
-            if (state.selectedThirds.length > 0) {
-                upsertPromises.push(supabase.from('user_selected_thirds').upsert({ user_id: session.user.id, team_ids: state.selectedThirds }, { onConflict: 'user_id' }));
+            const upsertPromises: any[] = [];
+            if (matchRows.length > 0) {
+                upsertPromises.push(supabase.from('user_predictions_matches').upsert(matchRows, { onConflict: 'user_id,match_id' }));
+            }
+            if (saveCategories.bracket) {
+                if (koRows.length > 0) upsertPromises.push(supabase.from('user_predictions_knockout').upsert(koRows, { onConflict: 'user_id,round,team_id' }));
+                upsertPromises.push(supabase.from('user_predictions_knockout_structure').upsert(koStructureRows, { onConflict: 'user_id,match_id' }));
+                if (state.selectedThirds.length > 0) {
+                    upsertPromises.push(supabase.from('user_selected_thirds').upsert({ user_id: session.user.id, team_ids: state.selectedThirds }, { onConflict: 'user_id' }));
+                }
+            }
+            if (saveCategories.awards && awardRows.length > 0) {
+                upsertPromises.push(supabase.from('user_predictions_awards').upsert(awardRows, { onConflict: 'user_id,category' }));
+            }
+            if (saveCategories.tournamentXI && xiRows.length > 0) {
+                upsertPromises.push(supabase.from('user_predictions_xi').upsert(xiRows, { onConflict: 'user_id,position' }));
+            }
+            if (saveCategories.groupStage && groupPositionsRows.length > 0) {
+                upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
             }
 
             const results = await Promise.all(upsertPromises);
@@ -249,10 +271,17 @@ export const useSaveAllPredictions = () => {
                 // and to the auto-fetch cron. The user save only persists predictions.
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
-                const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + groupPositionsRows.length;
-                const lockedNote = lockedMatches.length > 0 ? ` (${lockedMatches.length} locked match(es) preserved)` : '';
-                setAlert('saved', `✅ Saved ${savedCount} predictions!${lockedNote}`);
-                addToast(`Saved ${savedCount} predictions!${lockedNote}`, 'success');
+                const savedCount = matchRows.length
+                    + (saveCategories.bracket ? koRows.length : 0)
+                    + (saveCategories.awards ? awardRows.length : 0)
+                    + (saveCategories.tournamentXI ? xiRows.length : 0)
+                    + (saveCategories.groupStage ? groupPositionsRows.length : 0);
+                const notes: string[] = [];
+                if (lockedMatches.length > 0) notes.push(`${lockedMatches.length} match(es) locked — preserved`);
+                if (blockedCategories.length > 0) notes.push(`${blockedCategories.join(', ')} locked — skipped`);
+                const suffix = notes.length > 0 ? ` (${notes.join('; ')})` : '';
+                setAlert('saved', `✅ Saved ${savedCount} predictions!${suffix}`);
+                addToast(`Saved ${savedCount} predictions!${suffix}`, 'success');
             }
 
         } catch (err: any) {
