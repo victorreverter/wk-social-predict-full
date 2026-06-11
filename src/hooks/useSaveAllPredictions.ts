@@ -80,14 +80,9 @@ export const useSaveAllPredictions = () => {
         setSaveStatus('saving');
         setSaveMsg('');
 
-        // Check per-match locks (each match locks 1 hour before kickoff) - group positions don't need this check
+        // Identify locked matches so we can skip them and preserve existing predictions
         const lockedMatches = allMatches.filter(m => isMatchLocked(m as Match));
-        if (lockedMatches.length > 0) {
-            const msg = `Cannot save: ${lockedMatches.length} match(es) are locked (1hr before kickoff).`;
-            setAlert('error', msg);
-            addToast(msg, 'error');
-            return;
-        }
+        const unlockedMatches = allMatches.filter(m => !isMatchLocked(m as Match));
 
         // Ensure profile exists for this user (auto-creates if missing)
         const { error: profileErr } = await supabase.rpc('ensure_profile', { target_id: session.user.id });
@@ -99,8 +94,8 @@ export const useSaveAllPredictions = () => {
         }
 
         try {
-            // 1. Matches (Group + Knockout)
-            const allMatchesWithPredictions = allMatches.filter(m => m.status === 'FINISHED' || m.result);
+            // 1. Matches (Group + Knockout) — only unlocked matches
+            const allMatchesWithPredictions = unlockedMatches.filter(m => m.status === 'FINISHED' || m.result);
 
             const matchRows = allMatchesWithPredictions.map(m => {
                 let hg = m.score?.homeGoals ?? null;
@@ -215,11 +210,12 @@ export const useSaveAllPredictions = () => {
                 pred_result: m.result ?? null,
             }));
 
-            // Delete all stale rows before upserting fresh data
-            // All deletes target independent tables for the same user — safe to batch
+            // Delete stale rows before upserting fresh data.
+            // IMPORTANT: Do NOT delete user_predictions_matches here — we must
+            // preserve existing predictions for locked matches. Upsert handles
+            // updates for unlocked matches via onConflict.
             await Promise.all([
                 supabase.from('user_predictions_knockout').delete().eq('user_id', session.user.id),
-                supabase.from('user_predictions_matches').delete().eq('user_id', session.user.id),
                 supabase.from('user_predictions_awards').delete().eq('user_id', session.user.id),
                 supabase.from('user_predictions_xi').delete().eq('user_id', session.user.id),
                 supabase.from('user_group_positions').delete().eq('user_id', session.user.id),
@@ -254,8 +250,9 @@ export const useSaveAllPredictions = () => {
                 window.dispatchEvent(new Event('leaderboard-refresh'));
 
                 const savedCount = matchRows.length + koRows.length + awardRows.length + xiRows.length + groupPositionsRows.length;
-                setAlert('saved', `✅ Saved ${savedCount} predictions!`);
-                addToast(`Saved ${savedCount} predictions!`, 'success');
+                const lockedNote = lockedMatches.length > 0 ? ` (${lockedMatches.length} locked match(es) preserved)` : '';
+                setAlert('saved', `✅ Saved ${savedCount} predictions!${lockedNote}`);
+                addToast(`Saved ${savedCount} predictions!${lockedNote}`, 'success');
             }
 
         } catch (err: any) {
