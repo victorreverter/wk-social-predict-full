@@ -40,19 +40,22 @@ export const useLoadUserPredictions = () => {
                     return;
                 }
 
-                const buildMatchObj = (m: any, existingMatch: any) => ({
-                    ...existingMatch,
-                    score: {
-                        homeGoals: m.pred_home_goals,
-                        awayGoals: m.pred_away_goals,
-                        homePenalties: m.pred_home_pens,
-                        awayPenalties: m.pred_away_pens,
-                    },
-                    result: (m.pred_home_goals !== null && m.pred_away_goals !== null) 
-                        ? (m.pred_home_goals > m.pred_away_goals ? 'HOME_WIN' : (m.pred_home_goals < m.pred_away_goals ? 'AWAY_WIN' : 'DRAW')) 
-                        : null,
-                    status: (m.pred_home_goals !== null && m.pred_away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED'
-                });
+                const buildMatchObj = (m: any, existingMatch: any) => {
+                    const hasScore = m.pred_home_goals !== null && m.pred_away_goals !== null;
+                    return {
+                        ...existingMatch,
+                        score: hasScore ? {
+                            homeGoals: m.pred_home_goals,
+                            awayGoals: m.pred_away_goals,
+                            homePenalties: m.pred_home_pens,
+                            awayPenalties: m.pred_away_pens,
+                        } : existingMatch.score,
+                        result: hasScore
+                            ? (m.pred_home_goals > m.pred_away_goals ? 'HOME_WIN' : (m.pred_home_goals < m.pred_away_goals ? 'AWAY_WIN' : 'DRAW'))
+                            : (existingMatch.result || null),
+                        status: hasScore ? 'FINISHED' : (existingMatch.status || 'NOT_PLAYED')
+                    };
+                };
 
                 const loadedGroups = { ...state.groupMatches };
                 const loadedKo = { ...state.knockoutMatches };
