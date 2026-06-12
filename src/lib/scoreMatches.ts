@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { recalculateUserPoints } from './scoreUtils';
 
 interface OfficialMatchRow {
     match_id: string;
@@ -84,7 +83,7 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
         .from('user_predictions_matches')
         .select('*')
         .in('match_id', official.map(o => o.match_id));
-        
+
     if (userId) query = query.eq('user_id', userId);
 
     const { data: preds, error: predErr } = await query;
@@ -95,7 +94,7 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
     // 3. Load Points Configuration
     const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
     const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
-    
+
     const ptsExact = getPts('match_exact_score', 2);
     const ptsOutcome = getPts('match_correct_outcome', 1);
     const ptsWentPens = getPts('match_went_to_pens', 2);
@@ -127,7 +126,7 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
         // Penalty Shootout Logic — only applies when user entered actual scores
         if (off.went_to_pens && pred.pred_home_goals !== null && pred.pred_away_goals !== null) {
             const predIsDraw = predOutcome === 'DRAW';
-            
+
             const offPenWinner = getOutcome(off.home_penalties, off.away_penalties);
             const predPenWinner = getOutcome(pred.pred_home_pens, pred.pred_away_pens);
 
@@ -143,19 +142,23 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
         return { id: pred.id, user_id: pred.user_id, pts_earned: pts };
     });
 
-    // 5. Persist the points array updates natively to Supabase
-    await Promise.all(
-        updates.map(u => 
-            supabase
-                .from('user_predictions_matches')
-                .update({ pts_earned: u.pts_earned })
-                .eq('id', u.id)
-        )
+    // 5. Persist via RPC (SECURITY DEFINER - bypasses RLS, scores ALL users)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        'bulk_update_prediction_points',
+        {
+            p_table_name: 'user_predictions_matches',
+            p_updates: updates
+        }
     );
 
-    // 6. Recalculate Profiles via RPC or iteration
-    const uniqueUserIds = [...new Set(updates.map(r => r.user_id))];
-    await Promise.all(uniqueUserIds.map(uid => recalculateUserPoints(uid)));
+    if (rpcErr) {
+        return { usersScored: 0, error: rpcErr.message };
+    }
 
-    return { usersScored: uniqueUserIds.length };
+    const result = rpcResult as any;
+    if (!result?.success) {
+        return { usersScored: 0, error: result?.message || 'Bulk update failed.' };
+    }
+
+    return { usersScored: result?.users_scored ?? 0 };
 };

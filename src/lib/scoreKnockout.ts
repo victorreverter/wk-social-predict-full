@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { recalculateUserPoints } from './scoreUtils';
 import { generateInitialGroupMatches } from '../utils/data-init';
 import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../utils/bracket-logic';
 
@@ -11,12 +10,12 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
 
     if (offErr) return { usersScored: 0, error: offErr.message };
 
-    // 2. Re-create the deterministic Bracket exactly as the site engine normally does, 
+    // 2. Re-create the deterministic Bracket exactly as the site engine normally does,
     //    but strictly seeded by Official Data.
     const groupMatches = generateInitialGroupMatches();
     const omMap: Record<string, any> = {};
     official.forEach(o => omMap[o.match_id] = o);
-    
+
     // Fill groups
     Object.keys(groupMatches).forEach(id => {
         const om = omMap[id];
@@ -43,13 +42,19 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         if (userId) q = q.eq('user_id', userId);
         const { data: existing } = await q;
         if (existing && existing.length > 0) {
-            await supabase
-                .from('user_predictions_knockout')
-                .update({ pts_earned: 0 })
-                .in('id', existing.map(r => r.id));
-            const uids = [...new Set(existing.map(r => r.user_id))];
-            await Promise.all(uids.map(uid => recalculateUserPoints(uid)));
-            return { usersScored: uids.length };
+            // Zero via RPC
+            const zeroUpdates = existing.map((r: any) => ({
+                id: r.id,
+                user_id: r.user_id,
+                pts_earned: 0
+            }));
+            const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+                'bulk_update_prediction_points',
+                { p_table_name: 'user_predictions_knockout', p_updates: zeroUpdates }
+            );
+            if (rpcErr) return { usersScored: 0, error: rpcErr.message };
+            const result = rpcResult as any;
+            return { usersScored: result?.users_scored ?? 0 };
         }
         return { usersScored: 0 };
     }
@@ -67,7 +72,7 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
     let ko = r32Official
         ? updateKnockoutBracket({}, groupMatches, thirdsIds, false)
         : generateInitialKnockoutMatches();
-    
+
     // Inject official KO scores
     Object.keys(ko).forEach(id => {
         const om = omMap[id];
@@ -93,7 +98,7 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         'SF': new Set(),
         'F': new Set()
     };
-    
+
     let champion = '';
 
     Object.values(ko).forEach(m => {
@@ -144,7 +149,7 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
     // 4. Load Scoring Rules
     const { data: rules } = await supabase.from('scoring_rules').select('rule_key, pts');
     const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
-    
+
     const ptsR32 = getPts('ko_reach_r32', 2);
     const ptsR16 = getPts('ko_reach_r16', 5);
     const ptsQF = getPts('ko_reach_qf', 10);
@@ -160,10 +165,10 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
     if (!preds?.length) return { usersScored: 0 };
 
     // 6. Calculate user points mathematically
-    const updates = preds.map(p => {
+    const updates = preds.map((p: any) => {
         let pts = 0;
-        
-        // Wait, 'user_predictions_knockout' uses round mapping. 
+
+        // Wait, 'user_predictions_knockout' uses round mapping.
         // e.g. 'R16', 'QF', 'SF', 'F', 'CHAMPION'
         if (p.round === 'R32' && officialStages['R32'].has(p.team_id)) pts = ptsR32;
         if (p.round === 'R16' && officialStages['R16'].has(p.team_id)) pts = ptsR16;
@@ -175,19 +180,20 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         return { id: p.id, user_id: p.user_id, pts_earned: pts };
     });
 
-    // 7. Update User Arrays natively
-    await Promise.all(
-        updates.map(u => 
-            supabase
-                .from('user_predictions_knockout')
-                .update({ pts_earned: u.pts_earned })
-                .eq('id', u.id)
-        )
+    // 7. Persist via RPC (SECURITY DEFINER - bypasses RLS, scores ALL users)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        'bulk_update_prediction_points',
+        { p_table_name: 'user_predictions_knockout', p_updates: updates }
     );
 
-    // 8. Rebuild Total Profile Points
-    const uniqueUserIds = [...new Set(updates.map(r => r.user_id))];
-    await Promise.all(uniqueUserIds.map(uid => recalculateUserPoints(uid)));
+    if (rpcErr) {
+        return { usersScored: 0, error: rpcErr.message };
+    }
 
-    return { usersScored: uniqueUserIds.length };
+    const result = rpcResult as any;
+    if (!result?.success) {
+        return { usersScored: 0, error: result?.message || 'Bulk update failed.' };
+    }
+
+    return { usersScored: result?.users_scored ?? 0 };
 };

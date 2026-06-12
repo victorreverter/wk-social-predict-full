@@ -8,12 +8,10 @@
  *    check if the name appears anywhere in the official 10 FPs → 3 pts
  *
  * Name matching is accent-insensitive and case-insensitive.
- * Then recalculates profiles.total_points as sum of all prediction tables.
  */
 
 import { supabase } from './supabase';
 import { normalizeForMatch } from './normalizeText';
-import { recalculateUserPoints } from './scoreUtils';
 
 interface PredXIRow {
     id: string;
@@ -65,20 +63,20 @@ export const scoreXI = async (userId?: string): Promise<{ usersScored: number; e
         return { id: pred.id, user_id: pred.user_id, pts_earned: pts };
     });
 
-    // ── 4. Persist pts_earned ───────────────────────────────
-    await Promise.all(
-        updates.map(u =>
-            supabase
-                .from('user_predictions_xi')
-                .update({ pts_earned: u.pts_earned })
-                .eq('id', u.id)
-        )
+    // ── 4. Persist via RPC (SECURITY DEFINER - bypasses RLS, scores ALL users) ──
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        'bulk_update_prediction_points',
+        { p_table_name: 'user_predictions_xi', p_updates: updates }
     );
 
-    // ── 5. Recalculate profiles.total_points for each user ───
-    const uniqueUserIds = [...new Set(updates.map(r => r.user_id))];
-    await Promise.all(uniqueUserIds.map(uid => recalculateUserPoints(uid)));
+    if (rpcErr) {
+        return { usersScored: 0, error: rpcErr.message };
+    }
 
-    return { usersScored: uniqueUserIds.length };
+    const result = rpcResult as any;
+    if (!result?.success) {
+        return { usersScored: 0, error: result?.message || 'Bulk update failed.' };
+    }
+
+    return { usersScored: result?.users_scored ?? 0 };
 };
-

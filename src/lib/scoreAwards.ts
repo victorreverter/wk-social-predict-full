@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import { normalizeForMatch } from './normalizeText';
-import { recalculateUserPoints } from './scoreUtils';
 
 interface PredAwardRow {
     id: string;
@@ -30,7 +29,7 @@ export const scoreAwards = async (userId?: string): Promise<{ usersScored: numbe
     // 2. Load all user predictions
     let query = supabase.from('user_predictions_awards').select('id, user_id, category, value, pts_earned');
     if (userId) query = query.eq('user_id', userId);
-    
+
     const { data: preds, error: predErr } = await query;
 
     if (predErr) return { usersScored: 0, error: predErr.message };
@@ -50,28 +49,29 @@ export const scoreAwards = async (userId?: string): Promise<{ usersScored: numbe
     const updates = (preds as PredAwardRow[]).map(pred => {
         const officialNorm = officialMap[pred.category];
         const userNorm = normalizeForMatch(pred.value || '');
-        
+
         let pts = 0;
         if (officialNorm && userNorm && officialNorm === userNorm) {
             pts = MAJOR_CATS.includes(pred.category) ? ptsMajor : ptsMinor;
         }
-        
+
         return { id: pred.id, user_id: pred.user_id, pts_earned: pts };
     });
 
-    // 5. Persist points
-    await Promise.all(
-        updates.map(u =>
-            supabase
-                .from('user_predictions_awards')
-                .update({ pts_earned: u.pts_earned })
-                .eq('id', u.id)
-        )
+    // 5. Persist via RPC (SECURITY DEFINER - bypasses RLS, scores ALL users)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        'bulk_update_prediction_points',
+        { p_table_name: 'user_predictions_awards', p_updates: updates }
     );
 
-    const uniqueUserIds = [...new Set(updates.map(r => r.user_id))];
-    await Promise.all(uniqueUserIds.map(uid => recalculateUserPoints(uid)));
-    
-    return { usersScored: uniqueUserIds.length };
-};
+    if (rpcErr) {
+        return { usersScored: 0, error: rpcErr.message };
+    }
 
+    const result = rpcResult as any;
+    if (!result?.success) {
+        return { usersScored: 0, error: result?.message || 'Bulk update failed.' };
+    }
+
+    return { usersScored: result?.users_scored ?? 0 };
+};

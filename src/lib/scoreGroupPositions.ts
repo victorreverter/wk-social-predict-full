@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { recalculateUserPoints } from './scoreUtils';
 import { groups, initialTeams, generateInitialGroupMatches } from '../utils/data-init';
 import { calculateGroupStandings } from '../utils/standings';
 
@@ -17,17 +16,23 @@ export const scoreGroupPositions = async (userId?: string): Promise<{ usersScore
     }).length;
 
     if (finishedGroupCount === 0) {
-        let q = supabase.from('user_group_positions').select('id, user_id');
+        let q = supabase.from('user_group_positions').select('user_id, group_letter, pts_earned');
         if (userId) q = q.eq('user_id', userId);
         const { data: existing } = await q;
         if (existing && existing.length > 0) {
-            await supabase
-                .from('user_group_positions')
-                .update({ pts_earned: 0 })
-                .in('id', existing.map(r => r.id));
-            const uids = [...new Set(existing.map(r => r.user_id))];
-            await Promise.all(uids.map(uid => recalculateUserPoints(uid)));
-            return { usersScored: uids.length };
+            // Zero via RPC - user_group_positions uses (user_id, group_letter) as PK
+            const zeroUpdates = existing.map((r: any) => ({
+                user_id: r.user_id,
+                group_letter: r.group_letter,
+                pts_earned: 0
+            }));
+            const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+                'bulk_update_prediction_points',
+                { p_table_name: 'user_group_positions', p_updates: zeroUpdates }
+            );
+            if (rpcErr) return { usersScored: 0, error: rpcErr.message };
+            const result = rpcResult as any;
+            return { usersScored: result?.users_scored ?? 0 };
         }
         return { usersScored: 0 };
     }
@@ -89,8 +94,9 @@ export const scoreGroupPositions = async (userId?: string): Promise<{ usersScore
     const getPts = (key: string, _default: number) => rules?.find(r => r.rule_key === key)?.pts ?? _default;
     const ptsCorrectPosition = getPts('group_position_correct', 2);
 
+    // user_group_positions uses (user_id, group_letter) as PK
     const updates: { user_id: string; group_letter: string; pts_earned: number }[] = [];
-    preds.forEach(p => {
+    preds.forEach((p: any) => {
         const official = officialPositions[p.group_letter];
         if (!official || !p.order) return;
 
@@ -104,18 +110,20 @@ export const scoreGroupPositions = async (userId?: string): Promise<{ usersScore
 
     if (updates.length === 0) return { usersScored: 0 };
 
-    await Promise.all(
-        updates.map(u =>
-            supabase
-                .from('user_group_positions')
-                .update({ pts_earned: u.pts_earned })
-                .eq('user_id', u.user_id)
-                .eq('group_letter', u.group_letter)
-        )
+    // 5. Persist via RPC (SECURITY DEFINER - bypasses RLS, scores ALL users)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+        'bulk_update_prediction_points',
+        { p_table_name: 'user_group_positions', p_updates: updates }
     );
 
-    const uniqueUserIds = [...new Set(updates.map(r => r.user_id))];
-    await Promise.all(uniqueUserIds.map(uid => recalculateUserPoints(uid)));
+    if (rpcErr) {
+        return { usersScored: 0, error: rpcErr.message };
+    }
 
-    return { usersScored: uniqueUserIds.length };
+    const result = rpcResult as any;
+    if (!result?.success) {
+        return { usersScored: 0, error: result?.message || 'Bulk update failed.' };
+    }
+
+    return { usersScored: result?.users_scored ?? 0 };
 };

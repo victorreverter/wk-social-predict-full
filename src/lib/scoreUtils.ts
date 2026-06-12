@@ -1,26 +1,9 @@
 import { supabase } from './supabase';
 
-const sum = (rows: { pts_earned: number }[] | null): number =>
-    (rows ?? []).reduce((s, r) => s + (r.pts_earned || 0), 0);
-
 /**
  * Recalculates profiles.total_points for a specific user based on all prediction tables.
+ * Uses SECURITY DEFINER RPC to bypass RLS.
  */
 export const recalculateUserPoints = async (userId: string) => {
-    const [matchRes, awardRes, koRes, xiRes, groupPosRes] = await Promise.all([
-        supabase.from('user_predictions_matches').select('pts_earned').eq('user_id', userId),
-        supabase.from('user_predictions_awards').select('pts_earned').eq('user_id', userId),
-        supabase.from('user_predictions_knockout').select('pts_earned').eq('user_id', userId),
-        supabase.from('user_predictions_xi').select('pts_earned').eq('user_id', userId),
-        supabase.from('user_group_positions').select('pts_earned').eq('user_id', userId),
-    ]);
-    
-    const total =
-        sum(matchRes.data) +
-        sum(awardRes.data) +
-        sum(koRes.data) +
-        sum(xiRes.data) +
-        sum(groupPosRes.data);
-        
-    await supabase.from('profiles').update({ total_points: total }).eq('id', userId);
+    await supabase.rpc('recalculate_user_points_rpc', { target_user_id: userId });
 };
