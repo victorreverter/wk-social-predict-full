@@ -198,8 +198,9 @@ export const LeaderboardView: React.FC = () => {
                             .slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
                             .map((user, index) => {
                                 const sorted = leaderboard;
-                                let rank = index + 1;
-                                if (index > 0 && sorted[index - 1].total === user.total) {
+                                const globalIndex = page * PAGE_SIZE + index;
+                                let rank = globalIndex + 1;
+                                if (globalIndex > 0 && sorted[globalIndex - 1].total === user.total) {
                                     const firstTiedIndex = sorted.findIndex((u: any) => u.total === user.total);
                                     rank = firstTiedIndex + 1;
                                 }
