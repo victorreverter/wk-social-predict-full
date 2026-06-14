@@ -29,8 +29,12 @@ serve(async (req: Request): Promise<Response> => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let supabaseClient: ReturnType<typeof createClient> | null = null;
+  let apiUrl = '';
+  let startTime = 0;
+
   try {
-    const supabaseClient = createClient(
+    supabaseClient = createClient(
       SUPABASE_URL,
       Deno.env.get('PROJECT_SERVICE_KEY') ?? '',
       { auth: { persistSession: false } }
@@ -60,8 +64,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const apiUrl = `https://api.football-data.org/v4/competitions/${COMPETITION_ID}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
-    const startTime = Date.now();
+    apiUrl = `https://api.football-data.org/v4/competitions/${COMPETITION_ID}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    startTime = Date.now();
 
     const response = await fetch(apiUrl, {
       headers: { 'X-Auth-Token': API_KEY },
@@ -79,7 +83,18 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const data = await response.json();
+    let data: Record<string, unknown>;
+    try {
+      data = await response.json() as Record<string, unknown>;
+    } catch (jsonErr) {
+      const rawText = await response.text().catch(() => '(unreadable)');
+      await logApiCall(supabaseClient, apiUrl, response.status, Date.now() - startTime,
+        `JSON parse error — first 500 chars: ${rawText.substring(0, 500)}`);
+      return new Response(
+        JSON.stringify({ success: false, updated: 0, message: `API returned non-JSON response — check football_data_api_log.`, dateFrom, dateTo }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
+      );
+    }
     const allMatches: Record<string, unknown>[] = data.matches || [];
     const finished = allMatches.filter(m => m.status === 'FINISHED' || m.status === 'AWARDED');
 
@@ -100,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
       const typedM = m as Record<string, unknown>;
       const score = (typedM.score || {}) as Record<string, unknown>;
       const fullTime = (score.fullTime || {}) as Record<string, number | null>;
-      const penalties = score.penalties as Record<string, number | null> | null;
+      const penalties = (score.penalties != null ? score.penalties : null) as Record<string, number | null> | null;
 
       const homeGoals = fullTime.home;
       const awayGoals = fullTime.away;
@@ -218,8 +233,13 @@ serve(async (req: Request): Promise<Response> => {
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
+    const stack = err instanceof Error ? err.stack : '';
+    console.error('fetch-wc-results CRASH:', msg, stack);
+    try {
+      await logApiCall(supabaseClient, apiUrl, 500, Date.now() - startTime, msg + ' | ' + (stack || '').substring(0, 500));
+    } catch (_) { /* swallow */ }
     return new Response(
-      JSON.stringify({ success: false, updated: 0, message: msg }),
+      JSON.stringify({ success: false, updated: 0, message: `Internal crash: ${msg}` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
