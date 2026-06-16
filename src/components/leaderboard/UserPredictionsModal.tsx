@@ -355,6 +355,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     const groupExact = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned >= 2).length;
     const groupCorrect = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned === 1).length;
 
+    const koR32 = pd.ko.filter(k => k.round === 'R32' && k.pts_earned > 0).length;
     const koR16 = pd.ko.filter(k => k.round === 'R16' && k.pts_earned > 0).length;
     const koQF = pd.ko.filter(k => k.round === 'QF' && k.pts_earned > 0).length;
     const koSF = pd.ko.filter(k => k.round === 'SF' && k.pts_earned > 0).length;
@@ -410,7 +411,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     return {
       allMatchPts, groupMatchPts, koPts, awardsPts, xiPts,
       groupExact, groupCorrect,
-      koR16, koQF, koSF, koF,
+      koR32, koR16, koQF, koSF, koF,
       awardsHit, xiHit,
       championPick, runnerUpPick, bronzePick,
       groupStandings,
@@ -476,7 +477,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             <span className="points-card-icon">🏆</span>
             <span className="points-card-val">{stats.koPts}</span>
             <span className="points-card-label">Knockout</span>
-            <span className="points-card-sub">R16×{stats.koR16} QF×{stats.koQF} SF×{stats.koSF} F×{stats.koF}</span>
+            <span className="points-card-sub">R32×{stats.koR32} R16×{stats.koR16} QF×{stats.koQF} SF×{stats.koSF} F×{stats.koF}</span>
           </div>
           <div className="points-card">
             <span className="points-card-icon">🎖️</span>

@@ -257,6 +257,20 @@ export const useSaveAllPredictions = () => {
                 upsertPromises.push(supabase.from('user_group_positions').upsert(groupPositionsRows, { onConflict: 'user_id,group_letter' }));
             }
 
+            // 7. Actual knockout game predictions (Games tab)
+            const koGameRows = Object.entries(state.koGamePredictions).map(([matchId, score]) => ({
+                user_id: session.user.id,
+                match_id: matchId,
+                pred_home_goals: score.homeGoals,
+                pred_away_goals: score.awayGoals,
+                pred_home_pens: score.homePenalties ?? null,
+                pred_away_pens: score.awayPenalties ?? null,
+                pts_earned: 0,
+            }));
+            if (koGameRows.length > 0) {
+                upsertPromises.push(supabase.from('user_predictions_ko_games').upsert(koGameRows, { onConflict: 'user_id,match_id' }));
+            }
+
             const results = await Promise.all(upsertPromises);
             const hasError = results.some(r => r.error);
             if (hasError) {
@@ -275,7 +289,8 @@ export const useSaveAllPredictions = () => {
                     + (saveCategories.bracket ? koRows.length : 0)
                     + (saveCategories.awards ? awardRows.length : 0)
                     + (saveCategories.tournamentXI ? xiRows.length : 0)
-                    + (saveCategories.groupStage ? groupPositionsRows.length : 0);
+                    + (saveCategories.groupStage ? groupPositionsRows.length : 0)
+                    + koGameRows.length;
                 const notes: string[] = [];
                 if (lockedMatches.length > 0) notes.push(`${lockedMatches.length} match(es) locked — preserved`);
                 if (blockedCategories.length > 0) notes.push(`${blockedCategories.join(', ')} locked — skipped`);

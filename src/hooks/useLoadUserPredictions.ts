@@ -15,7 +15,7 @@ export const useLoadUserPredictions = () => {
 
         const loadPredictions = async () => {
             try {
-                const [matchesRes, koRes, awardsRes, xiRes, groupPosRes, koStructRes, thirdsRes] = await Promise.all([
+                const [matchesRes, koRes, awardsRes, xiRes, groupPosRes, koStructRes, thirdsRes, koGamesRes] = await Promise.all([
                     supabase.from('user_predictions_matches').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_awards').select('*').eq('user_id', session.user.id),
@@ -23,6 +23,7 @@ export const useLoadUserPredictions = () => {
                     supabase.from('user_group_positions').select('*').eq('user_id', session.user.id),
                     supabase.from('user_predictions_knockout_structure').select('*').eq('user_id', session.user.id),
                     supabase.from('user_selected_thirds').select('*').eq('user_id', session.user.id).maybeSingle(),
+                    supabase.from('user_predictions_ko_games').select('*').eq('user_id', session.user.id),
                 ]);
 
                 if (matchesRes.error || koRes.error || awardsRes.error || xiRes.error || groupPosRes.error) {
@@ -36,7 +37,7 @@ export const useLoadUserPredictions = () => {
                     console.warn('Knockout structure load skipped:', koStructRes.error.message);
                 }
 
-                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && groupPosRes.data?.length === 0 && (koStructRes.data?.length || 0) === 0) {
+                if (matchesRes.data.length === 0 && awardsRes.data.length === 0 && xiRes.data.length === 0 && groupPosRes.data?.length === 0 && (koStructRes.data?.length || 0) === 0 && (koGamesRes.data?.length || 0) === 0) {
                     return;
                 }
 
@@ -123,6 +124,18 @@ export const useLoadUserPredictions = () => {
                     }
                 });
 
+                const loadedKOGamePredictions: Record<string, any> = {};
+                if (koGamesRes.data) {
+                    koGamesRes.data.forEach((row: any) => {
+                        loadedKOGamePredictions[row.match_id] = {
+                            homeGoals: row.pred_home_goals,
+                            awayGoals: row.pred_away_goals,
+                            homePenalties: row.pred_home_pens,
+                            awayPenalties: row.pred_away_pens,
+                        };
+                    });
+                }
+
                 // ── Rehydrate selectedThirds ──
                 // 1. Primary source: user_selected_thirds table (explicitly persisted)
                 let loadedSelectedThirds: string[] = [];
@@ -164,7 +177,8 @@ export const useLoadUserPredictions = () => {
                     awards: loadedAwards,
                     tournamentXI: loadedXI,
                     selectedThirds: loadedSelectedThirds.length > 0 ? loadedSelectedThirds : state.selectedThirds,
-                    customGroupPositions: loadedPositions
+                    customGroupPositions: loadedPositions,
+                    koGamePredictions: loadedKOGamePredictions
                 });
                 
             } catch (err) {

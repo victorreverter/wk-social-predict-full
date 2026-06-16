@@ -48,6 +48,7 @@ begin
         -- cannot survive a tournament reset. This covers all prediction tables
         -- (group matches, knockout, awards, XI, group positions, eredivisie).
         update public.user_predictions_matches   set pts_earned = 0 where pts_earned <> 0;
+        update public.user_predictions_ko_games set pts_earned = 0 where pts_earned <> 0;
         update public.user_predictions_knockout set pts_earned = 0 where pts_earned <> 0;
         update public.user_predictions_awards    set pts_earned = 0 where pts_earned <> 0;
         update public.user_predictions_xi        set pts_earned = 0 where pts_earned <> 0;
@@ -61,6 +62,8 @@ begin
         with users as (
             select user_id from public.user_predictions_matches
             union
+            select user_id from public.user_predictions_ko_games
+            union
             select user_id from public.user_predictions_knockout
             union
             select user_id from public.user_predictions_awards
@@ -73,17 +76,19 @@ begin
         )
         update public.profiles p
         set    total_points = coalesce(m.pts, 0)
+                            + coalesce(kg.pts, 0)
                             + coalesce(k.pts, 0)
                             + coalesce(a.pts, 0)
                             + coalesce(x.pts, 0)
                             + coalesce(g.pts, 0)
                             + coalesce(e.pts, 0)
         from        users u
-        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_matches    group by user_id) m on m.user_id = u.user_id
-        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_knockout group by user_id) k on k.user_id = u.user_id
-        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_awards   group by user_id) a on a.user_id = u.user_id
-        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_xi        group by user_id) x on x.user_id = u.user_id
-        left join   (select user_id, sum(pts_earned) as pts from public.user_group_positions      group by user_id) g on g.user_id = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_matches    group by user_id) m  on m.user_id  = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_ko_games  group by user_id) kg on kg.user_id = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_knockout group by user_id) k  on k.user_id  = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_awards   group by user_id) a  on a.user_id  = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_xi        group by user_id) x  on x.user_id  = u.user_id
+        left join   (select user_id, sum(pts_earned) as pts from public.user_group_positions      group by user_id) g  on g.user_id  = u.user_id
         left join   (select user_id, sum(pts_earned) as pts from public.user_predictions_eredivisie group by user_id) e on e.user_id = u.user_id
         where  p.id = u.user_id;
 
@@ -93,6 +98,7 @@ begin
         set    total_points = 0
         where  (total_points is null or total_points <> 0)
           and  not exists (select 1 from public.user_predictions_matches    where user_id = profiles.id)
+          and  not exists (select 1 from public.user_predictions_ko_games  where user_id = profiles.id)
           and  not exists (select 1 from public.user_predictions_knockout  where user_id = profiles.id)
           and  not exists (select 1 from public.user_predictions_awards    where user_id = profiles.id)
           and  not exists (select 1 from public.user_predictions_xi        where user_id = profiles.id)
@@ -103,6 +109,7 @@ begin
     else
         -- Regular user: zero their own points across all tables and re-sum total.
         update public.user_predictions_matches     set pts_earned = 0 where user_id = caller_id and pts_earned <> 0;
+        update public.user_predictions_ko_games   set pts_earned = 0 where user_id = caller_id and pts_earned <> 0;
         update public.user_predictions_knockout   set pts_earned = 0 where user_id = caller_id and pts_earned <> 0;
         update public.user_predictions_awards      set pts_earned = 0 where user_id = caller_id and pts_earned <> 0;
         update public.user_predictions_xi          set pts_earned = 0 where user_id = caller_id and pts_earned <> 0;
@@ -140,6 +147,7 @@ begin
     end if;
 
     delete from public.user_predictions_matches              where user_id = caller_id;
+    delete from public.user_predictions_ko_games              where user_id = caller_id;
     delete from public.user_predictions_knockout               where user_id = caller_id;
     delete from public.user_predictions_knockout_structure     where user_id = caller_id;
     delete from public.user_predictions_awards                 where user_id = caller_id;

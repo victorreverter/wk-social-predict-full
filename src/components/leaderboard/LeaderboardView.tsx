@@ -10,9 +10,9 @@ interface ProfileData {
     display_name: string | null;
     avatar_url: string | null;
     matches_pts: number;
+    groups_pts: number;
     ko_pts: number;
     awa_pts: number;
-    pos_pts: number;
     total: number;
 }
 
@@ -39,6 +39,7 @@ export const LeaderboardView: React.FC = () => {
                 .select(`
                     id, username, display_name, avatar_url,
                     user_predictions_matches (pts_earned),
+                    user_predictions_ko_games (pts_earned),
                     user_predictions_knockout (pts_earned),
                     user_predictions_awards (pts_earned),
                     user_group_positions (pts_earned),
@@ -51,13 +52,16 @@ export const LeaderboardView: React.FC = () => {
                 const matches_pts = (user.user_predictions_matches || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
+                const ko_games_pts = (user.user_predictions_ko_games || []).reduce(
+                    (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
+                );
                 const ko_pts = (user.user_predictions_knockout || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
                 const awa_pts = (user.user_predictions_awards || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
-                const pos_pts = (user.user_group_positions || []).reduce(
+                const groups_pts = (user.user_group_positions || []).reduce(
                     (acc: number, curr: any) => acc + (curr.pts_earned || 0), 0
                 );
                 const xi_pts = (user.user_predictions_xi || []).reduce(
@@ -68,11 +72,11 @@ export const LeaderboardView: React.FC = () => {
                     username: user.username,
                     display_name: user.display_name,
                     avatar_url: user.avatar_url,
-                    matches_pts,
+                    matches_pts: matches_pts + ko_games_pts,
+                    groups_pts,
                     ko_pts,
                     awa_pts,
-                    pos_pts,
-                    total: matches_pts + ko_pts + awa_pts + pos_pts + xi_pts,
+                    total: matches_pts + ko_games_pts + ko_pts + awa_pts + groups_pts + xi_pts,
                 };
             });
 
@@ -100,6 +104,7 @@ export const LeaderboardView: React.FC = () => {
 
         const wcTables: string[] = [
             'user_predictions_matches',
+            'user_predictions_ko_games',
             'user_predictions_knockout',
             'user_predictions_awards',
             'user_group_positions',
@@ -132,7 +137,7 @@ export const LeaderboardView: React.FC = () => {
         };
     }, [fetchWorldCupLeaderboard]);
 
-    const totalColSpan = 8;
+    const totalColSpan = 7;
 
     if (loading) {
         return (
@@ -186,10 +191,10 @@ export const LeaderboardView: React.FC = () => {
                         <tr>
                             <th className="th-rank">Rank</th>
                             <th className="th-user">Predictor</th>
-                            <th className="th-score" title="Points from exact scores &amp; results">Groups</th>
+                            <th className="th-score" title="Points from exact scores &amp; results">Matches</th>
+                            <th className="th-score" title="Points from Group Positions">Groups</th>
                             <th className="th-score" title="Points from Bracket progressions">Knockout</th>
                             <th className="th-score" title="Points from Awards">Awards</th>
-                            <th className="th-score" title="Points from Group Positions">Pos</th>
                             <th className="th-total">Total</th>
                         </tr>
                     </thead>
@@ -243,9 +248,9 @@ export const LeaderboardView: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="td-score">{user.matches_pts}</td>
+                                        <td className="td-score">{user.groups_pts}</td>
                                         <td className="td-score">{user.ko_pts}</td>
                                         <td className="td-score">{user.awa_pts}</td>
-                                        <td className="td-score">{user.pos_pts}</td>
                                         <td className="td-total">{user.total}</td>
                                     </tr>
                                 );

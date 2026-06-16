@@ -91,5 +91,6 @@ export interface AppState {
   officialMatches: Record<string, OfficialMatch>;
   officialKnockoutMatches: Record<string, Match>;
   customGroupPositions: CustomGroupPositions;
+  koGamePredictions: Record<string, MatchScore>;
 }
 

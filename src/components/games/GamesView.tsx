@@ -2,25 +2,31 @@ import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react'
 import { useApp } from '../../context/AppContext';
 import { getDailySchedules, findTodayIndex, getMonthForDateKey } from '../../utils/schedule';
 import { DailyMatchCard } from './DailyMatchCard';
+import type { Match, MatchScore } from '../../types';
 import './GamesView.css';
 
 export const GamesView: React.FC = () => {
   const { state } = useApp();
-  const { groupMatches, officialKnockoutMatches } = state;
+  const { groupMatches, officialKnockoutMatches, koGamePredictions } = state;
 
-  const filteredKnockout = useMemo(() => {
-    const result: Record<string, typeof officialKnockoutMatches[string]> = {};
-    for (const [id, m] of Object.entries(officialKnockoutMatches)) {
-      if (m.homeTeamId !== 'TBD' || m.awayTeamId !== 'TBD') {
-        result[id] = m;
+  const mergedKnockout = useMemo(() => {
+    const result: Record<string, Match> = {};
+    for (const [id, officialMatch] of Object.entries(officialKnockoutMatches)) {
+      if (officialMatch.homeTeamId !== 'TBD' && officialMatch.awayTeamId !== 'TBD') {
+        const userScore: MatchScore | undefined = koGamePredictions[id];
+        result[id] = {
+          ...officialMatch,
+          score: userScore || { homeGoals: null, awayGoals: null, homePenalties: null, awayPenalties: null },
+          status: userScore && userScore.homeGoals !== null && userScore.awayGoals !== null ? 'FINISHED' : 'NOT_PLAYED',
+        };
       }
     }
     return result;
-  }, [officialKnockoutMatches]);
+  }, [officialKnockoutMatches, koGamePredictions]);
 
   const schedules = useMemo(
-    () => getDailySchedules(groupMatches, filteredKnockout),
-    [groupMatches, filteredKnockout]
+    () => getDailySchedules(groupMatches, mergedKnockout),
+    [groupMatches, mergedKnockout]
   );
 
   const todayIdx = useMemo(() => findTodayIndex(schedules), [schedules]);

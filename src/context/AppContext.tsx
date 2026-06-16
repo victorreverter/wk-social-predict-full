@@ -28,6 +28,7 @@ interface AppContextType {
     updateGroupPosition: (group: string, order: string[]) => void;
     setGroupPositions: (positions: CustomGroupPositions) => void;
     autoFillGroupPositions: () => void;
+    updateKOGamePrediction: (matchId: string, score: MatchScore) => void;
 }
 
 const getFreshState = (): AppState => {
@@ -74,7 +75,8 @@ const getFreshState = (): AppState => {
         },
         officialMatches: {},
         officialKnockoutMatches: generateInitialKnockoutMatches(),
-        customGroupPositions: getDefaultGroupPositions()
+        customGroupPositions: getDefaultGroupPositions(),
+        koGamePredictions: {}
     };
 };
 
@@ -196,6 +198,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     };
 
+    const updateKOGamePrediction = (matchId: string, score: MatchScore) => {
+        setState(prev => ({
+            ...prev,
+            koGamePredictions: {
+                ...prev.koGamePredictions,
+                [matchId]: score
+            }
+        }));
+    };
+
     const updateAward = (category: keyof AwardsState, value: string) => {
         setState(prev => ({
             ...prev,
@@ -226,6 +238,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (authData?.user) {
             try {
                 await supabase.from('user_predictions_knockout_structure').delete().eq('user_id', authData.user.id);
+            } catch (_) { /* table may not exist yet */ }
+            try {
+                await supabase.from('user_predictions_ko_games').delete().eq('user_id', authData.user.id);
             } catch (_) { /* table may not exist yet */ }
         }
 
@@ -434,7 +449,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         loadOfficialMatches,
         updateGroupPosition,
         setGroupPositions,
-        autoFillGroupPositions
+        autoFillGroupPositions,
+        updateKOGamePrediction
     }), [state]); // Only re-create context object if state actually changes
 
     return (

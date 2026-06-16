@@ -26,7 +26,7 @@ const stageLabel = (stage: string): string => {
 };
 
 export const DailyMatchCard: React.FC<Props> = ({ match }) => {
-  const { state, updateGroupMatchScore } = useApp();
+  const { state, updateGroupMatchScore, updateKOGamePrediction } = useApp();
   const { isLocked: isMatchTimeLocked, formatted: lockCountdown, urgency } = useMatchLock(match);
   const { officialMatches, officialKnockoutMatches } = state;
 
@@ -41,13 +41,33 @@ export const DailyMatchCard: React.FC<Props> = ({ match }) => {
 
   const official = officialMatches[match.id];
 
+  const showPenalties = isKO
+    && match.score.homeGoals !== null
+    && match.score.awayGoals !== null
+    && match.score.homeGoals === match.score.awayGoals;
+
   const handleScoreChange = (type: 'home' | 'away', val: string) => {
     const num = val === '' ? null : parseInt(val, 10);
     if (num !== null && (isNaN(num) || num < 0)) return;
     const newScore = { ...match.score };
     if (type === 'home') newScore.homeGoals = num;
     else newScore.awayGoals = num;
-    updateGroupMatchScore(match.id, newScore);
+
+    if (isKO) {
+      updateKOGamePrediction(match.id, newScore);
+    } else {
+      updateGroupMatchScore(match.id, newScore);
+    }
+  };
+
+  const handlePenaltyChange = (type: 'home-pen' | 'away-pen', val: string) => {
+    const num = val === '' ? null : parseInt(val, 10);
+    if (num !== null && (isNaN(num) || num < 0)) return;
+    const newScore = { ...match.score };
+    if (type === 'home-pen') newScore.homePenalties = num;
+    else newScore.awayPenalties = num;
+
+    updateKOGamePrediction(match.id, newScore);
   };
 
   const renderOfficialResult = () => {
@@ -140,19 +160,27 @@ export const DailyMatchCard: React.FC<Props> = ({ match }) => {
             <img src={`${import.meta.env.BASE_URL}flags/${homeTeam.code}.svg`} className="team-flag" alt="" />
           )}
           <div className="daily-score-group">
-            {isKO ? (
-              <span className="daily-score-readonly">{match.score.homeGoals !== null ? match.score.homeGoals : '-'}</span>
-            ) : (
+            {showPenalties && (
               <input
                 type="number"
                 min="0"
-                className="daily-score-input"
-                value={match.score.homeGoals === null ? '' : match.score.homeGoals}
-                onChange={(e) => handleScoreChange('home', e.target.value)}
-                placeholder="-"
+                className="daily-pen-input"
+                placeholder="P"
+                title="Penalties"
+                value={match.score.homePenalties === null || match.score.homePenalties === undefined ? '' : match.score.homePenalties}
+                onChange={(e) => handlePenaltyChange('home-pen', e.target.value)}
                 disabled={isMatchTimeLocked}
               />
             )}
+            <input
+              type="number"
+              min="0"
+              className="daily-score-input"
+              value={match.score.homeGoals === null ? '' : match.score.homeGoals}
+              onChange={(e) => handleScoreChange('home', e.target.value)}
+              placeholder="-"
+              disabled={isMatchTimeLocked}
+            />
           </div>
         </div>
 
@@ -160,16 +188,24 @@ export const DailyMatchCard: React.FC<Props> = ({ match }) => {
 
         <div className="daily-team away">
           <div className="daily-score-group">
-            {isKO ? (
-              <span className="daily-score-readonly">{match.score.awayGoals !== null ? match.score.awayGoals : '-'}</span>
-            ) : (
+            <input
+              type="number"
+              min="0"
+              className="daily-score-input"
+              value={match.score.awayGoals === null ? '' : match.score.awayGoals}
+              onChange={(e) => handleScoreChange('away', e.target.value)}
+              placeholder="-"
+              disabled={isMatchTimeLocked}
+            />
+            {showPenalties && (
               <input
                 type="number"
                 min="0"
-                className="daily-score-input"
-                value={match.score.awayGoals === null ? '' : match.score.awayGoals}
-                onChange={(e) => handleScoreChange('away', e.target.value)}
-                placeholder="-"
+                className="daily-pen-input"
+                placeholder="P"
+                title="Penalties"
+                value={match.score.awayPenalties === null || match.score.awayPenalties === undefined ? '' : match.score.awayPenalties}
+                onChange={(e) => handlePenaltyChange('away-pen', e.target.value)}
                 disabled={isMatchTimeLocked}
               />
             )}
