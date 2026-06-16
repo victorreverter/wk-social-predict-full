@@ -5,7 +5,7 @@ import { THIRD_PLACE_COMBOS } from './fifa-combos';
 
 type ThirdPlaceTeam = GroupStanding & { group: string };
 
-const T3_MATCH_ORDER: readonly number[] = [79, 85, 81, 74, 82, 77, 87, 80];
+export const T3_MATCH_ORDER: readonly number[] = [79, 85, 81, 74, 82, 77, 87, 80];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2026 FIFA World Cup – Official Knockout Bracket
@@ -253,7 +253,7 @@ export const generateInitialKnockoutMatches = (): Record<string, Match> => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolve a match winner (used for propagation)
 // ─────────────────────────────────────────────────────────────────────────────
-const getMatchWinner = (match?: Match): string => {
+export const getMatchWinner = (match?: Match): string => {
   if (!match) return 'TBD';
   if (match.status !== 'FINISHED') return 'TBD';
   if (match.result === 'HOME_WIN') return match.homeTeamId;
@@ -269,7 +269,7 @@ const getMatchWinner = (match?: Match): string => {
   return 'TBD';
 };
 
-const getMatchLoser = (match?: Match): string => {
+export const getMatchLoser = (match?: Match): string => {
   if (!match) return 'TBD';
   if (match.status !== 'FINISHED') return 'TBD';
   if (match.result === 'HOME_WIN') return match.awayTeamId;
@@ -288,7 +288,7 @@ const getMatchLoser = (match?: Match): string => {
 // ─────────────────────────────────────────────────────────────────────────────
 // setTeams helper: only mutates if something actually changed (avoids re-renders)
 // ─────────────────────────────────────────────────────────────────────────────
-const setTeams = (
+export const setTeams = (
   ko: Record<string, Match>,
   matchNum: number,
   home: string,
