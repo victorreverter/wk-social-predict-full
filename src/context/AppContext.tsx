@@ -6,7 +6,7 @@ import { generateInitialKnockoutMatches, updateKnockoutBracket, seedBracketFromP
 import { deriveOfficialKnockoutBracket } from '../utils/official-bracket';
 import { supabase } from '../lib/supabase';
 
-interface AppContextType {
+export interface AppContextType {
     state: AppState;
     setMode: (mode: PredictionMode) => void;
     setTheme: (theme: Theme) => void;
@@ -80,7 +80,7 @@ const getFreshState = (): AppState => {
     };
 };
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Lazily initialize state so getFreshState() isn't called on every render/clone pass

@@ -17,6 +17,13 @@ import type { LockCategory } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../../utils/bracket-logic';
 import { calculateGroupStandings } from '../../utils/standings';
 import type { Match, OfficialMatch } from '../../types';
+import { fetchUserPredictions, type UserPredictionData } from '../../utils/fetchUserPredictions';
+import { UserPreviewProvider } from './UserPreviewProvider';
+import { GamesView } from '../games/GamesView';
+import { BracketTree } from '../knockout-stage/BracketTree';
+import { AwardsView } from '../awards/AwardsView';
+import { TournamentXIView } from '../tournament-xi/TournamentXIView';
+import { GroupPositionsView } from '../group-positions/GroupPositionsView';
 
 import './AdminView.css';
 
@@ -150,7 +157,7 @@ export const AdminView: React.FC = () => {
     const { isLocked, updateLockDate, isEaseModeEnabled, updateEaseMode, categoryLocks, setCategoryLock, clearCategoryLock } = useAuth();
     const { resetTournament } = useApp();
     
-    const [section, setSection]           = useState<'group' | 'knockout' | 'positions' | 'awards' | 'xi'>('group');
+    const [section, setSection]           = useState<'group' | 'knockout' | 'positions' | 'awards' | 'xi' | 'users'>('group');
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
     const [activeKoRound, setActiveKoRound] = useState<string>('R32');
     const [officialMatches, setOfficialMatches] = useState<Record<string, OfficialMatch>>({});
@@ -169,6 +176,15 @@ export const AdminView: React.FC = () => {
     const [nextFetchIn, setNextFetchIn] = useState<number | null>(null);
     const [officialPositions, setOfficialPositions] = useState<Record<string, string[]>>({});
     const [positionsSaving, setPositionsSaving] = useState(false);
+
+    const [userSearch, setUserSearch] = useState('');
+    const [userSearchResults, setUserSearchResults] = useState<{ id: string; username: string; display_name: string | null }[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [selectedUserName, setSelectedUserName] = useState<string>('');
+    const [previewData, setPreviewData] = useState<UserPredictionData | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewError, setPreviewError] = useState('');
+    const [previewTab, setPreviewTab] = useState<'games' | 'bracket' | 'awards' | 'xi' | 'positions'>('games');
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -205,6 +221,38 @@ export const AdminView: React.FC = () => {
     }, []);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    const handleUserSearch = useCallback(async (query: string) => {
+        setUserSearch(query);
+        if (query.trim().length < 2) {
+            setUserSearchResults([]);
+            return;
+        }
+        const { data } = await supabase
+            .from('profiles')
+            .select('id, username, display_name')
+            .neq('is_master', true)
+            .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+            .limit(20);
+        if (data) {
+            setUserSearchResults(data);
+        }
+    }, []);
+
+    const handleSelectUser = useCallback(async (userId: string, userName: string) => {
+        setSelectedUserId(userId);
+        setSelectedUserName(userName);
+        setPreviewLoading(true);
+        setPreviewError('');
+        setPreviewData(null);
+        try {
+            const data = await fetchUserPredictions(userId);
+            setPreviewData(data);
+        } catch (err: any) {
+            setPreviewError(err?.message || 'Failed to load user predictions');
+        }
+        setPreviewLoading(false);
+    }, []);
 
     // ── Dynamically resolve Knockout Bracket based on Official Matches
     useEffect(() => {
@@ -479,6 +527,7 @@ export const AdminView: React.FC = () => {
                     <button className={`admin-sec-btn ${section === 'positions' ? 'active' : ''}`} onClick={() => setSection('positions')}>📊 Positions</button>
                     <button className={`admin-sec-btn ${section === 'awards'    ? 'active' : ''}`} onClick={() => setSection('awards')}>🎖️ Awards</button>
                     <button className={`admin-sec-btn ${section === 'xi'        ? 'active' : ''}`} onClick={() => setSection('xi')}>👕 Tournament XI</button>
+                    <button className={`admin-sec-btn ${section === 'users'     ? 'active' : ''}`} onClick={() => setSection('users')}>🔍 Inspect User</button>
                     <div className="admin-reset-area">
                         <button 
                             className={`admin-lock-btn ${isLocked ? 'locked' : 'unlocked'}`}
@@ -750,6 +799,98 @@ export const AdminView: React.FC = () => {
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+
+            {/* ── INSPECT USER ─────────────────────────────────── */}
+            {section === 'users' && (
+                <div className="admin-inspect-user">
+                    <div className="admin-inspect-header glass-panel">
+                        <h3>🔍 Inspect User Predictions</h3>
+                        <p>Search for a user to view all their predictions in read-only mode. No data will be modified.</p>
+                        <div className="admin-inspect-search">
+                            <input
+                                type="text"
+                                className="admin-inspect-search-input"
+                                placeholder="Type username or display name..."
+                                value={userSearch}
+                                onChange={(e) => handleUserSearch(e.target.value)}
+                                autoComplete="off"
+                            />
+                            {userSearchResults.length > 0 && !selectedUserId && (
+                                <div className="admin-inspect-results">
+                                    {userSearchResults.map(u => (
+                                        <button
+                                            key={u.id}
+                                            className="admin-inspect-result-item"
+                                            onClick={() => handleSelectUser(u.id, u.display_name || u.username)}
+                                        >
+                                            <span className="admin-inspect-result-name">{u.display_name || u.username}</span>
+                                            <span className="admin-inspect-result-username">@{u.username}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {selectedUserId && (
+                        <div className="admin-inspect-preview">
+                            <div className="admin-inspect-preview-header glass-panel">
+                                <div className="admin-inspect-preview-user">
+                                    <span className="admin-inspect-preview-label">Viewing:</span>
+                                    <span className="admin-inspect-preview-name">{selectedUserName}</span>
+                                    <button
+                                        className="admin-inspect-clear-btn"
+                                        onClick={() => {
+                                            setSelectedUserId(null);
+                                            setSelectedUserName('');
+                                            setPreviewData(null);
+                                            setUserSearch('');
+                                            setUserSearchResults([]);
+                                        }}
+                                    >
+                                        ✕ Clear
+                                    </button>
+                                </div>
+                                <div className="admin-inspect-preview-tabs">
+                                    <button className={`admin-sec-btn ${previewTab === 'games' ? 'active' : ''}`} onClick={() => setPreviewTab('games')}>⚽ Games</button>
+                                    <button className={`admin-sec-btn ${previewTab === 'bracket' ? 'active' : ''}`} onClick={() => setPreviewTab('bracket')}>🏆 Bracket</button>
+                                    <button className={`admin-sec-btn ${previewTab === 'awards' ? 'active' : ''}`} onClick={() => setPreviewTab('awards')}>🎖️ Awards</button>
+                                    <button className={`admin-sec-btn ${previewTab === 'xi' ? 'active' : ''}`} onClick={() => setPreviewTab('xi')}>👕 XI</button>
+                                    <button className={`admin-sec-btn ${previewTab === 'positions' ? 'active' : ''}`} onClick={() => setPreviewTab('positions')}>📊 Positions</button>
+                                </div>
+                            </div>
+
+                            {previewLoading && (
+                                <div className="admin-inspect-loading glass-panel">
+                                    <p>Loading predictions...</p>
+                                </div>
+                            )}
+
+                            {previewError && (
+                                <div className="admin-inspect-error glass-panel">
+                                    <p>Error: {previewError}</p>
+                                </div>
+                            )}
+
+                            {previewData && !previewLoading && (
+                                <div className="admin-inspect-preview-content">
+                                    <UserPreviewProvider
+                                        data={previewData}
+                                        officialMatches={officialMatches}
+                                        officialKnockoutMatches={resolvedKo}
+                                    >
+                                        {previewTab === 'games' && <GamesView />}
+                                        {previewTab === 'bracket' && <BracketTree />}
+                                        {previewTab === 'awards' && <AwardsView />}
+                                        {previewTab === 'xi' && <TournamentXIView />}
+                                        {previewTab === 'positions' && <GroupPositionsView />}
+                                    </UserPreviewProvider>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
