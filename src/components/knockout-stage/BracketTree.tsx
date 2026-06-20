@@ -122,7 +122,7 @@ export const BracketTree: React.FC = () => {
     const isTournament = bracketMode === 'tournament';
 
     return (
-        <div className="bracket-view-container">
+        <div className={`bracket-view-container ${isTournament ? 'bracket-mode-tournament' : ''}`}>
             <div className="bracket-mode-toggle">
                 <button
                     className={`bracket-mode-pill ${!isTournament ? 'active' : ''}`}

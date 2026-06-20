@@ -345,3 +345,7 @@
     border-color: rgba(200, 60, 60, 0.12);
     color: rgba(180, 60, 60, 0.55);
 }
+
+.bracket-view-container:not(.bracket-mode-tournament) .bracket-official-result {
+    display: none !important;
+}
