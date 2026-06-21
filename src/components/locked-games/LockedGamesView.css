@@ -1,0 +1,344 @@
+.locked-games-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 80%;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .locked-games-view {
+        max-width: 100%;
+    }
+}
+
+.locked-games-header {
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+}
+
+.locked-games-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+}
+
+.locked-games-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── User Search ─────────────────────────────────────────── */
+
+.locked-user-search {
+    position: relative;
+    margin-top: 1rem;
+}
+
+.locked-search-input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.locked-search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(236, 255, 0, 0.12);
+}
+
+:root.light .locked-search-input {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.locked-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.3rem;
+    background: rgba(20, 20, 20, 0.98);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+:root.light .locked-search-results {
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.locked-search-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+}
+
+.locked-search-result-item:hover {
+    background: rgba(236, 255, 0, 0.08);
+}
+
+.locked-search-result-name {
+    font-weight: 600;
+}
+
+.locked-search-result-username {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* ── Viewing Banner ──────────────────────────────────────── */
+
+.locked-viewing-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 12px;
+    background: rgba(100, 220, 255, 0.06);
+    border: 1px solid rgba(100, 220, 255, 0.2);
+}
+
+.locked-viewing-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.locked-viewing-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #64dcff;
+}
+
+.locked-clear-btn {
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: auto;
+}
+
+.locked-clear-btn:hover {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    background: rgba(255, 100, 100, 0.08);
+}
+
+/* ── Loading / Error / Stats ─────────────────────────────── */
+
+.locked-loading,
+.locked-error {
+    padding: 2rem;
+    text-align: center;
+    border-radius: 12px;
+}
+
+.locked-loading p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.locked-error p {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+}
+
+.locked-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+}
+
+.locked-stats-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ── Empty State ────────────────────────────────────────── */
+
+.locked-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    border-radius: 16px;
+}
+
+.locked-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.locked-empty-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.locked-empty-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+}
+
+/* ── Date Scroller ──────────────────────────────────────── */
+
+.locked-scroller-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+}
+
+.locked-scroller {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    flex: 1;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.locked-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.locked-scroller-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.locked-scroller-arrow:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.locked-scroller-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.locked-date-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.locked-date-pill:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.locked-date-pill.active {
+    background: var(--color-primary);
+    color: #000;
+    border-color: var(--color-primary);
+}
+
+.locked-date-pill-label {
+    font-weight: 600;
+}
+
+.locked-date-pill-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.locked-date-pill.active .locked-date-pill-count {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Day Section ────────────────────────────────────────── */
+
+.locked-day-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.locked-day-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.locked-day-month {
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.locked-day-separator {
+    color: var(--text-muted);
+}
+
+.locked-day-count {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.locked-matches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}

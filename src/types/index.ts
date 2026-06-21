@@ -1,7 +1,7 @@
 // types/index.ts
 
 export type PredictionMode = 'EASY' | 'HARD';
-export type ViewTab = 'GAMES' | 'GROUP_DEP' | 'GROUP' | 'GROUP_POSITIONS' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
+export type ViewTab = 'GAMES' | 'RESULTS' | 'GROUP_DEP' | 'GROUP' | 'GROUP_POSITIONS' | 'BRACKET' | 'AWARDS' | 'SUMMARY' | 'TOURNAMENT_XI' | 'ADMIN' | 'LEADERBOARD';
 
 export type CustomGroupPositions = Record<string, string[]>;
 export type MatchStatus = 'NOT_PLAYED' | 'FINISHED';

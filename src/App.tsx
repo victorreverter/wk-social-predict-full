@@ -16,6 +16,7 @@ import { AdminView } from './components/admin/AdminView';
 import { CountdownWidget } from './components/shared/CountdownWidget';
 import { LeaderboardView } from './components/leaderboard/LeaderboardView';
 import { GamesView } from './components/games/GamesView';
+import { LockedGamesView } from './components/locked-games/LockedGamesView';
 import { FloatingSaveButton } from './components/shared/FloatingSaveButton';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { ToastProvider } from './components/shared/Toast';
@@ -31,6 +32,7 @@ const MainContent = () => {
   return (
     <main className="main-content">
       {state.activeTab === 'GAMES'         && <GamesView />}
+      {state.activeTab === 'RESULTS'       && <LockedGamesView />}
       {state.activeTab === 'GROUP_DEP'        && <GroupView />}
       {state.activeTab === 'GROUP_POSITIONS'  && <GroupPositionsView />}
       {state.activeTab === 'BRACKET'       && <BracketTree />}

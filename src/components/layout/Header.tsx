@@ -82,6 +82,12 @@ export const Header: React.FC = () => {
                             Games
                         </button>
                         <button
+                            className={`tab-btn ${activeTab === 'RESULTS' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('RESULTS')}
+                        >
+                            🔒 Results
+                        </button>
+                        <button
                             className={`tab-btn ${activeTab === 'GROUP_POSITIONS' ? 'active' : ''}`}
                             onClick={() => setActiveTab('GROUP_POSITIONS')}
                             data-tutorial-id="tutorial-group-positions"
@@ -240,6 +246,13 @@ export const Header: React.FC = () => {
                     >
                         <span className="mobile-drawer-nav-icon">📅</span>
                         <span className="mobile-drawer-nav-label">Games</span>
+                    </button>
+                    <button
+                        className={`mobile-drawer-nav-item ${activeTab === 'RESULTS' ? 'active' : ''}`}
+                        onClick={() => handleTabClick('RESULTS')}
+                    >
+                        <span className="mobile-drawer-nav-icon">🔒</span>
+                        <span className="mobile-drawer-nav-label">Results</span>
                     </button>
                     <button
                         className={`mobile-drawer-nav-item ${activeTab === 'GROUP_POSITIONS' ? 'active' : ''}`}
