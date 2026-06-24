@@ -189,6 +189,22 @@ export const AdminView: React.FC = () => {
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
+    const runMatchRescore = useCallback(async () => {
+        const [matchRes, knockoutRes] = await Promise.all([
+            scoreMatches(),
+            scoreKnockout(),
+        ]);
+
+        window.dispatchEvent(new Event('leaderboard-refresh'));
+
+        const errors = [matchRes.error, knockoutRes.error].filter(Boolean);
+        return {
+            matchUsersScored: matchRes.usersScored ?? 0,
+            knockoutUsersScored: knockoutRes.usersScored ?? 0,
+            error: errors.length > 0 ? errors.join('; ') : null,
+        };
+    }, []);
+
     const flashSaved = (id: string) => {
         setSavedQueue(p => ({ ...p, [id]: true }));
         setTimeout(() => setSavedQueue(p => ({ ...p, [id]: false })), 2000);
@@ -324,13 +340,19 @@ export const AdminView: React.FC = () => {
                     status: (row.home_goals !== null && row.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED',
                 },
             }));
-            await scoreMatches();
-            await scoreKnockout();
+            const rescore = await runMatchRescore();
             flashSaved(matchId);
+            setSaving(null);
+            showToast(
+                rescore.error
+                    ? `⚠️ ${matchId.toUpperCase()} saved, but scoring failed: ${rescore.error}`
+                    : `✅ ${matchId.toUpperCase()} saved & users scored!`
+            );
+            return;
         }
 
         setSaving(null);
-        showToast(error ? `❌ ${error.message}` : `✅ ${matchId.toUpperCase()} saved & users scored!`);
+        showToast(`❌ ${error.message}`);
     };
 
     const saveAward = async (category: string) => {
@@ -492,34 +514,70 @@ export const AdminView: React.FC = () => {
             );
             setApiLastCheck(new Date().toLocaleTimeString());
 
-            if (result.success && result.updated > 0) {
+            if (result.success) {
                 await loadData();
-                await scoreMatches();
-                await scoreKnockout();
-                window.dispatchEvent(new Event('leaderboard-refresh'));
+                const rescore = await runMatchRescore();
 
-                let statusMsg = `Updated ${result.updated} match(es)`;
-                if (result.groupMatches) statusMsg += ` (${result.groupMatches} group)`;
-                if (result.knockoutMatches) statusMsg += ` (${result.knockoutMatches} KO)`;
+                if (result.updated > 0) {
+                    let statusMsg = `Updated ${result.updated} match(es)`;
+                    if (result.groupMatches) statusMsg += ` (${result.groupMatches} group)`;
+                    if (result.knockoutMatches) statusMsg += ` (${result.knockoutMatches} KO)`;
 
-                if (result.skippedKnockouts && result.skippedKnockouts.length > 0) {
-                    const skNames = result.skippedKnockouts
-                        .map(s => `${s.home} vs ${s.away}`)
-                        .join(', ');
-                    statusMsg += ` — Auto-mapping required for: ${skNames}`;
-                    showToast(`⚠️ Some knockout matches could not be auto-mapped. Check bracket manually.`);
+                    if (result.skippedKnockouts && result.skippedKnockouts.length > 0) {
+                        const skNames = result.skippedKnockouts
+                            .map(s => `${s.home} vs ${s.away}`)
+                            .join(', ');
+                        statusMsg += ` — Auto-mapping required for: ${skNames}`;
+                        showToast(`⚠️ Some knockout matches could not be auto-mapped. Check bracket manually.`);
+                    } else if (rescore.error) {
+                        showToast(`⚠️ Matches updated, but scoring failed: ${rescore.error}`);
+                    } else {
+                        showToast(`✅ ${result.updated} matches updated & scored!`);
+                    }
+
+                    setApiStatus(statusMsg);
                 } else {
-                    showToast(`✅ ${result.updated} matches updated & scored!`);
+                    setApiStatus(
+                        rescore.error
+                            ? `No new finished matches. Rescore failed: ${rescore.error}`
+                            : 'No new finished matches. Existing predictions rescored.'
+                    );
+                    showToast(
+                        rescore.error
+                            ? `⚠️ Rescore failed: ${rescore.error}`
+                            : '✅ Existing finished matches rescored.'
+                    );
                 }
-
-                setApiStatus(statusMsg);
-            } else if (result.success && result.updated === 0) {
-                setApiStatus('No new finished matches');
             } else {
                 setApiStatus(result.message);
             }
         } catch {
             setApiStatus('API call failed');
+        }
+        setApiLoading(false);
+    };
+
+    const forceRescoreAllMatches = async () => {
+        setApiLoading(true);
+        setApiStatus('Rescoring all match predictions…');
+        try {
+            const { data, error } = await supabase.rpc('rescore_all_match_predictions');
+            if (error) {
+                setApiStatus(`Rescore failed: ${error.message}`);
+                showToast(`⚠️ Rescore failed: ${error.message}`);
+            } else if (!(data as any)?.success) {
+                const msg = (data as any)?.message || 'Unknown rescore error';
+                setApiStatus(`Rescore failed: ${msg}`);
+                showToast(`⚠️ Rescore failed: ${msg}`);
+            } else {
+                const result = data as any;
+                window.dispatchEvent(new Event('leaderboard-refresh'));
+                setApiStatus(`Rescored ${result.users_scored} users (${result.match_rows_updated} group rows, ${result.ko_game_rows_updated} KO rows).`);
+                showToast(`✅ Rescored ${result.users_scored} users.`);
+            }
+        } catch (err: any) {
+            setApiStatus(`Rescore failed: ${err.message || 'Unknown error'}`);
+            showToast(`⚠️ Rescore failed: ${err.message || 'Unknown error'}`);
         }
         setApiLoading(false);
     };
@@ -622,6 +680,14 @@ export const AdminView: React.FC = () => {
                                 title="Fetch World Cup results from football-data.org API"
                             >
                                 {apiLoading ? '⏳' : '🔄'} Fetch Live Results
+                            </button>
+                            <button
+                                className="admin-api-btn"
+                                onClick={forceRescoreAllMatches}
+                                disabled={apiLoading}
+                                title="Recalculate all saved match prediction points from official results"
+                            >
+                                {apiLoading ? '⏳' : '🧮'} Rescore All Matches
                             </button>
                             {apiStatus && <span className="admin-api-status">{apiStatus}</span>}
                             {apiLastCheck && <span className="admin-api-time">Last check: {apiLastCheck}</span>}

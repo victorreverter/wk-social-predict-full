@@ -11,7 +11,7 @@ interface OfficialMatchRow {
 }
 
 interface PredMatchRow {
-    id: string;
+    id?: string;
     user_id: string;
     match_id: string;
     pred_home_goals: number | null;
@@ -165,9 +165,9 @@ export const scoreMatches = async (userId?: string): Promise<{ usersScored: numb
         if (koPreds?.length) {
             const koUpdates = (koPreds as PredMatchRow[]).map(pred => {
                 const off = offMap[pred.match_id];
-                if (!off) return { id: pred.id, user_id: pred.user_id, pts_earned: 0 };
+                if (!off) return { user_id: pred.user_id, match_id: pred.match_id, pts_earned: 0 };
                 const pts = calculatePoints(off, pred, ptsExact, ptsOutcome, ptsWentPens, ptsPensWinner, null);
-                return { id: pred.id, user_id: pred.user_id, pts_earned: pts };
+                return { user_id: pred.user_id, match_id: pred.match_id, pts_earned: pts };
             });
 
             const { data: rpcResult, error: rpcErr } = await supabase.rpc(
