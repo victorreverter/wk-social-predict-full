@@ -161,6 +161,7 @@ export const AdminView: React.FC = () => {
     const [activeGroup, setActiveGroup]   = useState<string>(groups[0]);
     const [activeKoRound, setActiveKoRound] = useState<string>('R32');
     const [officialMatches, setOfficialMatches] = useState<Record<string, OfficialMatch>>({});
+    const [persistedOfficialMatches, setPersistedOfficialMatches] = useState<Record<string, OfficialMatch>>({});
     const [officialAwards, setOfficialAwards]   = useState<Record<string, string>>({});
     const [officialXI, setOfficialXI]     = useState<Record<string, string>>({});
     const [resolvedKo, setResolvedKo]     = useState<Record<string, Match>>({});
@@ -199,6 +200,7 @@ export const AdminView: React.FC = () => {
             const map: Record<string, OfficialMatch> = {};
             mData.forEach((r: OfficialMatch) => { map[r.match_id] = r; });
             setOfficialMatches(map);
+            setPersistedOfficialMatches(map);
         }
         const { data: aData } = await supabase.from('official_awards').select('*');
         if (aData) {
@@ -308,11 +310,20 @@ export const AdminView: React.FC = () => {
             match_id: matchId, home_goals: row.home_goals, away_goals: row.away_goals,
             home_penalties: row.home_penalties ?? null, away_penalties: row.away_penalties ?? null,
             went_to_pens: row.went_to_pens ?? false,
+            date: allGroupMatches[matchId]?.date ?? resolvedKo[matchId]?.date ?? null,
             status: (row.home_goals !== null && row.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED',
             updated_at: new Date().toISOString(),
         }, { onConflict: 'match_id' });
         
         if (!error) {
+            setPersistedOfficialMatches(prev => ({
+                ...prev,
+                [matchId]: {
+                    ...row,
+                    date: allGroupMatches[matchId]?.date ?? resolvedKo[matchId]?.date ?? null,
+                    status: (row.home_goals !== null && row.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED',
+                },
+            }));
             await scoreMatches();
             await scoreKnockout();
             flashSaved(matchId);
@@ -365,6 +376,7 @@ export const AdminView: React.FC = () => {
         try {
             await resetTournament();
             setOfficialMatches({});
+            setPersistedOfficialMatches({});
             setOfficialAwards({});
             setOfficialXI({});
             setConfirmReset(false);
@@ -415,6 +427,42 @@ export const AdminView: React.FC = () => {
         });
         return result;
     }, [officialMatches]);
+
+    const previewResolvedKo = React.useMemo(() => {
+        const fullGroupMatches = generateInitialGroupMatches();
+        Object.keys(fullGroupMatches).forEach(id => {
+            const om = persistedOfficialMatches[id];
+            if (om) {
+                fullGroupMatches[id].score.homeGoals = om.home_goals;
+                fullGroupMatches[id].score.awayGoals = om.away_goals;
+                fullGroupMatches[id].score.homePenalties = om.home_penalties;
+                fullGroupMatches[id].score.awayPenalties = om.away_penalties;
+                fullGroupMatches[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
+            }
+        });
+
+        const hasAnyFinishedGroup = Object.values(fullGroupMatches).some(m => m.status === 'FINISHED');
+        if (!hasAnyFinishedGroup) {
+            return generateInitialKnockoutMatches();
+        }
+
+        const { best8Thirds } = determineQualifiedTeams(fullGroupMatches);
+        const thirdsIds = best8Thirds.map(t => t.teamId);
+
+        let ko = updateKnockoutBracket({}, fullGroupMatches, thirdsIds, true);
+        Object.keys(ko).forEach(id => {
+            const om = persistedOfficialMatches[id];
+            if (om) {
+                ko[id].score.homeGoals = om.home_goals;
+                ko[id].score.awayGoals = om.away_goals;
+                ko[id].score.homePenalties = om.home_penalties;
+                ko[id].score.awayPenalties = om.away_penalties;
+                ko[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
+            }
+        });
+
+        return updateKnockoutBracket(ko, fullGroupMatches, thirdsIds, true);
+    }, [persistedOfficialMatches]);
 
     const saveOfficialPositions = async () => {
         setPositionsSaving(true);
@@ -878,8 +926,8 @@ export const AdminView: React.FC = () => {
                                 <div className="admin-inspect-preview-content">
                                     <UserPreviewProvider
                                         data={previewData}
-                                        officialMatches={officialMatches}
-                                        officialKnockoutMatches={resolvedKo}
+                                        officialMatches={persistedOfficialMatches}
+                                        officialKnockoutMatches={previewResolvedKo}
                                     >
                                         {previewTab === 'games' && <GamesView />}
                                         {previewTab === 'bracket' && <BracketTree />}
@@ -1125,4 +1173,3 @@ export const AdminView: React.FC = () => {
         </div>
     );
 };
-
