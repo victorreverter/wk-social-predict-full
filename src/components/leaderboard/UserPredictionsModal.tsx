@@ -43,6 +43,7 @@ interface UserPredictions {
   matches: MatchPrediction[];
   koStructure: any[];
   groupPositions: Record<string, string[]>;
+  groupPositionPoints: number;
   selectedThirds: string[];
   totalPts: number;
 }
@@ -124,14 +125,15 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             }
           });
         }
+        const groupPositionPoints = (groupPosRes.data || []).reduce((sum: number, row: any) => sum + (row.pts_earned || 0), 0);
         const savedSelectedThirds: string[] = thirdsRes.data && Array.isArray((thirdsRes.data as any).team_ids)
           ? [...(thirdsRes.data as any).team_ids]
           : [];
 
         const totalPts = [...ko, ...awards, ...xi, ...matches]
-          .reduce((sum, p) => sum + (p.pts_earned || 0), 0);
+          .reduce((sum, p) => sum + (p.pts_earned || 0), 0) + groupPositionPoints;
 
-        setPredictions({ ko, awards, xi, matches, koStructure, groupPositions, selectedThirds: savedSelectedThirds, totalPts });
+        setPredictions({ ko, awards, xi, matches, koStructure, groupPositions, groupPositionPoints, selectedThirds: savedSelectedThirds, totalPts });
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to load predictions');
       } finally {
@@ -350,6 +352,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
     const koPts = pd.ko.reduce((s, k) => s + (k.pts_earned || 0), 0);
     const awardsPts = pd.awards.reduce((s, a) => s + (a.pts_earned || 0), 0);
     const xiPts = pd.xi.reduce((s, x) => s + (x.pts_earned || 0), 0);
+    const groupPositionsPts = pd.groupPositionPoints || 0;
 
     const groupMatchPts = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP').reduce((s, m) => s + (m.pts_earned || 0), 0);
     const groupExact = pd.matches.filter(m => MATCH_STAGE_MAP[m.match_id] === 'GROUP' && m.pts_earned >= 2).length;
@@ -409,7 +412,7 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
       : null;
 
     return {
-      allMatchPts, groupMatchPts, koPts, awardsPts, xiPts,
+      allMatchPts, groupMatchPts, groupPositionsPts, koPts, awardsPts, xiPts,
       groupExact, groupCorrect,
       koR32, koR16, koQF, koSF, koF,
       awardsHit, xiHit,
@@ -472,6 +475,12 @@ export const UserPredictionsModal: React.FC<Props> = ({ userId, username, avatar
             <span className="points-card-val">{stats.allMatchPts}</span>
             <span className="points-card-label">Matches</span>
             <span className="points-card-sub">{stats.groupExact} exact · {stats.groupCorrect} correct</span>
+          </div>
+          <div className="points-card">
+            <span className="points-card-icon">📚</span>
+            <span className="points-card-val">{stats.groupPositionsPts}</span>
+            <span className="points-card-label">Group Positions</span>
+            <span className="points-card-sub">Closed groups only</span>
           </div>
           <div className="points-card">
             <span className="points-card-icon">🏆</span>

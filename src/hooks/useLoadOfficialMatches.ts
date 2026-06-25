@@ -1,11 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import type { OfficialMatch } from '../types';
+import { scoreMatches } from '../lib/scoreMatches';
+import { scoreKnockout } from '../lib/scoreKnockout';
+import { scoreGroupPositions } from '../lib/scoreGroupPositions';
 
 export function useLoadOfficialMatches() {
   const { loadOfficialMatches } = useApp();
+  const { profile } = useAuth();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const lastSnapshotRef = useRef<string>('');
+  const rescoreInFlightRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +44,37 @@ export function useLoadOfficialMatches() {
       });
 
       loadOfficialMatches(map);
+
+      const snapshot = JSON.stringify(
+        (data || [])
+          .map((row: any) => [
+            row.match_id,
+            row.status ?? 'NOT_PLAYED',
+            row.home_goals ?? null,
+            row.away_goals ?? null,
+            row.home_penalties ?? null,
+            row.away_penalties ?? null,
+            row.updated_at ?? null,
+          ])
+          .sort((a: any, b: any) => String(a[0]).localeCompare(String(b[0])))
+      );
+
+      if (lastSnapshotRef.current === snapshot) return;
+      lastSnapshotRef.current = snapshot;
+
+      if (!profile?.is_master || rescoreInFlightRef.current) return;
+
+      rescoreInFlightRef.current = true;
+      try {
+        await Promise.all([
+          scoreMatches(),
+          scoreKnockout(),
+          scoreGroupPositions(),
+        ]);
+        window.dispatchEvent(new Event('leaderboard-refresh'));
+      } finally {
+        rescoreInFlightRef.current = false;
+      }
     };
 
     load();
@@ -58,5 +96,5 @@ export function useLoadOfficialMatches() {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [loadOfficialMatches]);
+  }, [loadOfficialMatches, profile?.is_master]);
 }

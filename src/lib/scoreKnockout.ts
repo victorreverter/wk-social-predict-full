@@ -1,6 +1,81 @@
 import { supabase } from './supabase';
-import { generateInitialGroupMatches } from '../utils/data-init';
+import { generateInitialGroupMatches, initialTeams } from '../utils/data-init';
 import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../utils/bracket-logic';
+import { calculateGroupStandings } from '../utils/standings';
+
+interface OfficialMatchRow {
+    match_id: string;
+    home_goals: number | null;
+    away_goals: number | null;
+    home_penalties?: number | null;
+    away_penalties?: number | null;
+    status: string;
+}
+
+interface OfficialGroupPositionRow {
+    group_letter: string;
+    order: string[];
+}
+
+export const buildOfficialR32TeamSet = (
+    officialMatches: OfficialMatchRow[],
+    officialGroupPositions: OfficialGroupPositionRow[] = []
+): { teams: Set<string>; finishedGroups: Set<string>; allGroupsFinished: boolean } => {
+    const groupMatches = generateInitialGroupMatches();
+    const matchesByGroup: Record<string, string[]> = {};
+    const adminPositions: Record<string, string[]> = {};
+
+    Object.entries(groupMatches).forEach(([matchId, match]) => {
+        if (!matchesByGroup[match.group!]) matchesByGroup[match.group!] = [];
+        matchesByGroup[match.group!].push(matchId);
+    });
+
+    officialGroupPositions.forEach(row => {
+        adminPositions[row.group_letter] = row.order;
+    });
+
+    const officialStatus: Record<string, string> = {};
+    officialMatches.forEach(om => {
+        officialStatus[om.match_id] = om.status;
+        if (groupMatches[om.match_id] && om.status === 'FINISHED' && om.home_goals !== null && om.away_goals !== null) {
+            groupMatches[om.match_id] = {
+                ...groupMatches[om.match_id],
+                score: {
+                    ...groupMatches[om.match_id].score,
+                    homeGoals: om.home_goals,
+                    awayGoals: om.away_goals,
+                    homePenalties: om.home_penalties ?? null,
+                    awayPenalties: om.away_penalties ?? null,
+                },
+                status: 'FINISHED',
+            };
+        }
+    });
+
+    const finishedGroups = new Set<string>();
+    Object.entries(matchesByGroup).forEach(([group, matchIds]) => {
+        if (matchIds.every(id => officialStatus[id] === 'FINISHED')) {
+            finishedGroups.add(group);
+        }
+    });
+
+    const teams = new Set<string>();
+    finishedGroups.forEach(group => {
+        const officialOrder = adminPositions[group]
+            || calculateGroupStandings(group, initialTeams, groupMatches).map(team => team.teamId);
+
+        if (officialOrder[0]) teams.add(officialOrder[0]);
+        if (officialOrder[1]) teams.add(officialOrder[1]);
+    });
+
+    const allGroupsFinished = finishedGroups.size === Object.keys(matchesByGroup).length;
+    if (allGroupsFinished) {
+        const { best8Thirds } = determineQualifiedTeams(groupMatches);
+        best8Thirds.forEach(team => teams.add(team.teamId));
+    }
+
+    return { teams, finishedGroups, allGroupsFinished };
+};
 
 export const scoreKnockout = async (userId?: string): Promise<{ usersScored: number; error?: string }> => {
     // 1. Load Finished Official Matches
@@ -59,9 +134,14 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
         return { usersScored: 0 };
     }
 
-    // R32 can only be considered "official" when ALL 72 group matches are FINISHED.
-    // Until then, no R32 points can be awarded.
-    const r32Official = finishedGroupCount === 72;
+    const { data: officialGroupPositions } = await supabase
+        .from('official_group_positions')
+        .select('group_letter, "order"');
+
+    const { teams: officialR32Teams, allGroupsFinished: r32Official } = buildOfficialR32TeamSet(
+        official as OfficialMatchRow[],
+        (officialGroupPositions || []) as OfficialGroupPositionRow[]
+    );
 
     const { best8Thirds } = determineQualifiedTeams(groupMatches);
     const thirdsIds = best8Thirds.map(t => t.teamId);
@@ -92,7 +172,7 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
 
     // 3. Extract mathematically precise official stage teams based off tournament progression
     const officialStages: Record<string, Set<string>> = {
-        'R32': new Set(),
+        'R32': new Set(officialR32Teams),
         'R16': new Set(),
         'QF': new Set(),
         'SF': new Set(),
@@ -137,7 +217,6 @@ export const scoreKnockout = async (userId?: string): Promise<{ usersScored: num
     const sfNums  = [101, 102];
     const fNum    = 104;
 
-    if (!r32Official)                                  officialStages['R32'] = new Set();
     if (!finishedMatchCount(r32Nums))                  officialStages['R16'] = new Set();
     if (!finishedMatchCount(r16Nums))                  officialStages['QF']  = new Set();
     if (!finishedMatchCount(qfNums))                   officialStages['SF']  = new Set();

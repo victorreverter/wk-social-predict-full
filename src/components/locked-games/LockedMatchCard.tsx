@@ -1,7 +1,7 @@
 import React from 'react';
 import { initialTeams } from '../../utils/data-init';
 import { useApp } from '../../context/AppContext';
-import { hasPublishedOfficialKnockoutMatch } from '../../utils/officialMatches';
+import { hasDefinedKnockoutTeams } from '../../utils/officialMatches';
 import { isMatchKnockout } from '../../utils/schedule';
 import type { Match, Team } from '../../types';
 import './LockedMatchCard.css';
@@ -30,7 +30,9 @@ export const LockedMatchCard: React.FC<Props> = ({ match }) => {
     const { officialMatches, officialKnockoutMatches } = state;
 
     const isKO = isMatchKnockout(match);
-    const displayMatch = isKO && hasPublishedOfficialKnockoutMatch(officialMatches[match.id]) ? (officialKnockoutMatches[match.id] || match) : match;
+    const displayMatch = isKO && hasDefinedKnockoutTeams(officialKnockoutMatches[match.id])
+        ? (officialKnockoutMatches[match.id] || match)
+        : match;
 
     const homeTeam = initialTeams.find(t => t.id === displayMatch.homeTeamId)
         || (displayMatch.homeTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: displayMatch.homeTeamId });

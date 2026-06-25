@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { getDailySchedules, getMonthForDateKey } from '../../utils/schedule';
-import { hasPublishedOfficialKnockoutMatch } from '../../utils/officialMatches';
+import { hasDefinedKnockoutTeams } from '../../utils/officialMatches';
 import { LockedMatchCard } from './LockedMatchCard';
 import type { Match, MatchScore } from '../../types';
 
@@ -14,12 +14,12 @@ interface LockedContentProps {
 export const LockedContent: React.FC<LockedContentProps> = ({ gm, koPreds }) => {
     const { state: liveState } = useApp();
     const { isMatchLocked: lockFn } = useAuth();
-    const { officialKnockoutMatches: liveOfficialKo, officialMatches } = liveState;
+    const { officialKnockoutMatches: liveOfficialKo } = liveState;
 
-  const mergedKnockout = useMemo(() => {
+    const mergedKnockout = useMemo(() => {
     const result: Record<string, Match> = {};
     for (const [id, officialMatch] of Object.entries(liveOfficialKo)) {
-        if (hasPublishedOfficialKnockoutMatch(officialMatches[id]) && officialMatch.homeTeamId !== 'TBD' && officialMatch.awayTeamId !== 'TBD') {
+        if (hasDefinedKnockoutTeams(officialMatch)) {
                 const userScore: MatchScore | undefined = koPreds[id];
                 result[id] = {
                     ...officialMatch,
@@ -29,7 +29,7 @@ export const LockedContent: React.FC<LockedContentProps> = ({ gm, koPreds }) => 
             }
         }
         return result;
-    }, [liveOfficialKo, koPreds, officialMatches]);
+    }, [liveOfficialKo, koPreds]);
 
     const allSchedules = useMemo(
         () => getDailySchedules(gm, mergedKnockout),

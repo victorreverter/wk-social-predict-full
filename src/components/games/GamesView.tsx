@@ -1,19 +1,19 @@
 import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { getDailySchedules, findTodayIndex, getMonthForDateKey } from '../../utils/schedule';
-import { hasPublishedOfficialKnockoutMatch } from '../../utils/officialMatches';
+import { hasDefinedKnockoutTeams } from '../../utils/officialMatches';
 import { DailyMatchCard } from './DailyMatchCard';
 import type { Match, MatchScore } from '../../types';
 import './GamesView.css';
 
 export const GamesView: React.FC = () => {
   const { state } = useApp();
-  const { groupMatches, officialKnockoutMatches, koGamePredictions, officialMatches } = state;
+  const { groupMatches, officialKnockoutMatches, koGamePredictions } = state;
 
   const mergedKnockout = useMemo(() => {
     const result: Record<string, Match> = {};
     for (const [id, officialMatch] of Object.entries(officialKnockoutMatches)) {
-      if (hasPublishedOfficialKnockoutMatch(officialMatches[id]) && officialMatch.homeTeamId !== 'TBD' && officialMatch.awayTeamId !== 'TBD') {
+      if (hasDefinedKnockoutTeams(officialMatch)) {
         const userScore: MatchScore | undefined = koGamePredictions[id];
         result[id] = {
           ...officialMatch,
@@ -23,7 +23,7 @@ export const GamesView: React.FC = () => {
       }
     }
     return result;
-  }, [officialKnockoutMatches, koGamePredictions, officialMatches]);
+  }, [officialKnockoutMatches, koGamePredictions]);
 
   const schedules = useMemo(
     () => getDailySchedules(groupMatches, mergedKnockout),

@@ -462,7 +462,7 @@ html[data-theme='light'] .current-user.top-rank-3 {
 
 .user-preds-points-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
     padding: 0 2rem 0.75rem;
     border-bottom: 1px solid var(--border-subtle);

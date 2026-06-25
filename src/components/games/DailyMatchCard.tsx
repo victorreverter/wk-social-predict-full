@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useMatchLock } from '../../hooks/useMatchLock';
 import { initialTeams } from '../../utils/data-init';
-import { hasPublishedOfficialKnockoutMatch } from '../../utils/officialMatches';
+import { hasDefinedKnockoutTeams } from '../../utils/officialMatches';
 import { isMatchKnockout } from '../../utils/schedule';
 import type { Match, Team } from '../../types';
 import './DailyMatchCard.css';
@@ -33,7 +33,9 @@ export const DailyMatchCard: React.FC<Props> = ({ match }) => {
 
   const isKO = isMatchKnockout(match);
 
-  const displayMatch = isKO && hasPublishedOfficialKnockoutMatch(officialMatches[match.id]) ? (officialKnockoutMatches[match.id] || match) : match;
+  const displayMatch = isKO && hasDefinedKnockoutTeams(officialKnockoutMatches[match.id])
+    ? (officialKnockoutMatches[match.id] || match)
+    : match;
 
   const homeTeam = initialTeams.find(t => t.id === displayMatch.homeTeamId)
     || (displayMatch.homeTeamId === 'TBD' ? TBD_TEAM : { ...TBD_TEAM, id: displayMatch.homeTeamId });

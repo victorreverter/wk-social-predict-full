@@ -190,17 +190,19 @@ export const AdminView: React.FC = () => {
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
     const runMatchRescore = useCallback(async () => {
-        const [matchRes, knockoutRes] = await Promise.all([
+        const [matchRes, knockoutRes, groupPosRes] = await Promise.all([
             scoreMatches(),
             scoreKnockout(),
+            scoreGroupPositions(),
         ]);
 
         window.dispatchEvent(new Event('leaderboard-refresh'));
 
-        const errors = [matchRes.error, knockoutRes.error].filter(Boolean);
+        const errors = [matchRes.error, knockoutRes.error, groupPosRes.error].filter(Boolean);
         return {
             matchUsersScored: matchRes.usersScored ?? 0,
             knockoutUsersScored: knockoutRes.usersScored ?? 0,
+            groupPositionUsersScored: groupPosRes.usersScored ?? 0,
             error: errors.length > 0 ? errors.join('; ') : null,
         };
     }, []);

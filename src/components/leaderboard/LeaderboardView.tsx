@@ -192,7 +192,7 @@ export const LeaderboardView: React.FC = () => {
                             <th className="th-rank">Rank</th>
                             <th className="th-user">Predictor</th>
                             <th className="th-score" title="Points from exact scores &amp; results">Matches</th>
-                            <th className="th-score" title="Points from Group Positions">Groups</th>
+                            <th className="th-score" title="Points from Group Positions">Group Positions</th>
                             <th className="th-score" title="Points from Bracket progressions">Knockout</th>
                             <th className="th-score" title="Points from Awards">Awards</th>
                             <th className="th-total">Total</th>
