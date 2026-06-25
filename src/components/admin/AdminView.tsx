@@ -16,6 +16,7 @@ import { useApp } from '../../context/AppContext';
 import type { LockCategory } from '../../context/AuthContext';
 import { updateKnockoutBracket, determineQualifiedTeams, generateInitialKnockoutMatches } from '../../utils/bracket-logic';
 import { calculateGroupStandings } from '../../utils/standings';
+import { deriveOfficialKnockoutBracket } from '../../utils/official-bracket';
 import type { Match, OfficialMatch } from '../../types';
 import { fetchUserPredictions, type UserPredictionData } from '../../utils/fetchUserPredictions';
 import { UserPreviewProvider } from './UserPreviewProvider';
@@ -453,39 +454,7 @@ export const AdminView: React.FC = () => {
     }, [officialMatches]);
 
     const previewResolvedKo = React.useMemo(() => {
-        const fullGroupMatches = generateInitialGroupMatches();
-        Object.keys(fullGroupMatches).forEach(id => {
-            const om = persistedOfficialMatches[id];
-            if (om) {
-                fullGroupMatches[id].score.homeGoals = om.home_goals;
-                fullGroupMatches[id].score.awayGoals = om.away_goals;
-                fullGroupMatches[id].score.homePenalties = om.home_penalties;
-                fullGroupMatches[id].score.awayPenalties = om.away_penalties;
-                fullGroupMatches[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
-            }
-        });
-
-        const hasAnyFinishedGroup = Object.values(fullGroupMatches).some(m => m.status === 'FINISHED');
-        if (!hasAnyFinishedGroup) {
-            return generateInitialKnockoutMatches();
-        }
-
-        const { best8Thirds } = determineQualifiedTeams(fullGroupMatches);
-        const thirdsIds = best8Thirds.map(t => t.teamId);
-
-        let ko = updateKnockoutBracket({}, fullGroupMatches, thirdsIds, true);
-        Object.keys(ko).forEach(id => {
-            const om = persistedOfficialMatches[id];
-            if (om) {
-                ko[id].score.homeGoals = om.home_goals;
-                ko[id].score.awayGoals = om.away_goals;
-                ko[id].score.homePenalties = om.home_penalties;
-                ko[id].score.awayPenalties = om.away_penalties;
-                ko[id].status = (om.home_goals !== null && om.away_goals !== null) ? 'FINISHED' : 'NOT_PLAYED';
-            }
-        });
-
-        return updateKnockoutBracket(ko, fullGroupMatches, thirdsIds, true);
+        return deriveOfficialKnockoutBracket(persistedOfficialMatches);
     }, [persistedOfficialMatches]);
 
     const saveOfficialPositions = async () => {
