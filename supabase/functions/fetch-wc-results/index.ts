@@ -114,11 +114,19 @@ serve(async (req: Request): Promise<Response> => {
     for (const m of finished) {
       const typedM = m as Record<string, unknown>;
       const score = (typedM.score || {}) as Record<string, unknown>;
+      const duration = score.duration as string | undefined;
       const fullTime = (score.fullTime || {}) as Record<string, number | null>;
       const penalties = (score.penalties != null ? score.penalties : null) as Record<string, number | null> | null;
 
-      const homeGoals = fullTime.home;
-      const awayGoals = fullTime.away;
+      const normalizedScore = normalizePenaltyShootoutScore(
+        fullTime.home,
+        fullTime.away,
+        penalties?.home ?? null,
+        penalties?.away ?? null,
+        duration
+      );
+      const homeGoals = normalizedScore.homeGoals;
+      const awayGoals = normalizedScore.awayGoals;
       if (homeGoals === null || homeGoals === undefined || awayGoals === null || awayGoals === undefined) continue;
 
       const homeTeam = (typedM.homeTeam || {}) as Record<string, string>;
@@ -271,16 +279,16 @@ function resolveKnockoutBracket(
   const result: UpRow[] = [];
 
   for (const c of candidates) {
-    const date = (c.matchDate as string);
+    const utcDate = c.utcDate as string;
     const homeCode = c.internalHome as string;
     const awayCode = c.internalAway as string;
 
     let matchNum: number | null = null;
 
     const r32 = R32_FIXTURES.find(f =>
-      f.date.startsWith(date) &&
-      f.homeCode === homeCode &&
-      f.awayCode === awayCode
+      isSameKickoff(f.date, utcDate) &&
+      (f.homeCode === 'T3' || f.homeCode === homeCode) &&
+      (f.awayCode === 'T3' || f.awayCode === awayCode)
     );
 
     if (r32) {
@@ -288,23 +296,23 @@ function resolveKnockoutBracket(
     }
 
     if (!matchNum) {
-      const r16 = R16_FIXTURES.find(f => f.date.startsWith(date));
+      const r16 = R16_FIXTURES.find(f => isSameKickoff(f.date, utcDate));
       if (r16) matchNum = r16.num;
     }
 
     if (!matchNum) {
-      const qf = QF_FIXTURES.find(f => f.date.startsWith(date));
+      const qf = QF_FIXTURES.find(f => isSameKickoff(f.date, utcDate));
       if (qf) matchNum = qf.num;
     }
 
     if (!matchNum) {
-      const sf = SF_FIXTURES.find(f => f.date.startsWith(date));
+      const sf = SF_FIXTURES.find(f => isSameKickoff(f.date, utcDate));
       if (sf) matchNum = sf.num;
     }
 
     if (!matchNum) {
-      if (THIRD_PLACE.date.startsWith(date)) matchNum = THIRD_PLACE.num;
-      else if (FINAL.date.startsWith(date)) matchNum = FINAL.num;
+      if (isSameKickoff(THIRD_PLACE.date, utcDate)) matchNum = THIRD_PLACE.num;
+      else if (isSameKickoff(FINAL.date, utcDate)) matchNum = FINAL.num;
     }
 
     if (matchNum) {
@@ -325,6 +333,45 @@ function resolveKnockoutBracket(
   }
 
   return result;
+}
+
+function isSameKickoff(a: string, b: string): boolean {
+  return Date.parse(a) === Date.parse(b);
+}
+
+function normalizePenaltyShootoutScore(
+  homeGoals: number | null | undefined,
+  awayGoals: number | null | undefined,
+  homePenalties: number | null,
+  awayPenalties: number | null,
+  duration?: string
+): { homeGoals: number | null | undefined; awayGoals: number | null | undefined } {
+  if (
+    homeGoals == null ||
+    awayGoals == null ||
+    homePenalties == null ||
+    awayPenalties == null ||
+    duration !== 'PENALTY_SHOOTOUT'
+  ) {
+    return { homeGoals, awayGoals };
+  }
+
+  // Some provider payloads encode penalty-shootout winners into fullTime,
+  // e.g. 4-5 plus penalties 3-4 instead of the expected 1-1 + 3-4 pens.
+  // When that happens, subtract the shootout tally back out.
+  if (homeGoals !== awayGoals) {
+    const normalizedHome = homeGoals - homePenalties;
+    const normalizedAway = awayGoals - awayPenalties;
+    if (
+      normalizedHome >= 0 &&
+      normalizedAway >= 0 &&
+      normalizedHome === normalizedAway
+    ) {
+      return { homeGoals: normalizedHome, awayGoals: normalizedAway };
+    }
+  }
+
+  return { homeGoals, awayGoals };
 }
 
 const FIFA_2026_TEAM_MAP: Record<string, string> = {

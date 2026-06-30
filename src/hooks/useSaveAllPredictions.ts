@@ -258,15 +258,21 @@ export const useSaveAllPredictions = () => {
             }
 
             // 7. Actual knockout game predictions (Games tab)
-            const koGameRows = Object.entries(state.koGamePredictions).map(([matchId, score]) => ({
-                user_id: session.user.id,
-                match_id: matchId,
-                pred_home_goals: score.homeGoals,
-                pred_away_goals: score.awayGoals,
-                pred_home_pens: score.homePenalties ?? null,
-                pred_away_pens: score.awayPenalties ?? null,
-                pts_earned: 0,
-            }));
+            // These must respect the same per-match lock rules as group-stage games.
+            const koGameRows = Object.entries(state.koGamePredictions)
+                .filter(([matchId]) => {
+                    const officialMatch = state.officialKnockoutMatches[matchId];
+                    return officialMatch ? !isMatchLocked(officialMatch as Match) : true;
+                })
+                .map(([matchId, score]) => ({
+                    user_id: session.user.id,
+                    match_id: matchId,
+                    pred_home_goals: score.homeGoals,
+                    pred_away_goals: score.awayGoals,
+                    pred_home_pens: score.homePenalties ?? null,
+                    pred_away_pens: score.awayPenalties ?? null,
+                    pts_earned: 0,
+                }));
             if (koGameRows.length > 0) {
                 upsertPromises.push(supabase.from('user_predictions_ko_games').upsert(koGameRows, { onConflict: 'user_id,match_id' }));
             }

@@ -58,15 +58,60 @@ export function mapApiMatchToInternal(
   const score = apiMatch.score;
   const isFinished = apiMatch.status === 'FINISHED';
   const ft = score.fullTime;
+  const normalizedScore = normalizePenaltyShootoutScore(
+    isFinished ? ft.home : null,
+    isFinished ? ft.away : null,
+    (isFinished && score.penalties) ? score.penalties.home : null,
+    (isFinished && score.penalties) ? score.penalties.away : null,
+    score.duration
+  );
 
   return {
     internalMatchId: matched[0],
-    homeGoals: isFinished ? ft.home : null,
-    awayGoals: isFinished ? ft.away : null,
+    homeGoals: normalizedScore.homeGoals,
+    awayGoals: normalizedScore.awayGoals,
     homePenalties: (isFinished && score.penalties) ? score.penalties.home : null,
     awayPenalties: (isFinished && score.penalties) ? score.penalties.away : null,
     status: isFinished ? 'FINISHED' : 'NOT_PLAYED',
   };
+}
+
+export function normalizePenaltyShootoutScore(
+  homeGoals: number | null | undefined,
+  awayGoals: number | null | undefined,
+  homePenalties: number | null,
+  awayPenalties: number | null,
+  duration?: FootballDataMatch['score']['duration']
+): { homeGoals: number | null; awayGoals: number | null } {
+  if (
+    homeGoals == null ||
+    awayGoals == null ||
+    homePenalties == null ||
+    awayPenalties == null ||
+    duration !== 'PENALTY_SHOOTOUT'
+  ) {
+    return {
+      homeGoals: homeGoals ?? null,
+      awayGoals: awayGoals ?? null,
+    };
+  }
+
+  if (homeGoals !== awayGoals) {
+    const normalizedHome = homeGoals - homePenalties;
+    const normalizedAway = awayGoals - awayPenalties;
+    if (
+      normalizedHome >= 0 &&
+      normalizedAway >= 0 &&
+      normalizedHome === normalizedAway
+    ) {
+      return {
+        homeGoals: normalizedHome,
+        awayGoals: normalizedAway,
+      };
+    }
+  }
+
+  return { homeGoals, awayGoals };
 }
 
 export function buildGroupMatchLookup(): Record<string, { homeTeamId: string; awayTeamId: string; date: string; stage: string; group?: string }> {
